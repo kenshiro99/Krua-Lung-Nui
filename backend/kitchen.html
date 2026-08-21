@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>จอในครัว (Kitchen KDS) | ครัวลุงหนุ่ย</title>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Prompt:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body style="background: #0f172a;">
+  <div id="app" class="app-container" style="background: #0f172a; color: #f8fafc;">
+    
+    <!-- Top System Bar for Kitchen -->
+    <header class="top-nav" style="background: #1e293b; border-color: #334155; color: #ffffff;">
+      <div class="nav-brand">
+        <div class="brand-logo-wrap" style="border-color: #ea580c;">
+          <img src="logo/logo.jpg" alt="ครัวลุงหนุ่ย" class="brand-logo-img" onerror="this.src='logo/logo.png'">
+        </div>
+        <div class="brand-text">
+          <h1 id="headerShopName" style="color: #ffffff;">ครัวลุงหนุ่ย (Kitchen KDS)</h1>
+          <span class="badge badge-warning" id="kdsActiveBadge" style="background: #ea580c; color: #ffffff;">0 ออเดอร์รอปรุง</span>
+        </div>
+      </div>
+
+      <div class="nav-actions">
+        <label class="switch-wrap" style="color: #f8fafc; font-size: 0.85rem;" title="เปิด/ปิดเสียงแจ้งเตือนออเดอร์เข้า">
+          <input type="checkbox" id="kitchenSoundToggle" checked>
+          <span>🔔 เสียงเตือนออเดอร์</span>
+        </label>
+        <div class="live-clock" id="liveClock" style="color: #38bdf8;">--:--:--</div>
+        <button class="btn btn-danger-subtle btn-sm" onclick="logoutDepartment()" title="ออกจากระบบ">
+          <i data-lucide="log-out"></i>
+          <span>ออกจากระบบ</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Main Kitchen Cards Display -->
+    <main class="kitchen-kds-body" style="padding: 1.5rem; min-height: calc(100vh - 65px);">
+      <div class="kitchen-grid" id="kitchenCardsContainer">
+        <!-- Dynamically rendered live order tickets -->
+      </div>
+    </main>
+
+  </div>
+
+  <!-- Audio element for Kitchen Bell notification -->
+  <audio id="bellSound" preload="auto">
+    <source src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3" type="audio/mpeg">
+  </audio>
+
+  <!-- Scripts -->
+  <script src="js/state.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/kitchen.js"></script>
+</body>
+</html>

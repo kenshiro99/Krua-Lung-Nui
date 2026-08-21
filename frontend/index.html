@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>ครัวลุงหนุ่ย | สั่งอาหารออนไลน์ (ทานที่ร้าน & สั่งกลับบ้าน)</title>
+  <!-- Google Fonts: Prompt & Plus Jakarta Sans -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Prompt:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+  <!-- QRCode.js -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="mobile-container">
+    
+    <!-- Top Sticky Header -->
+    <header class="app-header">
+      <div class="header-main-row">
+        <div class="brand-info">
+          <div class="logo-circle">
+            <img src="logo/logo.jpg" alt="ครัวลุงหนุ่ย" class="shop-logo-img" onerror="this.src='logo/logo.png'">
+          </div>
+          <div>
+            <h1 class="shop-title" id="shopNameDisplay">ครัวลุงหนุ่ย</h1>
+            <p class="shop-slogan">อร่อยเหมือนกินที่บ้าน • วัตถุดิบสดใหม่</p>
+          </div>
+        </div>
+
+        <div class="header-right-actions">
+          <!-- Order Status Tracker Button -->
+          <button class="icon-circle-btn" onclick="openOrderTrackerModal()" title="ติดตามสถานะอาหาร / ดูประวัติสั่ง">
+            <i data-lucide="receipt-text"></i>
+            <span class="active-orders-dot" id="activeOrdersDot" style="display:none;"></span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Dedicated Context Banner (Shows exact Table or Takeaway Queue) -->
+      <div class="order-context-banner" id="orderContextBanner">
+        <div class="context-icon-wrap" id="contextIconWrap">🍽️</div>
+        <div class="context-info-wrap">
+          <div class="context-main-title" id="contextMainTitle">กำลังสั่งอาหารสำหรับ <b>โต๊ะ 1</b></div>
+          <div class="context-sub-desc" id="contextSubDesc">อาหารจะนำไปเสิร์ฟที่โต๊ะโดยตรง</div>
+        </div>
+        <div class="context-quick-actions" id="contextQuickActions">
+          <button class="context-action-btn" id="btnContextCallWaiter" onclick="callWaiter()">
+            <i data-lucide="bell"></i> <span>เรียกพนักงาน</span>
+          </button>
+          <button class="context-action-btn bill-action" id="btnContextBill" onclick="requestBill()">
+            <i data-lucide="receipt"></i> <span>ขอเช็คบิล</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Search & Category Filters -->
+      <div class="search-wrap">
+        <i data-lucide="search"></i>
+        <input type="text" id="searchInput" class="search-input" placeholder="ค้นหาเมนู เช่น ส้มตำ, ไก่ย่าง, ชาไทย..." oninput="handleSearch()">
+      </div>
+
+      <nav class="category-tabs-nav" id="categoryTabsNav">
+        <!-- Dynamically populated categories -->
+      </nav>
+    </header>
+
+    <!-- Main Menu Feed -->
+    <main class="menu-feed" id="menuFeed">
+      <!-- Dynamically populated menu cards -->
+    </main>
+
+    <!-- Floating Cart Bar (Bottom Sticky) -->
+    <aside class="floating-cart-bar" id="floatingCartBar" onclick="openCartModal()">
+      <div class="cart-left-info">
+        <div class="cart-badge-icon">
+          <i data-lucide="shopping-bag"></i>
+          <span class="cart-count-badge" id="floatCartItemCount">0</span>
+        </div>
+        <div class="cart-text-sum">
+          <span class="cart-qty-text"><span id="floatCartItemCountText">0</span> รายการในตะกร้า</span>
+          <span class="cart-total-price" id="floatCartTotalPrice">฿0.00</span>
+        </div>
+      </div>
+      <div class="cart-btn-label">
+        <span id="floatCartBtnActionText">ดูตะกร้า & สั่งอาหาร</span> <i data-lucide="arrow-right"></i>
+      </div>
+    </aside>
+
+  </div>
+
+  <!-- MODALS -->
+
+  <!-- 1. Item Customization Modal (เลือกความเผ็ด / ท็อปปิ้ง / หมายเหตุ) -->
+  <div id="customizeModal" class="modal-overlay">
+    <div class="modal-sheet">
+      <div class="sheet-header">
+        <div class="sheet-drag-handle"></div>
+        <button class="sheet-close-btn" onclick="closeModal('customizeModal')">&times;</button>
+      </div>
+      <div class="sheet-scroll-body" id="customizeModalBody">
+        <!-- Populated with item details, image, options radio/checkbox, and notes -->
+      </div>
+      <div class="sheet-footer">
+        <div class="qty-stepper">
+          <button type="button" class="stepper-btn" onclick="adjustCustomModalQty(-1)"><i data-lucide="minus"></i></button>
+          <span class="stepper-value" id="customModalQty">1</span>
+          <button type="button" class="stepper-btn" onclick="adjustCustomModalQty(1)"><i data-lucide="plus"></i></button>
+        </div>
+        <button type="button" class="btn-confirm-add" onclick="confirmAddToCartFromModal()">
+          <span>ใส่ตะกร้า</span>
+          <b id="customModalTotalPrice">฿0.00</b>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. Cart & Order Summary Modal -->
+  <div id="cartModal" class="modal-overlay">
+    <div class="modal-sheet">
+      <div class="sheet-header">
+        <div class="sheet-drag-handle"></div>
+        <div class="sheet-title-row">
+          <h3 class="sheet-title">
+            <i data-lucide="shopping-cart"></i> 
+            <span id="cartModalHeaderTitle">ตะกร้าอาหาร (ทานที่ร้าน โต๊ะ 1)</span>
+          </h3>
+          <button class="clear-cart-text-btn" onclick="clearCart()">ล้างตะกร้า</button>
+        </div>
+        <button class="sheet-close-btn" onclick="closeModal('cartModal')">&times;</button>
+      </div>
+      
+      <div class="sheet-scroll-body" id="cartModalScrollBody">
+        <!-- Items container -->
+        <div id="cartModalItemsContainer"></div>
+
+        <!-- Takeaway Extra Details (Visible when in Takeaway mode) -->
+        <div class="takeaway-extra-form" id="takeawayExtraForm" style="display:none; margin-top: 1rem; padding-top: 1rem; border-top: 1px dashed var(--border-color);">
+          <div class="custom-section-title">ข้อมูลสำหรับเรียกรับอาหาร (สั่งกลับบ้าน)</div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin-bottom: 0.75rem;">
+            <input type="text" id="custNameInput" class="special-note-input" placeholder="ชื่อผู้สั่ง (เช่น คุณก้อง)">
+            <input type="tel" id="custPhoneInput" class="special-note-input" placeholder="เบอร์โทรศัพท์">
+          </div>
+          <div class="takeaway-checkboxes">
+            <label class="custom-checkbox-row">
+              <input type="checkbox" id="chkPlasticCutlery" checked>
+              <span>รับช้อน-ส้อมพลาสติก</span>
+            </label>
+            <label class="custom-checkbox-row">
+              <input type="checkbox" id="chkSeparateSauce" checked>
+              <span>แยกน้ำจิ้ม / น้ำส้มตำ</span>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <div class="cart-sheet-summary" id="cartSheetSummary">
+        <div class="summary-line">
+          <span>รวมค่าอาหาร:</span>
+          <span id="cartModalSubtotal">฿0.00</span>
+        </div>
+        <div class="summary-line grand-total">
+          <span>ยอดสุทธิที่ต้องชำระ:</span>
+          <span id="cartModalGrandTotal">฿0.00</span>
+        </div>
+      </div>
+
+      <div class="sheet-footer">
+        <button type="button" class="btn-primary-block" id="btnSubmitOrder" onclick="submitOrder()">
+          <i data-lucide="send"></i> ยืนยันสั่งอาหารเข้าครัวลุงหนุ่ย
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. Live Order Tracker Modal -->
+  <div id="trackerModal" class="modal-overlay">
+    <div class="modal-sheet">
+      <div class="sheet-header">
+        <div class="sheet-drag-handle"></div>
+        <h3 class="sheet-title">
+          <i data-lucide="utensils"></i> 
+          <span id="trackerModalHeaderTitle">สถานะอาหาร (โต๊ะ 1)</span>
+        </h3>
+        <button class="sheet-close-btn" onclick="closeModal('trackerModal')">&times;</button>
+      </div>
+      <div class="sheet-scroll-body" id="trackerModalBody">
+        <!-- Live status tickets -->
+      </div>
+      <div class="sheet-footer" style="flex-direction: column; gap: 0.65rem;">
+        <div class="tracker-total-box" id="trackerTotalBox">
+          <span>ยอดรวมทั้งสิ้น:</span>
+          <b id="trackerGrandTotalDisplay">฿0.00</b>
+        </div>
+        <button type="button" class="btn-primary-block bill-btn" id="btnTrackerBillAction" onclick="requestBill()">
+          <i data-lucide="receipt"></i> ขอเช็คบิล / ชำระเงิน
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 4. Bill & PromptPay Checkout Modal -->
+  <div id="billModal" class="modal-overlay">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3><i data-lucide="receipt"></i> ชำระเงินผ่านพร้อมเพย์</h3>
+        <button class="modal-close" onclick="closeModal('billModal')">&times;</button>
+      </div>
+      <div class="modal-body" style="text-align: center;">
+        <div class="promptpay-payment-card">
+          <div class="thai-qr-header">
+            <div class="thai-qr-badge">THAI QR PAYMENT</div>
+            <div class="promptpay-sub">สแกนจ่ายได้ทุกธนาคาร</div>
+          </div>
+          <div class="qr-box" id="customerBillQRCode">
+            <!-- QR code rendered here -->
+          </div>
+          <div class="bill-pay-meta">
+            <div class="shop-account-name" id="billMerchantName">ครัวลุงหนุ่ย</div>
+            <div class="bill-table-info" id="billTargetDisplay">โต๊ะ 1 • ยอดชำระสุทธิ</div>
+            <div class="bill-pay-amount" id="billPayAmount">฿0.00</div>
+          </div>
+        </div>
+        <p class="bill-instruction-note">
+          💡 สแกนจ่ายผ่าน Mobile Banking หรือแจ้งพนักงานเพื่อชำระเงินสด
+        </p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn-secondary-block" onclick="closeModal('billModal')">ปิดหน้าต่าง</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 5. Change Table Selector Modal (For Dine-in Switch) -->
+  <div id="tableModal" class="modal-overlay">
+    <div class="modal-dialog modal-sm">
+      <div class="modal-header">
+        <h3><i data-lucide="map-pin"></i> เลือกหมายเลขโต๊ะของคุณ</h3>
+        <button class="modal-close" onclick="closeModal('tableModal')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 1rem;">
+          เมื่อสแกน QR ประจำโต๊ะ ระบบจะเลือกโต๊ะให้อัตโนมัติ:
+        </p>
+        <div class="table-selection-grid" id="tableSelectionGrid">
+          <!-- Populated table cards -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Audio Chime -->
+  <audio id="orderSuccessSound" preload="auto">
+    <source src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3" type="audio/mpeg">
+  </audio>
+
+  <!-- Scripts -->
+  <script src="promptpay.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

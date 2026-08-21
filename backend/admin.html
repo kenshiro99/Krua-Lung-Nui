@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ผู้จัดการ / แอดมิน (Admin Backoffice) | ครัวลุงหนุ่ย</title>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Prompt:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+  <!-- QRCode.js -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="app" class="app-container">
+    
+    <!-- Top System Bar -->
+    <header class="top-nav">
+      <div class="nav-brand">
+        <div class="brand-logo-wrap">
+          <img src="logo/logo.jpg" alt="ครัวลุงหนุ่ย" class="brand-logo-img" onerror="this.src='logo/logo.png'">
+        </div>
+        <div class="brand-text">
+          <h1 id="headerShopName">ครัวลุงหนุ่ย (Krua Lung Nui)</h1>
+          <span class="badge badge-success-subtle"><span class="dot-online"></span> แผนกผู้จัดการ / แอดมิน</span>
+        </div>
+      </div>
+
+      <!-- Quick Switch to Cashier & Kitchen -->
+      <div class="mode-switch-group">
+        <a href="admin.html" class="mode-btn active">
+          <i data-lucide="layout-dashboard"></i>
+          <span>แอดมิน (Admin)</span>
+        </a>
+        <a href="cashier.html" class="mode-btn">
+          <i data-lucide="calculator"></i>
+          <span>แคชเชียร์ (POS)</span>
+        </a>
+        <a href="kitchen.html" class="mode-btn">
+          <i data-lucide="chef-hat"></i>
+          <span>จอในครัว (KDS)</span>
+        </a>
+        <a href="../frontend/index.html" target="_blank" class="mode-btn">
+          <i data-lucide="smartphone"></i>
+          <span>ลูกค้าสแกนสั่ง</span>
+        </a>
+      </div>
+
+      <div class="nav-actions">
+        <div class="user-role-pill" id="navUserBadge" style="display:flex; align-items:center; gap:0.4rem; background:#f1f5f9; padding:0.35rem 0.75rem; border-radius:9999px; border:1px solid #e2e8f0; font-size:0.85rem; font-weight:600;">
+          <span>👨‍💼</span> <span>แอดมิน (ผู้จัดการ)</span>
+        </div>
+        <div class="live-clock" id="liveClock">--:--:--</div>
+        <button class="btn btn-danger-subtle btn-sm" onclick="logoutDepartment()" title="ออกจากระบบ">
+          <i data-lucide="log-out"></i>
+          <span>ออกจากระบบ</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Main Container for ADMIN MODE -->
+    <div id="adminView" class="main-layout">
+      <!-- Sidebar Navigation -->
+      <aside class="sidebar">
+        <div class="sidebar-menu">
+          <button class="side-nav-item active" data-tab="menus" onclick="switchAdminTab('menus')">
+            <i data-lucide="book-open"></i>
+            <span>จัดการเมนูอาหาร</span>
+          </button>
+          <button class="side-nav-item" data-tab="tables" onclick="switchAdminTab('tables')">
+            <i data-lucide="grid"></i>
+            <span>ผังโต๊ะ & ป้าย QR Code</span>
+          </button>
+          <button class="side-nav-item" data-tab="reports" onclick="switchAdminTab('reports')">
+            <i data-lucide="trending-up"></i>
+            <span>ยอดขาย & ประวัติบิล</span>
+          </button>
+          <button class="side-nav-item" data-tab="settings" onclick="switchAdminTab('settings')">
+            <i data-lucide="settings"></i>
+            <span>ตั้งค่าร้าน & พร้อมเพย์</span>
+          </button>
+        </div>
+
+        <div class="sidebar-footer">
+          <div class="system-health-card">
+            <div class="health-header">
+              <span class="health-title"><i data-lucide="database"></i> ฐานข้อมูล</span>
+              <span class="badge badge-success">พร้อมใช้งาน</span>
+            </div>
+            <p class="health-desc">Local Sync + Cloud Ready</p>
+            <div class="storage-stats">
+              <span>เมนู: <b id="statMenuCount">0</b></span> |
+              <span>โต๊ะ: <b id="statTableCount">0</b></span>
+            </div>
+          </div>
+        </div>
+      </aside>
+
+      <!-- Main Content Area -->
+      <main class="content-body">
+        
+        <!-- TAB 1: MENU MANAGEMENT -->
+        <section id="tab-menus" class="admin-tab-content active">
+          <div class="page-header">
+            <div>
+              <h2 class="page-title">📖 รายการเมนูอาหาร (Menu Catalog)</h2>
+              <p class="page-subtitle">จัดการเมนูอาหาร ราคา ตัวเลือกความเผ็ด และสถานะพร้อมขาย</p>
+            </div>
+            <div class="header-actions">
+              <button class="btn btn-secondary" onclick="openCategoryModal()">
+                <i data-lucide="folder-plus"></i>
+                <span>จัดการหมวดหมู่</span>
+              </button>
+              <button class="btn btn-primary" onclick="openAddMenuModal()">
+                <i data-lucide="plus-circle"></i>
+                <span>เพิ่มเมนูใหม่</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Filters & Search -->
+          <div class="filter-toolbar">
+            <div class="search-box">
+              <i data-lucide="search"></i>
+              <input type="text" id="menuSearchInput" placeholder="ค้นหาเมนูอาหาร..." oninput="renderMenuList()">
+            </div>
+            <div class="category-pills" id="categoryFilterPills">
+              <!-- Dynamically populated categories -->
+            </div>
+          </div>
+
+          <!-- Menu Grid Cards -->
+          <div class="menu-grid" id="menuGridContainer">
+            <!-- Dynamically populated menu cards -->
+          </div>
+        </section>
+
+        <!-- TAB 2: TABLE & QR CODE GENERATOR -->
+        <section id="tab-tables" class="admin-tab-content">
+          <div class="page-header">
+            <div>
+              <h2 class="page-title">🪑 ผังโต๊ะ & ป้าย QR Code สแกนสั่งอาหาร</h2>
+              <p class="page-subtitle">พิมพ์ป้าย QR ประจำโต๊ะ และป้ายหน้าร้านสำหรับสั่งกลับบ้าน</p>
+            </div>
+            <div class="header-actions">
+              <button class="btn btn-warning" onclick="previewTakeawayQRStand()" title="พิมพ์ป้ายตั้งหน้าร้านสำหรับลูกค้าสั่งกลับบ้าน">
+                <i data-lucide="shopping-bag"></i>
+                <span>พิมพ์ป้าย QR สั่งกลับบ้าน</span>
+              </button>
+              <button class="btn btn-secondary" onclick="printAllQRCards()">
+                <i data-lucide="printer"></i>
+                <span>พิมพ์ป้าย QR ทุกโต๊ะ</span>
+              </button>
+              <button class="btn btn-primary" onclick="openAddTableModal()">
+                <i data-lucide="plus-circle"></i>
+                <span>เพิ่มโต๊ะใหม่</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Table Cards Grid -->
+          <div class="table-admin-grid" id="tableAdminGrid">
+            <!-- Dynamically populated table cards -->
+          </div>
+        </section>
+
+        <!-- TAB 3: SALES REPORTS & ORDER HISTORY -->
+        <section id="tab-reports" class="admin-tab-content">
+          <div class="page-header">
+            <div>
+              <h2 class="page-title">📈 ยอดขาย & ประวัติคำสั่งซื้อ (Sales & Analytics)</h2>
+              <p class="page-subtitle">สถิติยอดขายแบบ Real-time รายการเมนูขายดี และประวัติบิลทั้งหมด</p>
+            </div>
+            <div class="header-actions">
+              <button class="btn btn-secondary" onclick="exportOrdersCSV()">
+                <i data-lucide="download"></i>
+                <span>ส่งออกข้อมูล (CSV)</span>
+              </button>
+              <button class="btn btn-danger-subtle" onclick="clearOrdersHistory()">
+                <i data-lucide="trash-2"></i>
+                <span>ล้างประวัติบิล</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- KPI Metric Cards -->
+          <div class="kpi-grid">
+            <div class="kpi-card">
+              <div class="kpi-icon-wrap kpi-blue">
+                <i data-lucide="banknote"></i>
+              </div>
+              <div class="kpi-info">
+                <span class="kpi-label">ยอดขายรวมวันนี้</span>
+                <h3 class="kpi-value" id="kpiTodaySales">฿0.00</h3>
+                <span class="kpi-sub" id="kpiPaidCount">0 บิลที่ชำระแล้ว</span>
+              </div>
+            </div>
+
+            <div class="kpi-card">
+              <div class="kpi-icon-wrap kpi-emerald">
+                <i data-lucide="shopping-bag"></i>
+              </div>
+              <div class="kpi-info">
+                <span class="kpi-label">จำนวนคำสั่งซื้อทั้งหมด</span>
+                <h3 class="kpi-value" id="kpiTotalOrders">0</h3>
+                <span class="kpi-sub">รวมทุกสถานะ</span>
+              </div>
+            </div>
+
+            <div class="kpi-card">
+              <div class="kpi-icon-wrap kpi-amber">
+                <i data-lucide="calculator"></i>
+              </div>
+              <div class="kpi-info">
+                <span class="kpi-label">ยอดเฉลี่ยต่อบิล (AOV)</span>
+                <h3 class="kpi-value" id="kpiAvgBill">฿0.00</h3>
+                <span class="kpi-sub">Average Order Value</span>
+              </div>
+            </div>
+
+            <div class="kpi-card">
+              <div class="kpi-icon-wrap kpi-purple">
+                <i data-lucide="crown"></i>
+              </div>
+              <div class="kpi-info">
+                <span class="kpi-label">เมนูขายดีอันดับ 1</span>
+                <h3 class="kpi-value text-truncate" id="kpiTopMenu">-</h3>
+                <span class="kpi-sub" id="kpiTopMenuSales">0 รายการ</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Order History Table -->
+          <div class="data-card">
+            <div class="data-card-header">
+              <h3><i data-lucide="receipt"></i> ประวัติคำสั่งซื้อล่าสุด</h3>
+              <div class="table-controls">
+                <select id="orderStatusFilter" class="form-select" onchange="renderOrderHistoryTable()">
+                  <option value="all">สถานะทั้งหมด</option>
+                  <option value="pending">รอดำเนินการ</option>
+                  <option value="cooking">กำลังปรุง</option>
+                  <option value="served">เสิร์ฟแล้ว</option>
+                  <option value="completed">เช็คบิลแล้ว</option>
+                </select>
+              </div>
+            </div>
+            <div class="table-responsive">
+              <table class="table" id="orderHistoryTable">
+                <thead>
+                  <tr>
+                    <th>เลขที่บิล</th>
+                    <th>เวลา</th>
+                    <th>ประเภท/โต๊ะ</th>
+                    <th>รายการอาหาร</th>
+                    <th>ยอดรวม</th>
+                    <th>การชำระ</th>
+                    <th>สถานะออเดอร์</th>
+                    <th>จัดการ</th>
+                  </tr>
+                </thead>
+                <tbody id="orderHistoryTableBody">
+                  <!-- Dynamically rendered orders -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- TAB 4: SHOP SETTINGS & PROMPTPAY -->
+        <section id="tab-settings" class="admin-tab-content">
+          <div class="page-header">
+            <div>
+              <h2 class="page-title">⚙️ ตั้งค่าร้าน & พร้อมเพย์ (Shop Settings)</h2>
+              <p class="page-subtitle">จัดการข้อมูลร้านค้า เบอร์โทร ข้อมูลพร้อมเพย์สำหรับรับชำระเงิน และการแจ้งเตือน</p>
+            </div>
+            <div class="header-actions">
+              <button class="btn btn-primary" onclick="saveSettings()">
+                <i data-lucide="save"></i>
+                <span>บันทึกการตั้งค่า</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="settings-grid">
+            <!-- Left: Settings Form -->
+            <div class="data-card">
+              <div class="data-card-header">
+                <h3><i data-lucide="store"></i> ข้อมูลทั่วไปของร้าน</h3>
+              </div>
+              <div class="data-card-body">
+                <div class="form-group">
+                  <label class="form-label">ชื่อร้านอาหาร</label>
+                  <input type="text" id="settingShopName" class="form-control" placeholder="ครัวลุงหนุ่ย">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">เบอร์โทรศัพท์ร้าน</label>
+                  <input type="text" id="settingShopPhone" class="form-control" placeholder="089-123-4567">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">ที่อยู่ร้านอาหาร</label>
+                  <textarea id="settingShopAddress" class="form-control" rows="2" placeholder="ที่อยู่ร้าน"></textarea>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">ข้อความท้ายใบเสร็จ</label>
+                  <input type="text" id="settingReceiptFooter" class="form-control" placeholder="ขอบคุณที่อุดหนุนครัวลุงหนุ่ยครับ 🙏">
+                </div>
+                
+                <h4 style="margin-top: 1.5rem; margin-bottom: 0.75rem; font-size: 0.95rem; color: var(--text-primary);">
+                  ภาษีและค่าบริการ (ถ้ามี)
+                </h4>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                  <div class="form-group">
+                    <label class="form-label">Service Charge (%)</label>
+                    <input type="number" id="settingServiceCharge" class="form-control" value="0" min="0" max="100">
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">VAT / ภาษีมูลค่าเพิ่ม (%)</label>
+                    <input type="number" id="settingVat" class="form-control" value="0" min="0" max="100">
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Right: PromptPay Configuration & Live Preview -->
+            <div class="data-card">
+              <div class="data-card-header">
+                <h3><i data-lucide="qr-code"></i> การรับชำระเงินด้วย PromptPay QR</h3>
+              </div>
+              <div class="data-card-body">
+                <div class="form-group">
+                  <label class="form-label">ประเภทพร้อมเพย์</label>
+                  <div class="radio-group">
+                    <label class="radio-label">
+                      <input type="radio" name="promptpayType" value="mobile" checked>
+                      <span>เบอร์มือถือ</span>
+                    </label>
+                    <label class="radio-label">
+                      <input type="radio" name="promptpayType" value="national_id">
+                      <span>เลขบัตรประชาชน / เลขนิติบุคคล</span>
+                    </label>
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label">หมายเลขพร้อมเพย์ (PromptPay ID) <span class="text-danger">*</span></label>
+                  <input type="text" id="settingPromptPayId" class="form-control" placeholder="0891234567" oninput="updatePromptPayPreview()">
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label">ชื่อบัญชีที่แสดงตอนลูกค้าสแกน</label>
+                  <input type="text" id="settingPromptPayName" class="form-control" placeholder="ครัวลุงหนุ่ย" oninput="updatePromptPayPreview()">
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label">LINE Notify / Webhook URL</label>
+                  <div style="display: flex; gap: 0.5rem;">
+                    <input type="text" id="settingLineWebhook" class="form-control" placeholder="https://notify-api.line.me/api/notify">
+                    <button class="btn btn-secondary" onclick="testWebhookNotification()">ทดสอบ</button>
+                  </div>
+                </div>
+
+                <!-- PromptPay Live Card Preview -->
+                <div class="promptpay-preview-card" style="margin-top: 1.5rem;">
+                  <div class="thai-qr-header">
+                    <div class="thai-qr-badge">THAI QR PAYMENT</div>
+                    <div class="promptpay-sub">สแกนจ่ายได้ทุกธนาคาร</div>
+                  </div>
+                  <div class="qr-canvas-box" id="settingsQRPreview">
+                    <!-- Dynamic QR Canvas will be rendered here -->
+                  </div>
+                  <div class="promptpay-merchant-info">
+                    <div class="merchant-name" id="previewMerchantName">ครัวลุงหนุ่ย</div>
+                    <div class="merchant-id" id="previewMerchantId">089-123-4567</div>
+                    <div class="sample-amount">ตัวอย่าง QR รับชำระ: ฿150.00</div>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+          </div>
+        </section>
+
+      </main>
+    </div>
+
+  </div>
+
+  <!-- MODALS -->
+
+  <!-- Modal: Add/Edit Menu Item -->
+  <div id="menuModal" class="modal-overlay">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3 id="menuModalTitle">เพิ่มเมนูอาหารใหม่</h3>
+        <button class="modal-close" onclick="closeModal('menuModal')">&times;</button>
+      </div>
+      <form id="menuForm" onsubmit="handleSaveMenu(event)">
+        <input type="hidden" id="menuFormId">
+        <div class="modal-body">
+          <div class="form-group">
+            <label class="form-label">ชื่อเมนูอาหาร <span class="text-danger">*</span></label>
+            <input type="text" id="menuName" class="form-control" required placeholder="เช่น ส้มตำไทยไข่เค็มทรงเครื่อง">
+          </div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+            <div class="form-group">
+              <label class="form-label">หมวดหมู่อาหาร <span class="text-danger">*</span></label>
+              <select id="menuCategory" class="form-select" required></select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">ราคา (บาท) <span class="text-danger">*</span></label>
+              <input type="number" id="menuPrice" class="form-control" required min="0" step="0.5" placeholder="75.00">
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">คำอธิบายเมนู</label>
+            <textarea id="menuDesc" class="form-control" rows="2" placeholder="รสชาติ วัตถุดิบ ความพิเศษ..."></textarea>
+          </div>
+          <div class="form-group">
+            <label class="form-label">ที่อยู่ไฟล์รูปภาพ</label>
+            <input type="text" id="menuImage" class="form-control" placeholder="images/somtum_thai_egg.jpg">
+          </div>
+          <div class="form-group">
+            <label class="form-label">ตัวเลือกเสริม / ระดับความเผ็ด (คั่นด้วยเครื่องหมายจุลภาค , )</label>
+            <input type="text" id="menuOptions" class="form-control" placeholder="พริก 1 เม็ด (ไม่เผ็ด), พริก 3 เม็ด (เผ็ดน้อย), พริก 5 เม็ด (เผ็ดปกติ)">
+          </div>
+          <div class="form-group">
+            <label class="switch-wrap">
+              <input type="checkbox" id="menuAvailable" checked>
+              <span>พร้อมขายในระบบ (เปิด/ปิดสต็อก)</span>
+            </label>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="closeModal('menuModal')">ยกเลิก</button>
+          <button type="submit" class="btn btn-primary">บันทึกเมนู</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Category Management -->
+  <div id="categoryModal" class="modal-overlay">
+    <div class="modal-dialog modal-sm">
+      <div class="modal-header">
+        <h3>จัดการหมวดหมู่อาหาร</h3>
+        <button class="modal-close" onclick="closeModal('categoryModal')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div style="display: flex; gap: 0.5rem; margin-bottom: 1rem;">
+          <input type="text" id="newCategoryInput" class="form-control" placeholder="ชื่อหมวดหมู่ใหม่...">
+          <button class="btn btn-primary" onclick="handleAddCategory()">เพิ่ม</button>
+        </div>
+        <div class="category-list-manage" id="categoryListManage"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeModal('categoryModal')">ปิด</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Add/Edit Table -->
+  <div id="tableModal" class="modal-overlay">
+    <div class="modal-dialog modal-sm">
+      <div class="modal-header">
+        <h3 id="tableModalTitle">เพิ่มโต๊ะอาหารใหม่</h3>
+        <button class="modal-close" onclick="closeModal('tableModal')">&times;</button>
+      </div>
+      <form id="tableForm" onsubmit="handleSaveTable(event)">
+        <input type="hidden" id="tableFormId">
+        <div class="modal-body">
+          <div class="form-group">
+            <label class="form-label">หมายเลข/ชื่อโต๊ะ <span class="text-danger">*</span></label>
+            <input type="text" id="tableName" class="form-control" required placeholder="เช่น 1, 2, 3, 4...">
+          </div>
+          <div class="form-group">
+            <label class="form-label">จำนวนที่นั่ง (คน)</label>
+            <input type="number" id="tableSeats" class="form-control" value="4" min="1">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="closeModal('tableModal')">ยกเลิก</button>
+          <button type="submit" class="btn btn-primary">บันทึกโต๊ะ</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Single Table QR Card Printable View -->
+  <div id="qrPrintModal" class="modal-overlay">
+    <div class="modal-dialog">
+      <div class="modal-header no-print">
+        <h3>ป้าย QR Code สแกนสั่งอาหาร</h3>
+        <button class="modal-close" onclick="closeModal('qrPrintModal')">&times;</button>
+      </div>
+      <div class="modal-body print-canvas-area" id="qrPrintContent"></div>
+      <div class="modal-footer no-print">
+        <button type="button" class="btn btn-secondary" onclick="closeModal('qrPrintModal')">ปิด</button>
+        <button type="button" class="btn btn-primary" onclick="window.print()">
+          <i data-lucide="printer"></i> พิมพ์ป้ายนี้
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="js/state.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/promptpay.js"></script>
+  <script src="js/admin.js"></script>
+</body>
+</html>

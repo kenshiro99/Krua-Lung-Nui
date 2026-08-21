@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>เข้าสู่ระบบแยกแผนก | ครัวลุงหนุ่ย</title>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Prompt:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body style="background: linear-gradient(135deg, #0f172a, #1e293b); min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 1.5rem;">
+
+  <div style="background: #ffffff; width: 100%; max-width: 500px; border-radius: 24px; padding: 2.5rem 2rem; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); text-align: center;">
+    
+    <!-- Logo & Brand Header -->
+    <div style="width: 86px; height: 86px; margin: 0 auto 1rem; border-radius: 50%; overflow: hidden; border: 3px solid #f59e0b; box-shadow: 0 4px 14px rgba(245, 158, 11, 0.35);">
+      <img src="logo/logo.jpg" alt="ครัวลุงหนุ่ย" style="width:100%; height:100%; object-fit:cover;" onerror="this.src='logo/logo.png'">
+    </div>
+    <h1 style="font-size: 1.5rem; font-weight: 800; color: #0f172a; margin-bottom: 0.25rem;">ครัวลุงหนุ่ย (Krua Lung Nui)</h1>
+    <p style="font-size: 0.9rem; color: #64748b; margin-bottom: 2rem;">ระบบจัดการร้านอาหาร • เลือกแผนกของคุณเพื่อเข้าสู่ระบบ</p>
+
+    <!-- Department Cards -->
+    <div id="deptCardList" style="display: flex; flex-direction: column; gap: 0.9rem; text-align: left;">
+      
+      <!-- 1. Manager / Admin -->
+      <div onclick="selectDept('admin')" style="display: flex; align-items: center; gap: 1rem; padding: 1.1rem 1.25rem; border: 2px solid #e2e8f0; border-radius: 16px; cursor: pointer; transition: all 0.2s; background: #ffffff;">
+        <div style="width: 52px; height: 52px; border-radius: 14px; background: #eff6ff; color: #2563eb; display: flex; align-items: center; justify-content: center; font-size: 1.6rem; flex-shrink: 0;">
+          👨‍💼
+        </div>
+        <div style="flex: 1;">
+          <strong style="font-size: 1.05rem; color: #0f172a; display: block;">ผู้จัดการ / แอดมิน (Admin)</strong>
+          <span style="font-size: 0.8rem; color: #64748b;">เมนู, โต๊ะ, ยอดขาย & สถิติ, ตั้งค่าร้าน</span>
+        </div>
+        <span class="badge badge-primary">PIN: 1234</span>
+      </div>
+
+      <!-- 2. Cashier POS -->
+      <div onclick="selectDept('cashier')" style="display: flex; align-items: center; gap: 1rem; padding: 1.1rem 1.25rem; border: 2px solid #e2e8f0; border-radius: 16px; cursor: pointer; transition: all 0.2s; background: #ffffff;">
+        <div style="width: 52px; height: 52px; border-radius: 14px; background: #ecfdf5; color: #059669; display: flex; align-items: center; justify-content: center; font-size: 1.6rem; flex-shrink: 0;">
+          💵
+        </div>
+        <div style="flex: 1;">
+          <strong style="font-size: 1.05rem; color: #0f172a; display: block;">แผนกแคชเชียร์ & หน้าร้าน (POS)</strong>
+          <span style="font-size: 0.8rem; color: #64748b;">เช็คบิลโต๊ะ, คิวกลับบ้าน, พร้อมเพย์, เงินทอน</span>
+        </div>
+        <span class="badge badge-success">PIN: 2222</span>
+      </div>
+
+      <!-- 3. Kitchen KDS -->
+      <div onclick="selectDept('kitchen')" style="display: flex; align-items: center; gap: 1rem; padding: 1.1rem 1.25rem; border: 2px solid #e2e8f0; border-radius: 16px; cursor: pointer; transition: all 0.2s; background: #ffffff;">
+        <div style="width: 52px; height: 52px; border-radius: 14px; background: #fff7ed; color: #ea580c; display: flex; align-items: center; justify-content: center; font-size: 1.6rem; flex-shrink: 0;">
+          👨‍🍳
+        </div>
+        <div style="flex: 1;">
+          <strong style="font-size: 1.05rem; color: #0f172a; display: block;">แผนกครัว & ปรุงอาหาร (Kitchen KDS)</strong>
+          <span style="font-size: 0.8rem; color: #64748b;">รับออเดอร์สด, จับเวลาปรุง, เสียงเตือน</span>
+        </div>
+        <span class="badge badge-warning">PIN: 3333</span>
+      </div>
+
+    </div>
+
+    <!-- PIN Pad Form (Shown after clicking a department) -->
+    <div id="pinEntryForm" style="display: none; margin-top: 1rem;">
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.25rem;">
+        <button type="button" class="btn btn-sm btn-light" onclick="backToDeptList()">
+          <i data-lucide="arrow-left"></i> เลือกแผนกอื่น
+        </button>
+        <span id="selectedDeptNameDisplay" style="font-weight: 700; color: #0f172a; font-size: 1rem;">-</span>
+      </div>
+
+      <div class="form-group" style="text-align: center;">
+        <label class="form-label" style="margin-bottom: 0.5rem;">กรุณากรอกรหัส PIN ประจำแผนก (4 หลัก)</label>
+        <input type="password" id="loginPinInput" class="form-control" maxlength="4" placeholder="••••" style="font-size: 2rem; letter-spacing: 0.5em; text-align: center; max-width: 240px; margin: 0 auto;" onkeyup="if(event.key === 'Enter') handlePinSubmit()">
+        <div id="loginErrorMsg" style="color: #ef4444; font-size: 0.85rem; margin-top: 0.5rem; display: none;">รหัส PIN ไม่ถูกต้อง กรุณาลองใหม่อีกครั้ง</div>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 0.65rem; margin-top: 1.5rem;">
+        <button type="button" class="btn btn-primary btn-lg" onclick="handlePinSubmit()" style="justify-content: center;">
+          <i data-lucide="log-in"></i> เข้าสู่ระบบ
+        </button>
+        <button type="button" class="btn btn-secondary" onclick="quickLogin()">
+          เข้าสู่ระบบทันที (Quick Login)
+        </button>
+      </div>
+    </div>
+
+  </div>
+
+  <script src="js/auth.js"></script>
+  <script>
+    let currentChosenDept = null;
+
+    function selectDept(dept) {
+      currentChosenDept = dept;
+      const info = DEPARTMENTS[dept];
+      document.getElementById("deptCardList").style.display = "none";
+      document.getElementById("pinEntryForm").style.display = "block";
+      document.getElementById("selectedDeptNameDisplay").innerText = `${info.icon} ${info.name}`;
+      document.getElementById("loginPinInput").value = "";
+      document.getElementById("loginErrorMsg").style.display = "none";
+      document.getElementById("loginPinInput").focus();
+      refreshLucideIcons();
+    }
+
+    function backToDeptList() {
+      currentChosenDept = null;
+      document.getElementById("deptCardList").style.display = "flex";
+      document.getElementById("pinEntryForm").style.display = "none";
+    }
+
+    function handlePinSubmit() {
+      const pin = document.getElementById("loginPinInput").value.trim();
+      if (!loginDepartment(currentChosenDept, pin)) {
+        document.getElementById("loginErrorMsg").style.display = "block";
+        document.getElementById("loginPinInput").value = "";
+        document.getElementById("loginPinInput").focus();
+      }
+    }
+
+    function quickLogin() {
+      loginDepartment(currentChosenDept);
+    }
+
+    function refreshLucideIcons() {
+      if (window.lucide) lucide.createIcons();
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      refreshLucideIcons();
+    });
+  </script>
+</body>
+</html>

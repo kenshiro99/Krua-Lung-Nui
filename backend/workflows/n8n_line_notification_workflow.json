@@ -1,0 +1,51 @@
+{
+  "name": "ครัวลุงหนุ่ย - LINE Order Alert Workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "krua-lung-nui-order-webhook",
+        "responseMode": "onReceived",
+        "options": {}
+      },
+      "name": "Webhook ออเดอร์ใหม่",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "authentication": "headerAuth",
+        "url": "https://notify-api.line.me/api/notify",
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "message",
+              "value": "={{ '🛎️ [ครัวลุงหนุ่ย] ออเดอร์ใหม่ - โต๊ะ ' + $json.body.tableName + '\\n\\nรายการอาหาร:\\n' + $json.body.items.map(i => '• ' + i.name + ' x' + i.qty + (i.options ? ' (' + i.options + ')' : '')).join('\\n') + '\\n\\nยอดรวม: ฿' + $json.body.total + '\\n⏱️ เวลา: ' + $now.format('HH:mm') }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "ส่งการ์ดเข้ากลุ่ม LINE ครัว",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [500, 300]
+    }
+  ],
+  "connections": {
+    "Webhook ออเดอร์ใหม่": {
+      "main": [
+        [
+          {
+            "node": "ส่งการ์ดเข้ากลุ่ม LINE ครัว",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}

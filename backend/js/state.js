@@ -1,0 +1,164 @@
+/**
+ * ครัวลุงหนุ่ย (Krua Lung Nui) - Shared State & Data Sync Module
+ */
+
+const DEFAULT_SHOP_SETTINGS = {
+  shopName: "ครัวลุงหนุ่ย (Krua Lung Nui)",
+  phone: "089-123-4567",
+  address: "ร้านครัวลุงหนุ่ย อร่อยเหมือนกินที่บ้าน",
+  receiptFooter: "อร่อยเหมือนกินที่บ้าน • ขอบคุณที่อุดหนุนครัวลุงหนุ่ยครับ 🙏",
+  promptpayType: "mobile",
+  promptpayId: "0891234567",
+  promptpayName: "ครัวลุงหนุ่ย (Krua Lung Nui)",
+  lineWebhook: "https://notify-bot.line.me/api/notify",
+  serviceCharge: 0,
+  vat: 0
+};
+
+const DEFAULT_CATEGORIES = [
+  { id: "cat-all", name: "ทั้งหมด" },
+  { id: "cat-1", name: "ตำแซ่บ & ยำ" },
+  { id: "cat-2", name: "ไก่ย่าง & ย่างเตาถ่าน" },
+  { id: "cat-3", name: "ต้มแซ่บ & แกงไทย" },
+  { id: "cat-4", name: "อาหารจานเดียว" },
+  { id: "cat-5", name: "เครื่องดื่ม & ของหวาน" }
+];
+
+const DEFAULT_MENUS = [
+  {
+    id: "m-101",
+    categoryId: "cat-1",
+    name: "ส้มตำไทยไข่เค็มทรงเครื่อง",
+    description: "มะละกอกรอบ ตำสดครกต่อครก กุ้งแห้งตัวโต ถั่วลิสงคั่วหอม ไข่เค็มไชยาเนื้อเนียนมันนัว รสชาติกลมกล่อม",
+    price: 75,
+    imageUrl: "images/somtum_thai_egg.jpg",
+    options: "พริก 1 เม็ด (ไม่เผ็ด), พริก 3 เม็ด (เผ็ดน้อย), พริก 5 เม็ด (เผ็ดปกติ), พริก 10 เม็ด (เผ็ดมาก)",
+    isAvailable: true
+  },
+  {
+    id: "m-102",
+    categoryId: "cat-1",
+    name: "ตำปูปลาร้าแซ่บนัว (สูตรลุงหนุ่ย)",
+    description: "น้ำปลาร้าต้มสุกสูตรเด็ดลุงหนุ่ย หอมนัวลึกถึงเครื่อง ปูดองสะอาด แซ่บถึงใจ รสจัดจ้าน",
+    price: 65,
+    imageUrl: "images/somtum_pu_plara.jpg",
+    options: "เผ็ดน้อย, เผ็ดปกติ, เผ็ดพ่นไฟ, เพิ่มกุ้งสด (+40), เพิ่มหมูยอ (+25)",
+    isAvailable: true
+  },
+  {
+    id: "m-103",
+    categoryId: "cat-2",
+    name: "เมี่ยงปลาทับทิม สูตรเด็ดอร่อยแซ่บ",
+    description: "ปลาทับทิมสดตัวโต ทอดกรอบนอกเนื้อนุ่มฟู เสิร์ฟพร้อมเส้นหมี่ลวก ผักสดปลอดสาร และน้ำจิ้มเมี่ยง 2 สูตร (ซีฟู้ด & ถั่วหวาน)",
+    price: 260,
+    imageUrl: "images/miang_pla_tabtim.jpg",
+    options: "น้ำจิ้มซีฟู้ดแซ่บ, น้ำจิ้มถั่วตัดหวาน, รับทั้ง 2 น้ำจิ้ม, เพิ่มเส้นหมี่ (+15), เพิ่มผักสด (+20)",
+    isAvailable: true
+  },
+  {
+    id: "m-104",
+    categoryId: "cat-2",
+    name: "ไก่ย่างหอมกลิ่นเตาถ่าน (สูตรลุงหนุ่ย)",
+    description: "หมักด้วยสมุนไพรไทยข้ามคืน ย่างบนเตาถ่านไฟอ่อนจนหนังกรอบเนื้อนุ่มฉ่ำ เสิร์ฟพร้อมน้ำจิ้มแจ่วมะขามเปียก",
+    price: 140,
+    imageUrl: "images/gai_yang.jpg",
+    options: "พร้อมน้ำจิ้มแจ่ว, พร้อมน้ำจิ้มไก่หวาน, รับข้าวเหนียวเพิ่ม (+15)",
+    isAvailable: true
+  },
+  {
+    id: "m-105",
+    categoryId: "cat-2",
+    name: "คอหมูย่างเตาถ่านน้ำจิ้มแจ่ว",
+    description: "สันคอหมูแทรกมันนุ่ม หมักสูตรพิเศษ ย่างเตาถ่านหอมละมุน เสิร์ฟคู่น้ำจิ้มแจ่วข้าวคั่วพริกป่นคั่วเอง",
+    price: 120,
+    imageUrl: "images/kor_moo_yang.jpg",
+    options: "มันน้อย, เนื้อแทรกมัน, ข้าวคั่วเยอะ, เพิ่มน้ำจิ้มแจ่ว",
+    isAvailable: true
+  },
+  {
+    id: "m-106",
+    categoryId: "cat-3",
+    name: "ต้มแซ่บกระดูกหมูอ่อน",
+    description: "ซี่โครงอ่อนเคี่ยวนานจนเปื่อยนุ่ม น้ำซุปต้มแซ่บรสจัดจ้าน ซดร้อนๆ คล่องคอ หอมข้าวคั่วและพริกขี้หนูสวนบุบ",
+    price: 150,
+    imageUrl: "images/tom_saap.jpg",
+    options: "เผ็ดน้อย, เผ็ดปกติ, เผ็ดแซ่บจี๊ด, เปรี้ยวนำ",
+    isAvailable: true
+  },
+  {
+    id: "m-107",
+    categoryId: "cat-4",
+    name: "ข้าวกะเพราเนื้อโคขุนคั่วพริกแห้ง + ไข่ดาว",
+    description: "อาหารไทยรสจัดจ้าน เนื้อโคขุนบดหยาบ คั่วแห้งพริกแห้งกระเทียมไทย ใบกะเพราป่ากลิ่นหอมแรง",
+    price: 95,
+    imageUrl: "images/pad_krapow_beef.jpg",
+    options: "ไข่ดาวกรอบไข่แดงเยิ้ม, ไข่ดาวสุก, ไข่เจียว (+10), พิเศษเนื้อโคขุน (+30)",
+    isAvailable: true
+  },
+  {
+    id: "m-108",
+    categoryId: "cat-5",
+    name: "ชาไทยโบราณเย็น (สูตรเข้มข้น)",
+    description: "ใบชาต้มสดใหม่ หอมมัน กลมกล่อม หวานเย็นชื่นใจ รสชาติชาไทยแท้",
+    price: 45,
+    imageUrl: "images/thai_tea.jpg",
+    options: "หวานน้อย (50%), หวานปกติ (100%), ไม่หวาน, เพิ่มเฉาก๊วย (+10)",
+    isAvailable: true
+  },
+  {
+    id: "m-109",
+    categoryId: "cat-5",
+    name: "ลอดช่องวัดเจษฯ น้ำกะทิน้ำตาลมะพร้าว",
+    description: "เส้นลอดช่องเหนียวนุ่ม หอมใบเตยสด ราดกะทิน้ำตาลมะพร้าวแท้อบควันเทียน ใส่น้ำแข็งเกล็ดหอมหวานชื่นใจ",
+    price: 45,
+    imageUrl: "images/lod_chong.jpg",
+    options: "หวานปกติ, หวานน้อย, เพิ่มข้าวต้มน้ำวุ้น (+10)",
+    isAvailable: true
+  }
+];
+
+const DEFAULT_TABLES = [
+  { id: "t-1", name: "1", seats: 4, status: "available" },
+  { id: "t-2", name: "2", seats: 4, status: "available" },
+  { id: "t-3", name: "3", seats: 4, status: "available" },
+  { id: "t-4", name: "4", seats: 6, status: "available" },
+  { id: "t-5", name: "5", seats: 6, status: "available" },
+  { id: "t-6", name: "6", seats: 8, status: "available" }
+];
+
+// App State
+window.posState = {
+  settings: JSON.parse(localStorage.getItem("pos_settings")) || DEFAULT_SHOP_SETTINGS,
+  categories: JSON.parse(localStorage.getItem("pos_categories")) || DEFAULT_CATEGORIES,
+  menus: JSON.parse(localStorage.getItem("pos_menus")) || DEFAULT_MENUS,
+  tables: JSON.parse(localStorage.getItem("pos_tables")) || DEFAULT_TABLES,
+  orders: JSON.parse(localStorage.getItem("pos_orders")) || []
+};
+
+// Sync state helper
+function savePOSState() {
+  localStorage.setItem("pos_settings", JSON.stringify(window.posState.settings));
+  localStorage.setItem("pos_categories", JSON.stringify(window.posState.categories));
+  localStorage.setItem("pos_menus", JSON.stringify(window.posState.menus));
+  localStorage.setItem("pos_tables", JSON.stringify(window.posState.tables));
+  localStorage.setItem("pos_orders", JSON.stringify(window.posState.orders));
+}
+
+// Refresh Lucide icons
+function refreshLucideIcons() {
+  if (window.lucide) {
+    lucide.createIcons();
+  }
+}
+
+// Live Clock Helper
+function startLiveClock(elementId = "liveClock") {
+  const clockEl = document.getElementById(elementId);
+  if (!clockEl) return;
+  function updateTime() {
+    const now = new Date();
+    clockEl.innerText = now.toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+  }
+  updateTime();
+  setInterval(updateTime, 1000);
+}
