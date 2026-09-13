@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>กำลังพาท่านเข้าสู่หน้าร้าน... | ครัวลุงหนุ่ย</title>
+  <style>
+    body {
+      font-family: 'Prompt', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #fffbf2;
+      color: #2b1810;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      margin: 0;
+      padding: 1.5rem;
+      text-align: center;
+    }
+    .spinner {
+      width: 48px;
+      height: 48px;
+      border: 4px solid #fef3c7;
+      border-top-color: #d97706;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin-bottom: 1.25rem;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    .redirect-title {
+      font-size: 1.25rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+      color: #2b1810;
+    }
+    .redirect-desc {
+      font-size: 0.95rem;
+      color: #78350f;
+      margin-bottom: 1.5rem;
+    }
+    .btn-manual {
+      display: inline-block;
+      background: #d97706;
+      color: #ffffff;
+      padding: 0.75rem 1.5rem;
+      border-radius: 9999px;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 0.95rem;
+      box-shadow: 0 4px 12px rgba(217, 119, 6, 0.3);
+    }
+  </style>
+  <script>
+    (function() {
+      // Auto-detect destination and preserve query parameters
+      var path = window.location.pathname;
+      var search = window.location.search || '';
+      var hash = window.location.hash || '';
+
+      // Determine repository root prefix
+      var repoPrefix = '/Krua-Lung-Nui';
+      if (!path.includes('Krua-Lung-Nui')) {
+        repoPrefix = '';
+      }
+
+      var targetUrl = repoPrefix + '/frontend/index.html' + search + hash;
+      
+      // Attempt immediate redirection
+      setTimeout(function() {
+        window.location.replace(targetUrl);
+      }, 300);
+    })();
+  </script>
+</head>
+<body>
+  <div class="spinner"></div>
+  <h2 class="redirect-title">🍲 ครัวลุงหนุ่ย</h2>
+  <p class="redirect-desc">กำลังนำท่านเข้าสู่เมนูสั่งอาหารออนไลน์...</p>
+  <a id="manualLink" href="/Krua-Lung-Nui/frontend/index.html" class="btn-manual">แตะที่นี่เพื่อเปิดเมนูทันที</a>
+
+  <script>
+    // Update manual link with current parameters
+    var manualLink = document.getElementById('manualLink');
+    if (manualLink) {
+      var repoPrefix = window.location.pathname.includes('Krua-Lung-Nui') ? '/Krua-Lung-Nui' : '';
+      manualLink.href = repoPrefix + '/frontend/index.html' + (window.location.search || '') + (window.location.hash || '');
+    }
+  </script>
+</body>
+</html>
