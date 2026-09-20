@@ -472,10 +472,13 @@ function renderMenuFeed() {
     container.innerHTML = `
       <div class="table-gate-container">
         <div class="table-gate-card">
-          <div class="gate-icon-pulsing">🍽️</div>
+          <div class="gate-mascot-avatar-wrap">
+            <img src="logo/logo.jpg" alt="ลุงหนุ่ย" class="gate-mascot-avatar" onerror="this.src='logo/logo.png'">
+            <span class="gate-mascot-badge">👨‍🍳 ลุงหนุ่ยยินดีต้อนรับ</span>
+          </div>
           <h2 class="gate-title">ยินดีต้อนรับสู่ ครัวลุงหนุ่ย</h2>
           <p class="gate-desc">
-            กรุณาระบุโต๊ะของคุณก่อนเลือกอาหาร เพื่อให้เสิร์ฟอาหารถึงโต๊ะและเช็คบิลได้ถูกต้องครับ
+            สวัสดีครับ! กรุณาระบุโต๊ะของคุณก่อนเลือกอาหาร เพื่อให้ลุงเสิร์ฟอาหารถึงโต๊ะและเช็คบิลได้ถูกต้องครับ ❤️
           </p>
 
           <div class="table-quick-select-box" style="margin-bottom: 1.25rem;">
@@ -724,14 +727,17 @@ function updateCartUI() {
   const floatCount = document.getElementById("floatCartItemCount");
   const floatCountText = document.getElementById("floatCartItemCountText");
   const floatPrice = document.getElementById("floatCartTotalPrice");
+  const mascotWidget = document.getElementById("mascotFloatingWidget");
 
   if (totalCount > 0) {
-    floatBar.style.display = "flex";
-    floatCount.innerText = totalCount;
-    floatCountText.innerText = totalCount;
-    floatPrice.innerText = `฿${totalPrice.toFixed(2)}`;
+    if (floatBar) floatBar.style.display = "flex";
+    if (floatCount) floatCount.innerText = totalCount;
+    if (floatCountText) floatCountText.innerText = totalCount;
+    if (floatPrice) floatPrice.innerText = `฿${totalPrice.toFixed(2)}`;
+    if (mascotWidget) mascotWidget.classList.add("has-cart");
   } else {
-    floatBar.style.display = "none";
+    if (floatBar) floatBar.style.display = "none";
+    if (mascotWidget) mascotWidget.classList.remove("has-cart");
   }
 }
 
@@ -789,6 +795,17 @@ function openCartModal() {
 
   refreshIcons();
   openModal("cartModal");
+  const scrollEl = document.getElementById("cartModalScrollBody");
+  if (scrollEl) scrollEl.scrollTop = 0;
+}
+
+function handleNavOrderClick() {
+  if (state.cart && state.cart.length > 0) {
+    openCartModal();
+  } else {
+    switchLiffPage("order");
+    showNotificationToast("🛒 ตะกร้ายังว่างอยู่ แตะเลือกเมนูอาหารเพื่อสั่งได้เลยครับ");
+  }
 }
 
 function adjustCartItemQty(index, delta) {
@@ -1355,33 +1372,60 @@ let currentMascotTipIndex = 0;
 
 function updateMascotGreeting(context = "default") {
   const textEl = document.getElementById("mascotSpeechText");
-  if (!textEl) return;
+  const floatMsgEl = document.getElementById("mascotFloatingMsg");
+
+  let msg = "ยินดีต้อนรับครับ! วันนี้ลุงคัดวัตถุดิบสดใหม่ รับประกันรสชาติจัดจ้านทุกจานครับ ❤️";
 
   if (context === "table_confirmed" && state.currentTable) {
-    textEl.innerHTML = `🎉 ยินดีต้อนรับ <b>โต๊ะ ${state.currentTable}</b> ครับ! เลือกเมนูอาหารที่ชอบแล้วสั่งได้เลยนะ เดี๋ยวลุงรีบทำให้เสิร์ฟร้อนๆ ถึงโต๊ะครับ 😊`;
+    msg = `🎉 ยินดีต้อนรับ <b>โต๊ะ ${state.currentTable}</b> ครับ! เลือกเมนูอาหารที่ชอบแล้วสั่งได้เลยนะ เดี๋ยวลุงรีบทำให้เสิร์ฟร้อนๆ ถึงโต๊ะครับ 😊`;
   } else if (context === "takeaway") {
-    textEl.innerHTML = `🛍️ สั่งกลับบ้าน คิว ${state.currentQueue} นะครับ ลุงจะแพ็กใส่กล่องอย่างดี รอเรียกรับอาหารหน้าร้านได้เลยครับ!`;
+    msg = `🛍️ สั่งกลับบ้าน คิว ${state.currentQueue} นะครับ ลุงจะแพ็กใส่กล่องอย่างดี รอเรียกรับอาหารหน้าร้านได้เลยครับ!`;
   } else if (context === "cart_active" && state.cart.length > 0) {
-    textEl.innerHTML = `🛒 สั่งอาหารไปแล้ว ${state.cart.length} อย่าง แตะ <b>'ดูตะกร้า'</b> ด้านล่างเพื่อส่งออเดอร์เข้าครัวได้เลยครับ!`;
+    msg = `🛒 สั่งอาหารไปแล้ว ${state.cart.length} อย่าง แตะ <b>'ดูตะกร้า'</b> ด้านล่างเพื่อส่งออเดอร์เข้าครัวได้เลยครับ!`;
   } else if (!state.isTableScanned && state.orderMode === "dinein") {
-    textEl.innerHTML = `👋 สวัสดีครับ! ยินดีต้อนรับสู่ครัวลุงหนุ่ย นั่งโต๊ะไหนแตะเลือกหมายเลขโต๊ะด้านบน หรือสแกน QR Code บนโต๊ะได้เลยนะคร้าบ ❤️`;
+    msg = `👋 สวัสดีครับ! ยินดีต้อนรับสู่ครัวลุงหนุ่ย นั่งโต๊ะไหนแตะเลือกหมายเลขโต๊ะได้เลย หรือสแกน QR Code บนโต๊ะนะคร้าบ ❤️`;
   }
+
+  if (textEl) textEl.innerHTML = msg;
+  if (floatMsgEl) floatMsgEl.innerHTML = msg;
 }
 
 function mascotSpeakNextTip() {
   const textEl = document.getElementById("mascotSpeechText");
+  const floatMsgEl = document.getElementById("mascotFloatingMsg");
   const avatarImg = document.querySelector(".mascot-avatar-img");
-  if (!textEl) return;
+  const floatAvatarImg = document.querySelector(".mascot-floating-img");
 
   // Tiny bounce animation on tap
   if (avatarImg) {
     avatarImg.style.transform = "scale(1.2) rotate(-8deg)";
     setTimeout(() => { avatarImg.style.transform = ""; }, 250);
   }
+  if (floatAvatarImg) {
+    floatAvatarImg.style.transform = "scale(1.25) rotate(-10deg)";
+    setTimeout(() => { floatAvatarImg.style.transform = ""; }, 250);
+  }
+
+  // Ensure floating bubble box is visible when tapped
+  const floatBox = document.getElementById("mascotBubbleBox");
+  if (floatBox) floatBox.style.display = "block";
 
   // Cycle through tips
   currentMascotTipIndex = (currentMascotTipIndex + 1) % MASCOT_TIPS.length;
-  textEl.innerHTML = MASCOT_TIPS[currentMascotTipIndex];
+  const tip = MASCOT_TIPS[currentMascotTipIndex];
+  if (textEl) textEl.innerHTML = tip;
+  if (floatMsgEl) floatMsgEl.innerHTML = tip;
+}
+
+function toggleMascotBubble() {
+  const floatBox = document.getElementById("mascotBubbleBox");
+  if (!floatBox) return;
+  if (floatBox.style.display === "none") {
+    floatBox.style.display = "block";
+    mascotSpeakNextTip();
+  } else {
+    floatBox.style.display = "none";
+  }
 }
 
 function dismissMascotBubble() {

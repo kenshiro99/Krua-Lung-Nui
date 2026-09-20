@@ -163,23 +163,6 @@
       <main class="menu-feed" id="menuFeed">
         <!-- Dynamically populated menu cards -->
       </main>
-
-      <!-- Floating Cart Bar (Bottom Sticky) -->
-      <aside class="floating-cart-bar" id="floatingCartBar" onclick="openCartModal()">
-        <div class="cart-left-info">
-          <div class="cart-badge-icon">
-            <i data-lucide="shopping-bag"></i>
-            <span class="cart-count-badge" id="floatCartItemCount">0</span>
-          </div>
-          <div class="cart-text-sum">
-            <span class="cart-qty-text"><span id="floatCartItemCountText">0</span> รายการในตะกร้า</span>
-            <span class="cart-total-price" id="floatCartTotalPrice">฿0.00</span>
-          </div>
-        </div>
-        <div class="cart-btn-label">
-          <span id="floatCartBtnActionText">ดูตะกร้า & สั่งอาหาร</span> <i data-lucide="arrow-right"></i>
-        </div>
-      </aside>
     </div>
 
     <!-- ========================================== -->
@@ -414,6 +397,44 @@
     </div>
 
     <!-- ========================================== -->
+    <!-- FLOATING MASCOT & FLOATING CART WIDGETS -->
+    <!-- ========================================== -->
+
+    <!-- Floating Interactive Mascot "Lung Nui" (Always accessible on screen) -->
+    <aside class="mascot-floating-widget" id="mascotFloatingWidget">
+      <div class="mascot-bubble-box" id="mascotBubbleBox" onclick="mascotSpeakNextTip()">
+        <div class="mascot-bubble-title">
+          <span>👨‍🍳 ลุงหนุ่ย แนะนำเมนู</span>
+          <button type="button" class="btn-bubble-close" onclick="event.stopPropagation(); toggleMascotBubble()" title="ย่อเก็บ">✕</button>
+        </div>
+        <p class="mascot-bubble-msg" id="mascotFloatingMsg">
+          สวัสดีครับ! ยินดีต้อนรับสู่ครัวลุงหนุ่ย ❤️ แตะตัวลุงให้แนะนำเมนูเด็ดได้ตลอดเลยนะคร้าบ
+        </p>
+      </div>
+      <button type="button" class="mascot-floating-avatar" onclick="toggleMascotBubble()" title="แตะคุยกับลุงหนุ่ย">
+        <img src="logo/logo.jpg" alt="ลุงหนุ่ย" class="mascot-floating-img" onerror="this.src='logo/logo.png'">
+        <span class="mascot-floating-name">ลุงหนุ่ย</span>
+      </button>
+    </aside>
+
+    <!-- Floating Cart Bar (Fixed above bottom nav, z-index 120) -->
+    <aside class="floating-cart-bar" id="floatingCartBar" onclick="openCartModal()">
+      <div class="cart-left-info">
+        <div class="cart-badge-icon">
+          <i data-lucide="shopping-bag"></i>
+          <span class="cart-count-badge" id="floatCartItemCount">0</span>
+        </div>
+        <div class="cart-text-sum">
+          <span class="cart-qty-text"><span id="floatCartItemCountText">0</span> รายการในตะกร้า</span>
+          <span class="cart-total-price" id="floatCartTotalPrice">฿0.00</span>
+        </div>
+      </div>
+      <div class="cart-btn-label">
+        <span id="floatCartBtnActionText">ดูตะกร้า & สั่งอาหาร</span> <i data-lucide="arrow-right"></i>
+      </div>
+    </aside>
+
+    <!-- ========================================== -->
     <!-- 6-BUTTON BOTTOM NAVIGATION BAR (MATCHING RICH MENU) -->
     <!-- ========================================== -->
     <nav class="liff-bottom-nav">
@@ -421,7 +442,7 @@
         <i data-lucide="book-open"></i>
         <span>ดูเมนู</span>
       </button>
-      <button class="liff-nav-item" id="navBtnOrder" onclick="switchLiffPage('order')">
+      <button class="liff-nav-item" id="navBtnOrder" onclick="handleNavOrderClick()">
         <i data-lucide="shopping-bag"></i>
         <span>สั่งอาหาร</span>
       </button>
@@ -487,6 +508,14 @@
       </div>
       
       <div class="sheet-scroll-body" id="cartModalScrollBody">
+        <!-- Friendly Mascot Encouragement -->
+        <div class="cart-mascot-banner">
+          <img src="logo/logo.jpg" alt="ลุงหนุ่ย" class="cart-mascot-img" onerror="this.src='logo/logo.png'">
+          <div class="cart-mascot-text">
+            <strong>👨‍🍳 ลุงหนุ่ย:</strong> ตรวจสอบรายการอาหารแล้วกด <b>"ยืนยันสั่งอาหาร"</b> ด้านล่างได้เลย เดี๋ยวลุงรีบเข้าครัวปรุงร้อนๆ ให้ครับ! ❤️
+          </div>
+        </div>
+
         <!-- Items container -->
         <div id="cartModalItemsContainer"></div>
 
@@ -599,11 +628,11 @@
       </div>
       <div class="modal-body" style="padding: 1rem;">
         
-        <!-- Friendly Notice -->
+        <!-- Friendly Notice with Mascot -->
         <div class="table-qr-hint-box">
-          <div style="font-size: 1.25rem;">🍽️</div>
+          <img src="logo/logo.jpg" alt="ลุงหนุ่ย" style="width: 44px; height: 44px; border-radius: 50%; border: 2.5px solid #f59e0b; flex-shrink: 0; object-fit: cover;" onerror="this.src='logo/logo.png'">
           <div style="font-size: 0.85rem; color: #1e293b;">
-            <strong style="color: #b45309; display: block; margin-bottom: 0.15rem;">ยินดีต้อนรับสู่ ครัวลุงหนุ่ย</strong>
+            <strong style="color: #b45309; display: block; margin-bottom: 0.15rem;">👨‍🍳 ลุงหนุ่ยยินดีต้อนรับครับ!</strong>
             สแกน QR Code บนโต๊ะ หรือแตะเลือกหมายเลขโต๊ะที่คุณนั่งได้ทันทีครับ
           </div>
         </div>
