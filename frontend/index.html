@@ -50,12 +50,21 @@
 
       <!-- Dedicated Context Banner (Shows exact Table or Takeaway Queue) - Only in Order mode -->
       <div class="order-context-banner" id="orderContextBanner">
-        <div class="context-icon-wrap" id="contextIconWrap">🍽️</div>
-        <div class="context-info-wrap">
-          <div class="context-main-title" id="contextMainTitle">กำลังสั่งอาหารสำหรับ <b>โต๊ะ 1</b></div>
-          <div class="context-sub-desc" id="contextSubDesc">อาหารจะนำไปเสิร์ฟที่โต๊ะโดยตรง</div>
+        <div class="context-top-row">
+          <div class="context-title-group">
+            <span class="context-icon-wrap" id="contextIconWrap">🍽️</span>
+            <div class="context-info-wrap">
+              <div class="context-main-title" id="contextMainTitle">กำลังสั่งอาหารสำหรับ <b>โต๊ะ 1</b></div>
+              <div class="context-sub-desc" id="contextSubDesc">อาหารจะนำไปเสิร์ฟที่โต๊ะโดยตรง</div>
+            </div>
+          </div>
+          <div class="context-change-btn-wrap" id="contextChangeBtnWrap">
+            <button class="context-btn-change" onclick="openTableQrModal()" title="สแกนเปลี่ยนโต๊ะ">
+              <i data-lucide="qr-code"></i> <span>เปลี่ยนโต๊ะ</span>
+            </button>
+          </div>
         </div>
-        <div class="context-quick-actions" id="contextQuickActions">
+        <div class="context-bottom-actions" id="contextQuickActions">
           <button class="context-action-btn" id="btnContextCallWaiter" onclick="callWaiter()">
             <i data-lucide="bell"></i> <span>เรียกพนักงาน</span>
           </button>
@@ -573,50 +582,58 @@
       </div>
       <div class="modal-body" style="padding: 1rem;">
         
-        <!-- Mandatory Notice -->
+        <!-- Friendly Notice -->
         <div class="table-qr-hint-box">
-          <div style="font-size: 1.25rem;">📷</div>
+          <div style="font-size: 1.25rem;">🍽️</div>
           <div style="font-size: 0.85rem; color: #1e293b;">
-            <strong style="color: #b45309; display: block; margin-bottom: 0.15rem;">กรุณาสแกน QR Code ประจำโต๊ะก่อนสั่งอาหาร</strong>
-            ระบบจะระบุหมายเลขโต๊ะอัตโนมัติ เพื่อให้ทางร้านเสิร์ฟอาหารถึงโต๊ะและเช็คบิลได้ถูกต้อง
+            <strong style="color: #b45309; display: block; margin-bottom: 0.15rem;">ยินดีต้อนรับสู่ ครัวลุงหนุ่ย</strong>
+            สแกน QR Code บนโต๊ะ หรือแตะเลือกหมายเลขโต๊ะที่คุณนั่งได้ทันทีครับ
           </div>
         </div>
 
-        <!-- Camera Scanner Viewport -->
+        <!-- 1-Tap Table Quick Selector (No Camera Needed) -->
+        <div class="table-quick-select-box">
+          <div class="quick-select-label">
+            <i data-lucide="layout-grid"></i> แตะเลือกหมายเลขโต๊ะของคุณ:
+          </div>
+          <div class="table-numbers-grid">
+            <button type="button" class="btn-num-table" onclick="confirmScannedTable('1')">โต๊ะ 1</button>
+            <button type="button" class="btn-num-table" onclick="confirmScannedTable('2')">โต๊ะ 2</button>
+            <button type="button" class="btn-num-table" onclick="confirmScannedTable('3')">โต๊ะ 3</button>
+            <button type="button" class="btn-num-table" onclick="confirmScannedTable('4')">โต๊ะ 4</button>
+            <button type="button" class="btn-num-table" onclick="confirmScannedTable('5')">โต๊ะ 5</button>
+            <button type="button" class="btn-num-table" onclick="confirmScannedTable('6')">โต๊ะ 6</button>
+            <button type="button" class="btn-num-table" onclick="confirmScannedTable('7')">โต๊ะ 7</button>
+            <button type="button" class="btn-num-table" onclick="confirmScannedTable('8')">โต๊ะ 8</button>
+            <button type="button" class="btn-num-table" onclick="confirmScannedTable('9')">โต๊ะ 9</button>
+            <button type="button" class="btn-num-table" onclick="confirmScannedTable('10')">โต๊ะ 10</button>
+          </div>
+        </div>
+
+        <div class="gate-divider" style="margin: 0.9rem 0;"><span>หรือสแกนป้าย QR บนโต๊ะ</span></div>
+
+        <!-- Camera Scanner Viewport (Triggered by user click only) -->
         <div class="qr-camera-box">
-          <div id="qrReader" style="width: 100%; min-height: 220px; background: #0f172a; border-radius: 12px; overflow: hidden;"></div>
-          <div id="qrScanStatusMsg" class="qr-status-msg">
-            <i data-lucide="camera"></i> <span>กดปุ่มเปิดกล้อง หรือเลือกหมายเลขโต๊ะด้านล่าง</span>
+          <div id="qrReader" style="width: 100%; display: none; min-height: 220px; background: #0f172a; border-radius: 12px; overflow: hidden; margin-bottom: 0.5rem;"></div>
+          <div id="qrScanStatusMsg" class="qr-status-msg" style="display: none;">
+            <i data-lucide="camera"></i> <span>เล็งกล้องไปที่ QR Code บนโต๊ะ</span>
           </div>
 
           <div class="scanner-action-buttons">
-            <button type="button" class="btn-camera-toggle" id="btnToggleQrCamera" onclick="toggleQrCamera()">
-              <i data-lucide="camera"></i> <span id="btnToggleQrCameraText">เปิดกล้องสแกน QR</span>
-            </button>
             <button type="button" class="btn-liff-camera" id="btnLiffScan" onclick="triggerLiffScan()" style="display:none;">
-              <i data-lucide="qr-code"></i> <span>สแกนด้วย LINE</span>
+              <i data-lucide="qr-code"></i> <span>สแกนด้วยกล้อง LINE</span>
+            </button>
+            <button type="button" class="btn-camera-toggle" id="btnToggleQrCamera" onclick="toggleQrCamera()">
+              <i data-lucide="camera"></i> <span id="btnToggleQrCameraText">เปิดกล้องสแกน QR Code</span>
             </button>
           </div>
         </div>
 
         <!-- Switch to Takeaway -->
-        <div style="text-align: center; margin-top: 1rem; padding-top: 0.85rem; border-top: 1px dashed #e2e8f0;">
+        <div style="text-align: center; margin-top: 0.85rem; padding-top: 0.75rem; border-top: 1px dashed #e2e8f0;">
           <button type="button" class="btn-takeaway-link" onclick="switchToTakeawayFromModal()">
-            🛍️ สั่งกลับบ้าน (สั่งใส่กล่อง ไม่ต้องนั่งโต๊ะ)
+            🛍️ สั่งกลับบ้าน (แพ็กใส่กล่อง ไม่นั่งโต๊ะ)
           </button>
-        </div>
-
-        <!-- Table QR Preview (For Store Owner / Testing on PC) -->
-        <div class="store-qr-preview-accordion">
-          <button type="button" class="btn-accordion-toggle" onclick="toggleQrPreviewGrid()">
-            <i data-lucide="printer"></i> <span>ดูตัวอย่าง QR Code โต๊ะ 1-6 (สำหรับทดสอบหรือพิมพ์)</span>
-          </button>
-          <div id="tableQrPreviewContainer" style="display:none; margin-top: 0.75rem;">
-            <p style="font-size: 0.75rem; color: #64748b; margin-bottom: 0.5rem; text-align: center;">
-              สามารถใช้มือถือสแกนภาพ QR Code เหล่านี้บนหน้าจอเพื่อทดสอบระบบได้ทันที:
-            </p>
-            <div id="qrPreviewGrid" class="qr-preview-grid"></div>
-          </div>
         </div>
 
       </div>

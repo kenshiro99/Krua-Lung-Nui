@@ -168,13 +168,6 @@ document.addEventListener("DOMContentLoaded", () => {
     switchLiffPage("menu");
   }
 
-  // Enforce mandatory QR scan immediately upon entering if table is not yet scanned
-  if (state.orderMode === "dinein" && !state.isTableScanned) {
-    setTimeout(() => {
-      openTableQrModal(true);
-    }, 400);
-  }
-
   // Init LINE LIFF if available
   initLineLiff();
 });
@@ -221,12 +214,11 @@ function switchLiffPage(page) {
     if (page === "order") document.getElementById("navBtnOrder")?.classList.add("active");
     if (contextBanner) contextBanner.style.display = "flex";
 
-    // Strictly enforce table scan: If dine-in and not yet scanned, hide search/categories and show gate + open scanner
+    // Strictly enforce table scan: If dine-in and not yet scanned, hide search/categories and show gate
     if (state.orderMode === "dinein" && !state.isTableScanned) {
       if (searchCatArea) searchCatArea.style.display = "none";
       if (floatCartBar) floatCartBar.style.display = "none";
       renderMenuFeed();
-      setTimeout(() => { openTableQrModal(true); }, 250);
     } else {
       if (searchCatArea) searchCatArea.style.display = "block";
       if (floatCartBar) floatCartBar.style.display = (page === "order" || state.cart.length > 0) ? "flex" : "none";
@@ -329,15 +321,21 @@ function setOrderMode(mode) {
       banner.className = "order-context-banner dinein";
     }
     
+    const changeBtnWrap = document.getElementById("contextChangeBtnWrap");
+
     if (state.isTableScanned && state.currentTable) {
       if (iconWrap) iconWrap.innerHTML = "🍽️";
-      if (titleWrap) titleWrap.innerHTML = `กำลังสั่งอาหารสำหรับ <b>โต๊ะ ${state.currentTable}</b> <span class="table-verified-badge"><i data-lucide="check-circle-2"></i> สแกนแล้ว</span>`;
-      if (descWrap) descWrap.innerText = "อาหารจะนำไปเสิร์ฟที่โต๊ะของคุณโดยตรง";
+      if (titleWrap) titleWrap.innerHTML = `สั่งอาหาร: <b>โต๊ะ ${state.currentTable}</b> <span class="table-verified-badge"><i data-lucide="check-circle-2"></i> สแกนแล้ว</span>`;
+      if (descWrap) descWrap.innerText = "อาหารเสิร์ฟที่โต๊ะ • สั่งเพิ่มได้ตลอด";
+      if (changeBtnWrap) {
+        changeBtnWrap.innerHTML = `
+          <button class="context-btn-change" onclick="openTableQrModal()" title="เปลี่ยนโต๊ะ">
+            <i data-lucide="refresh-cw"></i> <span>เปลี่ยนโต๊ะ</span>
+          </button>
+        `;
+      }
       if (actionsWrap) {
         actionsWrap.innerHTML = `
-          <button class="context-action-btn" onclick="openTableQrModal()" title="สแกนเปลี่ยนโต๊ะ">
-            <i data-lucide="qr-code"></i> <span>เปลี่ยนโต๊ะ</span>
-          </button>
           <button class="context-action-btn" onclick="callWaiter()">
             <i data-lucide="bell"></i> <span>เรียกพนักงาน</span>
           </button>
@@ -348,12 +346,13 @@ function setOrderMode(mode) {
       }
     } else {
       if (iconWrap) iconWrap.innerHTML = "📷";
-      if (titleWrap) titleWrap.innerHTML = `<span style="color:#b45309; font-weight:700;">ยังไม่ได้สแกน QR ประจำโต๊ะ</span>`;
-      if (descWrap) descWrap.innerText = "กรุณาสแกน QR Code บนโต๊ะเพื่อระบุโต๊ะก่อนสั่งอาหาร";
+      if (titleWrap) titleWrap.innerHTML = `<span style="color:#b45309; font-weight:700;">ยังไม่ได้ระบุโต๊ะ</span>`;
+      if (descWrap) descWrap.innerText = "แตะด้านล่างเพื่อเลือกโต๊ะหรือสแกน QR";
+      if (changeBtnWrap) changeBtnWrap.innerHTML = "";
       if (actionsWrap) {
         actionsWrap.innerHTML = `
-          <button class="context-action-btn btn-scan-highlight" onclick="openTableQrModal()">
-            <i data-lucide="scan-line"></i> <span>สแกน QR โต๊ะ</span>
+          <button class="context-action-btn btn-scan-highlight" onclick="openTableQrModal()" style="width:100%;">
+            <i data-lucide="scan-line"></i> <span>แตะเพื่อเลือกโต๊ะ / สแกน QR</span>
           </button>
         `;
       }
@@ -365,16 +364,21 @@ function setOrderMode(mode) {
     if (banner) {
       banner.className = "order-context-banner takeaway";
     }
+    const changeBtnWrap = document.getElementById("contextChangeBtnWrap");
     if (iconWrap) iconWrap.innerHTML = "🛍️";
-    if (titleWrap) titleWrap.innerHTML = `กำลังสั่งอาหารกลับบ้าน <b>คิว ${state.currentQueue}</b>`;
-    if (descWrap) descWrap.innerText = "อาหารบรรจุใส่กล่อง/ถุง • รอเรียกรับอาหาร";
+    if (titleWrap) titleWrap.innerHTML = `สั่งกลับบ้าน <b>คิว ${state.currentQueue}</b>`;
+    if (descWrap) descWrap.innerText = "อาหารบรรจุใส่กล่อง • รอเรียกรับอาหาร";
+    if (changeBtnWrap) {
+      changeBtnWrap.innerHTML = `
+        <button class="context-btn-change" onclick="setOrderMode('dinein')" title="เปลี่ยนเป็นทานที่ร้าน">
+          <i data-lucide="utensils"></i> <span>ทานที่ร้าน</span>
+        </button>
+      `;
+    }
     if (actionsWrap) {
       actionsWrap.innerHTML = `
-        <button class="context-action-btn tracker-action" onclick="openOrderTrackerModal()">
-          <i data-lucide="clock"></i> <span>ดูคิวของฉัน</span>
-        </button>
-        <button class="context-action-btn" onclick="setOrderMode('dinein')">
-          <i data-lucide="utensils"></i> <span>ทานที่ร้าน</span>
+        <button class="context-action-btn tracker-action" onclick="openOrderTrackerModal()" style="width:100%;">
+          <i data-lucide="clock"></i> <span>ดูสถานะคิวของฉัน</span>
         </button>
       `;
     }
@@ -451,15 +455,33 @@ function renderMenuFeed() {
     container.innerHTML = `
       <div class="table-gate-container">
         <div class="table-gate-card">
-          <div class="gate-icon-pulsing">📷</div>
-          <h2 class="gate-title">กรุณาสแกน QR Code ประจำโต๊ะ</h2>
+          <div class="gate-icon-pulsing">🍽️</div>
+          <h2 class="gate-title">ยินดีต้อนรับสู่ ครัวลุงหนุ่ย</h2>
           <p class="gate-desc">
-            กรุณาสแกนป้าย <b>QR Code ที่ติดอยู่บนโต๊ะของท่าน</b> ก่อนเริ่มเลือกเมนูอาหาร เพื่อให้ระบบระบุโต๊ะสำหรับเสิร์ฟและเช็คบิลได้ถูกต้องครับ
+            กรุณาระบุโต๊ะของคุณก่อนเลือกอาหาร เพื่อให้เสิร์ฟอาหารถึงโต๊ะและเช็คบิลได้ถูกต้องครับ
           </p>
+
+          <div class="table-quick-select-box" style="margin-bottom: 1.25rem;">
+            <div class="quick-select-label">
+              <i data-lucide="layout-grid"></i> แตะเลือกหมายเลขโต๊ะของคุณได้ทันที:
+            </div>
+            <div class="table-numbers-grid">
+              <button type="button" class="btn-num-table" onclick="confirmScannedTable('1')">โต๊ะ 1</button>
+              <button type="button" class="btn-num-table" onclick="confirmScannedTable('2')">โต๊ะ 2</button>
+              <button type="button" class="btn-num-table" onclick="confirmScannedTable('3')">โต๊ะ 3</button>
+              <button type="button" class="btn-num-table" onclick="confirmScannedTable('4')">โต๊ะ 4</button>
+              <button type="button" class="btn-num-table" onclick="confirmScannedTable('5')">โต๊ะ 5</button>
+              <button type="button" class="btn-num-table" onclick="confirmScannedTable('6')">โต๊ะ 6</button>
+              <button type="button" class="btn-num-table" onclick="confirmScannedTable('7')">โต๊ะ 7</button>
+              <button type="button" class="btn-num-table" onclick="confirmScannedTable('8')">โต๊ะ 8</button>
+              <button type="button" class="btn-num-table" onclick="confirmScannedTable('9')">โต๊ะ 9</button>
+              <button type="button" class="btn-num-table" onclick="confirmScannedTable('10')">โต๊ะ 10</button>
+            </div>
+          </div>
           
           <button type="button" class="btn-gate-scan-primary" onclick="openTableQrModal(true)">
             <i data-lucide="scan-line"></i>
-            <span>เปิดกล้องสแกน QR โต๊ะ</span>
+            <span>เปิดสแกนเนอร์สแกน QR โต๊ะ</span>
           </button>
           
           <div class="gate-divider"><span>หรือ</span></div>
@@ -1005,10 +1027,8 @@ function openTableQrModal() {
     }
   }
 
-  // Auto-start camera
-  setTimeout(() => {
-    startQrCamera();
-  }, 300);
+  // NOTE: Do NOT auto-start camera automatically!
+  // Let the user tap the scan button or choose table number directly to avoid scary browser permission popups.
 }
 
 function closeTableQrModal() {
@@ -1025,16 +1045,16 @@ function startQrCamera() {
 
   if (typeof Html5Qrcode === "undefined") {
     if (statusEl) {
-      statusEl.innerHTML = `<span style="color:#d97706;">⚠️ สแกนเนอร์ไม่พร้อมใช้งาน กรุณาเลือกหมายเลขโต๊ะด้านล่าง</span>`;
+      statusEl.style.display = "block";
+      statusEl.innerHTML = `<span style="color:#d97706;">⚠️ สแกนเนอร์ไม่พร้อมใช้งาน กรุณาเลือกหมายเลขโต๊ะด้านบนได้เลยครับ</span>`;
     }
     return;
   }
 
-  if (html5QrScanner) {
-    try {
-      html5QrScanner.stop().catch(() => {});
-    } catch (e) {}
-  }
+  // Stop & clear previous instance completely to prevent dual cameras glitch!
+  stopQrCamera();
+  qrReaderEl.innerHTML = "";
+  qrReaderEl.style.display = "block";
 
   try {
     html5QrScanner = new Html5Qrcode("qrReader");
@@ -1044,7 +1064,8 @@ function startQrCamera() {
   }
 
   if (statusEl) {
-    statusEl.innerHTML = `<span>📷 กำลังเปิดกล้อง... เล็งกล้องไปที่ QR บนโต๊ะ</span>`;
+    statusEl.style.display = "block";
+    statusEl.innerHTML = `<span>📷 กำลังเปิดกล้อง... เล็งไปที่ QR Code บนโต๊ะ</span>`;
   }
 
   html5QrScanner.start(
@@ -1056,6 +1077,7 @@ function startQrCamera() {
     },
     (decodedText) => {
       // Successfully scanned a QR Code!
+      stopQrCamera();
       handleScannedQrResult(decodedText);
     },
     () => {
@@ -1063,15 +1085,15 @@ function startQrCamera() {
     }
   ).then(() => {
     isCameraActive = true;
-    if (btnToggleText) btnToggleText.innerText = "ปิดกล้อง";
+    if (btnToggleText) btnToggleText.innerText = "ปิดกล้องสแกน";
     if (statusEl) {
       statusEl.innerHTML = `<span style="color:#16a34a; font-weight:600;">🟢 กล้องพร้อมทำงาน เล็งไปที่ QR Code บนโต๊ะ</span>`;
     }
   }).catch((err) => {
     isCameraActive = false;
-    if (btnToggleText) btnToggleText.innerText = "เปิดกล้องสแกน QR";
+    if (btnToggleText) btnToggleText.innerText = "เปิดกล้องสแกน QR Code";
     if (statusEl) {
-      statusEl.innerHTML = `<span style="color:#64748b;">💡 หากกล้องไม่เปิด สามารถกดเลือกหมายเลขโต๊ะด้านล่างได้ทันที</span>`;
+      statusEl.innerHTML = `<span style="color:#64748b;">💡 หากเปิดกล้องไม่ได้ สามารถแตะเลือกหมายเลขโต๊ะด้านบนได้ทันที</span>`;
     }
     console.log("QR Camera start error:", err);
   });
@@ -1079,18 +1101,39 @@ function startQrCamera() {
 
 function stopQrCamera() {
   const btnToggleText = document.getElementById("btnToggleQrCameraText");
+  const qrReaderEl = document.getElementById("qrReader");
+  const statusEl = document.getElementById("qrScanStatusMsg");
+
   if (html5QrScanner && isCameraActive) {
-    html5QrScanner.stop().then(() => {
+    try {
+      html5QrScanner.stop().then(() => {
+        isCameraActive = false;
+        if (btnToggleText) btnToggleText.innerText = "เปิดกล้องสแกน QR Code";
+        try { html5QrScanner.clear(); } catch(e) {}
+        if (qrReaderEl) {
+          qrReaderEl.innerHTML = "";
+          qrReaderEl.style.display = "none";
+        }
+        if (statusEl) statusEl.style.display = "none";
+      }).catch(() => {
+        isCameraActive = false;
+        if (btnToggleText) btnToggleText.innerText = "เปิดกล้องสแกน QR Code";
+        if (qrReaderEl) {
+          qrReaderEl.innerHTML = "";
+          qrReaderEl.style.display = "none";
+        }
+      });
+    } catch(e) {
       isCameraActive = false;
-      if (btnToggleText) btnToggleText.innerText = "เปิดกล้องสแกน QR";
-      try { html5QrScanner.clear(); } catch(e) {}
-    }).catch(() => {
-      isCameraActive = false;
-      if (btnToggleText) btnToggleText.innerText = "เปิดกล้องสแกน QR";
-    });
+    }
   } else {
     isCameraActive = false;
-    if (btnToggleText) btnToggleText.innerText = "เปิดกล้องสแกน QR";
+    if (btnToggleText) btnToggleText.innerText = "เปิดกล้องสแกน QR Code";
+    if (qrReaderEl) {
+      qrReaderEl.innerHTML = "";
+      qrReaderEl.style.display = "none";
+    }
+    if (statusEl) statusEl.style.display = "none";
   }
 }
 
