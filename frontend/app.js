@@ -159,6 +159,15 @@ document.addEventListener("DOMContentLoaded", () => {
   checkActiveOrders();
   refreshIcons();
 
+  // Mascot Initial Greeting
+  if (state.isTableScanned && state.currentTable) {
+    updateMascotGreeting("table_confirmed");
+  } else if (state.orderMode === "takeaway") {
+    updateMascotGreeting("takeaway");
+  } else {
+    updateMascotGreeting("default");
+  }
+
   // Set initial page from ?page=...
   if (pageParam && ["menu", "order", "map", "promotion", "contact", "reservation"].includes(pageParam)) {
     switchLiffPage(pageParam);
@@ -389,6 +398,14 @@ function setOrderMode(mode) {
   updateHeaderLabels();
   checkActiveOrders();
   refreshIcons();
+
+  if (mode === "takeaway") {
+    updateMascotGreeting("takeaway");
+  } else if (state.isTableScanned && state.currentTable) {
+    updateMascotGreeting("table_confirmed");
+  } else {
+    updateMascotGreeting("default");
+  }
 }
 
 function updateHeaderLabels() {
@@ -1221,6 +1238,7 @@ function confirmScannedTable(tableNum) {
   setOrderMode("dinein");
   closeTableQrModal();
   renderMenuFeed(); // Render menus immediately upon successful table scan!
+  updateMascotGreeting("table_confirmed"); // Mascot welcomes this specific table!
 
   // Play confirmation chime
   const audio = document.getElementById("orderSuccessSound");
@@ -1319,3 +1337,59 @@ function closeModal(modalId) {
   const el = document.getElementById(modalId);
   if (el) el.classList.remove("active");
 }
+
+// ============================================================================
+// 12. Mascot "Lung Nui" Controller (Interactive Greeting & Food Tips)
+// ============================================================================
+const MASCOT_TIPS = [
+  "🔥 วันนี้ลุงแนะนำ 'ไก่ย่าง' หนังกรอบเนื้อนุ่ม จิ้มแจ่วรสเด็ด แซ่บอีหลีครับ!",
+  "🍲 อากาศแบบนี้ ต้องซด 'ต้มยำทะเลรวมมิตร' หรือ 'ต้มแซ่บกระดูกหมู' ร้อนๆ คล่องคอมากครับ!",
+  "🥗 'ส้มตำปูปลาร้า' ปลาร้าต้มสุกสะอาด หอมนัว จัดจ้านสะใจแน่นอนคร้าบ!",
+  "🥩 'เสือร้องไห้' ย่างเตาถ่านหอมๆ ติดมันนิดๆ เคี้ยวเพลินจิ้มแจ่วแซ่บๆ สั่งได้เลยนะ!",
+  "🥤 อย่าลืมสั่งเครื่องดื่มเย็นๆ ชื่นใจ น้ำดื่ม โค้ก หรือเบียร์วุ้นดับกระหายด้วยนะคร้าบ!",
+  "🍳 อาหารตามสั่ง กะเพราเนื้อ กะเพราหมูกรอบ ผัดพริกแกง ลุงผัดจานต่อจานหอมกลิ่นกระทะครับ!",
+  "🐟 'เมี่ยงปลาทับทิมเผาเกลือ' ตัวโตๆ เสิร์ฟพร้อมผักสดและน้ำจิ้มซีฟู้ดรสเด็ด ลุงคัดพิเศษเลย!"
+];
+
+let currentMascotTipIndex = 0;
+
+function updateMascotGreeting(context = "default") {
+  const textEl = document.getElementById("mascotSpeechText");
+  if (!textEl) return;
+
+  if (context === "table_confirmed" && state.currentTable) {
+    textEl.innerHTML = `🎉 ยินดีต้อนรับ <b>โต๊ะ ${state.currentTable}</b> ครับ! เลือกเมนูอาหารที่ชอบแล้วสั่งได้เลยนะ เดี๋ยวลุงรีบทำให้เสิร์ฟร้อนๆ ถึงโต๊ะครับ 😊`;
+  } else if (context === "takeaway") {
+    textEl.innerHTML = `🛍️ สั่งกลับบ้าน คิว ${state.currentQueue} นะครับ ลุงจะแพ็กใส่กล่องอย่างดี รอเรียกรับอาหารหน้าร้านได้เลยครับ!`;
+  } else if (context === "cart_active" && state.cart.length > 0) {
+    textEl.innerHTML = `🛒 สั่งอาหารไปแล้ว ${state.cart.length} อย่าง แตะ <b>'ดูตะกร้า'</b> ด้านล่างเพื่อส่งออเดอร์เข้าครัวได้เลยครับ!`;
+  } else if (!state.isTableScanned && state.orderMode === "dinein") {
+    textEl.innerHTML = `👋 สวัสดีครับ! ยินดีต้อนรับสู่ครัวลุงหนุ่ย นั่งโต๊ะไหนแตะเลือกหมายเลขโต๊ะด้านบน หรือสแกน QR Code บนโต๊ะได้เลยนะคร้าบ ❤️`;
+  }
+}
+
+function mascotSpeakNextTip() {
+  const textEl = document.getElementById("mascotSpeechText");
+  const avatarImg = document.querySelector(".mascot-avatar-img");
+  if (!textEl) return;
+
+  // Tiny bounce animation on tap
+  if (avatarImg) {
+    avatarImg.style.transform = "scale(1.2) rotate(-8deg)";
+    setTimeout(() => { avatarImg.style.transform = ""; }, 250);
+  }
+
+  // Cycle through tips
+  currentMascotTipIndex = (currentMascotTipIndex + 1) % MASCOT_TIPS.length;
+  textEl.innerHTML = MASCOT_TIPS[currentMascotTipIndex];
+}
+
+function dismissMascotBubble() {
+  const card = document.getElementById("mascotGreetingCard");
+  if (card) {
+    card.style.opacity = "0";
+    card.style.transform = "translateY(-10px)";
+    setTimeout(() => { card.style.display = "none"; }, 250);
+  }
+}
+

@@ -91,6 +91,23 @@
     <!-- VIEW 1: MENU & ORDER FEED (Tab: menu / order) -->
     <!-- ========================================== -->
     <div id="pageViewMenu" class="liff-page-view active">
+      <!-- Mascot "Lung Nui" Friendly Welcome & Recommendation Widget -->
+      <div class="mascot-greeting-card" id="mascotGreetingCard">
+        <div class="mascot-avatar-wrap" onclick="mascotSpeakNextTip()" title="แตะให้ลุงหนุ่ยแนะนำเมนู">
+          <img src="logo/logo.jpg" alt="ลุงหนุ่ย" class="mascot-avatar-img" onerror="this.src='logo/logo.png'">
+          <span class="mascot-badge-name">ลุงหนุ่ย</span>
+        </div>
+        <div class="mascot-speech-bubble" onclick="mascotSpeakNextTip()">
+          <div class="speech-bubble-header">
+            <span class="bubble-tag">👨‍🍳 ลุงหนุ่ยทักทาย & แนะนำเมนู</span>
+            <button type="button" class="btn-bubble-dismiss" onclick="event.stopPropagation(); dismissMascotBubble()" title="ย่อเก็บ">✕</button>
+          </div>
+          <p class="speech-bubble-text" id="mascotSpeechText">
+            ยินดีต้อนรับครับ! วันนี้ลุงคัดวัตถุดิบสดใหม่ รับประกันรสชาติจัดจ้านทุกจานครับ ❤️
+          </p>
+        </div>
+      </div>
+
       <!-- Rich Menu 6-Action Quick Hub -->
       <section class="rich-hub-section" id="richHubSection">
         <div class="rich-hub-header">
