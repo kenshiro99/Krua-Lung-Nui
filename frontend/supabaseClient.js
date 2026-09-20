@@ -8,6 +8,7 @@
 
 (function(window) {
   const DEFAULT_URL = "https://myajcbynabcwfmlvqpwv.supabase.co";
+  const DEFAULT_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im15YWpjYnluYWJjd2ZtbHZxcHd2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk0NjI2MTgsImV4cCI6MjEwNTAzODYxOH0.BjjFAOIQF_qakKB2l9-IUwEONgB_jIXIx7VixLr3i7w";
   
   // Retrieve saved configuration from localStorage or global APP_CONFIG
   function getConfig() {
@@ -17,7 +18,7 @@
 
     return {
       url: savedUrl || globalConfig.SUPABASE_URL || DEFAULT_URL,
-      key: savedKey || globalConfig.SUPABASE_ANON_KEY || ""
+      key: savedKey || globalConfig.SUPABASE_ANON_KEY || DEFAULT_ANON_KEY
     };
   }
 

@@ -12,9 +12,7 @@
 # Local Secrets & Credentials
 .env
 .env.local
-config.js
-frontend/config.js
-backend/config.js
+
 
 # Node & Package Managers
 node_modules/

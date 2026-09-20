@@ -336,12 +336,19 @@ function confirmPaymentAndCloseTable() {
     if (!table) return;
 
     targetLabel = `โต๊ะ ${table.name}`;
-    window.posState.orders.forEach(o => {
+    window.posState.orders.forEach(async o => {
       if (isOrderForTable(o, table) && o.paymentStatus === "unpaid") {
         o.paymentStatus = "paid";
         o.status = "completed";
         o.paymentMethod = paymentMethod;
         paidAmount += (Number(o.total) || 0);
+        if (window.SupabaseService && window.SupabaseService.isConfigured()) {
+          try {
+            await window.SupabaseService.updateOrderStatus(o.id, "completed", "paid");
+          } catch (e) {
+            console.warn("Supabase update error:", e);
+          }
+        }
       }
     });
 
@@ -355,6 +362,13 @@ function confirmPaymentAndCloseTable() {
       order.status = "completed";
       order.paymentMethod = paymentMethod;
       paidAmount = (Number(order.total) || 0);
+      if (window.SupabaseService && window.SupabaseService.isConfigured()) {
+        try {
+          window.SupabaseService.updateOrderStatus(order.id, "completed", "paid");
+        } catch (e) {
+          console.warn("Supabase update error:", e);
+        }
+      }
       alert(`✅ รับชำระเงินคิวสั่งกลับบ้าน ${order.tableName} เรียบร้อยแล้ว! (฿${paidAmount.toFixed(2)})`);
     }
   }
