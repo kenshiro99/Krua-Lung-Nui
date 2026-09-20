@@ -829,7 +829,7 @@ function clearCart() {
 // ============================================================================
 // 7. Submit Order (Dine-in vs. Takeaway)
 // ============================================================================
-function submitOrder() {
+async function submitOrder() {
   if (state.cart.length === 0) return;
 
   // Verify that table is scanned for dine-in orders
@@ -891,7 +891,17 @@ function submitOrder() {
     }
   }
 
-  // 3. Try sending to Backend REST API
+  // 3. Sync to Supabase Cloud Database (Instant Realtime to Kitchen & Cashier)
+  if (window.SupabaseService && window.SupabaseService.isConfigured()) {
+    try {
+      await window.SupabaseService.createOrder(newOrder);
+      console.log("🟢 [Supabase] ออเดอร์ส่งเข้าคลาวด์สำเร็จ:", newOrder.id);
+    } catch (supaErr) {
+      console.warn("⚠️ [Supabase] Cloud sync error:", supaErr.message);
+    }
+  }
+
+  // 4. Try sending to Backend REST API (if local server running)
   fetch("http://localhost:5000/api/orders", {
     method: "POST",
     headers: { "Content-Type": "application/json" },

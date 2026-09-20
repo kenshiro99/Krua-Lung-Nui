@@ -12,8 +12,27 @@ document.addEventListener("DOMContentLoaded", () => {
   renderKitchenView();
   refreshLucideIcons();
 
-  // Polling every 3 seconds for new incoming orders
+  // Initial Cloud Sync
+  syncFromCloud();
+
+  // Realtime subscription from Supabase Cloud
+  if (window.SupabaseService && typeof window.SupabaseService.subscribeOrders === "function") {
+    window.SupabaseService.subscribeOrders(
+      (newOrder) => {
+        console.log("🔔 [Kitchen KDS] New Cloud Order received:", newOrder);
+        playKitchenBell();
+        syncFromCloud();
+      },
+      (updatedOrder) => {
+        syncFromCloud();
+      }
+    );
+  }
+
+  // Polling every 3 seconds for new incoming orders (Cloud & Local)
   setInterval(() => {
+    syncFromCloud();
+
     window.posState.orders = JSON.parse(localStorage.getItem("pos_orders")) || [];
     const activeOrders = window.posState.orders.filter(o => o.status === "pending" || o.status === "cooking");
     
@@ -25,6 +44,38 @@ document.addEventListener("DOMContentLoaded", () => {
     renderKitchenView();
   }, 3000);
 });
+
+async function syncFromCloud() {
+  if (window.SupabaseService && window.SupabaseService.isConfigured()) {
+    const cloudOrders = await window.SupabaseService.getOrders();
+    if (cloudOrders && Array.isArray(cloudOrders) && cloudOrders.length > 0) {
+      const mapped = cloudOrders.map(normalizeOrderFormat);
+      window.posState.orders = mapped;
+      localStorage.setItem("pos_orders", JSON.stringify(mapped));
+      renderKitchenView();
+    }
+  }
+}
+
+function normalizeOrderFormat(o) {
+  if (!o) return null;
+  return {
+    id: o.id,
+    orderType: o.order_type || o.orderType || "dinein",
+    tableId: o.table_id || o.tableId || "t-1",
+    tableName: o.table_name || o.tableName || "1",
+    customerName: o.customer_name || o.customerName || "",
+    customerPhone: o.customer_phone || o.customerPhone || "",
+    packagingNotes: o.packaging_notes || o.packagingNotes || o.customer_notes || "",
+    createdAt: o.created_at || o.createdAt || new Date().toISOString(),
+    status: o.status || "pending",
+    paymentStatus: o.payment_status || o.paymentStatus || "unpaid",
+    paymentMethod: o.payment_method || o.paymentMethod || "promptpay",
+    items: Array.isArray(o.items) ? o.items : (typeof o.items === 'string' ? JSON.parse(o.items) : []),
+    subtotal: Number(o.subtotal || o.total || 0),
+    total: Number(o.total || 0)
+  };
+}
 
 function renderKitchenView() {
   const container = document.getElementById("kitchenCardsContainer");
@@ -95,12 +146,15 @@ function renderKitchenView() {
   refreshLucideIcons();
 }
 
-function updateOrderStatus(orderId, newStatus) {
+async function updateOrderStatus(orderId, newStatus) {
   const order = window.posState.orders.find(o => o.id === orderId);
   if (order) {
     order.status = newStatus;
     savePOSState();
     renderKitchenView();
+    if (window.SupabaseService && window.SupabaseService.isConfigured()) {
+      await window.SupabaseService.updateOrderStatus(orderId, newStatus);
+    }
   }
 }
 

@@ -13,13 +13,63 @@ document.addEventListener("DOMContentLoaded", () => {
   renderCashierView();
   refreshLucideIcons();
 
-  // Polling to update live cashier bills
+  // Initial Cloud Sync
+  syncCashierFromCloud();
+
+  // Realtime subscription from Supabase Cloud
+  if (window.SupabaseService && typeof window.SupabaseService.subscribeOrders === "function") {
+    window.SupabaseService.subscribeOrders(
+      (newOrder) => {
+        console.log("💵 [Cashier POS] New Cloud Order received:", newOrder);
+        syncCashierFromCloud();
+      },
+      (updatedOrder) => {
+        syncCashierFromCloud();
+      }
+    );
+  }
+
+  // Polling to update live cashier bills (every 3s)
   setInterval(() => {
+    syncCashierFromCloud();
+
     window.posState.orders = JSON.parse(localStorage.getItem("pos_orders")) || [];
     window.posState.tables = JSON.parse(localStorage.getItem("pos_tables")) || [];
     renderCashierView();
-  }, 4000);
+  }, 3000);
 });
+
+async function syncCashierFromCloud() {
+  if (window.SupabaseService && window.SupabaseService.isConfigured()) {
+    const cloudOrders = await window.SupabaseService.getOrders();
+    if (cloudOrders && Array.isArray(cloudOrders) && cloudOrders.length > 0) {
+      const mapped = cloudOrders.map(normalizeCashierOrderFormat);
+      window.posState.orders = mapped;
+      localStorage.setItem("pos_orders", JSON.stringify(mapped));
+      renderCashierView();
+    }
+  }
+}
+
+function normalizeCashierOrderFormat(o) {
+  if (!o) return null;
+  return {
+    id: o.id,
+    orderType: o.order_type || o.orderType || "dinein",
+    tableId: o.table_id || o.tableId || "t-1",
+    tableName: o.table_name || o.tableName || "1",
+    customerName: o.customer_name || o.customerName || "",
+    customerPhone: o.customer_phone || o.customerPhone || "",
+    packagingNotes: o.packaging_notes || o.packagingNotes || o.customer_notes || "",
+    createdAt: o.created_at || o.createdAt || new Date().toISOString(),
+    status: o.status || "pending",
+    paymentStatus: o.payment_status || o.paymentStatus || "unpaid",
+    paymentMethod: o.payment_method || o.paymentMethod || "promptpay",
+    items: Array.isArray(o.items) ? o.items : (typeof o.items === 'string' ? JSON.parse(o.items) : []),
+    subtotal: Number(o.subtotal || o.total || 0),
+    total: Number(o.total || 0)
+  };
+}
 
 function switchCashierTab(tab) {
   currentCashierTab = tab;
