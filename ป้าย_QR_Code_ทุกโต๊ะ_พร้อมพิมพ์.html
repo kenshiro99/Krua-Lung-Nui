@@ -1,0 +1,721 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ป้าย QR Code สแกนสั่งอาหาร - ครัวลุงหนุ่ย (พร้อมพิมพ์ทันที)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Prompt', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: #f1f5f9;
+      color: #0f172a;
+      padding: 1.5rem 1rem;
+    }
+
+    /* Top Control Bar */
+    .top-controls {
+      max-width: 900px;
+      margin: 0 auto 1.5rem auto;
+      background: #ffffff;
+      padding: 1rem 1.5rem;
+      border-radius: 12px;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+    }
+
+    .top-controls h1 {
+      font-size: 1.25rem;
+      font-weight: 800;
+      color: #ea580c;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .top-controls p {
+      font-size: 0.85rem;
+      color: #64748b;
+      margin-top: 0.2rem;
+    }
+
+    .btn-print {
+      background: linear-gradient(135deg, #ea580c, #f97316);
+      color: #ffffff;
+      border: none;
+      padding: 0.75rem 1.5rem;
+      border-radius: 8px;
+      font-family: inherit;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      box-shadow: 0 4px 12px rgba(234, 88, 12, 0.3);
+      transition: all 0.2s ease;
+    }
+
+    .btn-print:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(234, 88, 12, 0.4);
+    }
+
+    /* Print Container Grid (2 Columns per A4 page) */
+    .print-container {
+      max-width: 900px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1.5rem;
+    }
+
+    /* Stand Card */
+    .qr-stand-card {
+      background: #ffffff;
+      border: 2px dashed #cbd5e1;
+      border-radius: 16px;
+      padding: 1.5rem 1.25rem;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
+      position: relative;
+      page-break-inside: avoid;
+      break-inside: avoid;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+      min-height: 520px;
+    }
+
+    .qr-stand-card::before {
+      content: '✂️ ตัดตามรอยประ หรือ พับตั้งโต๊ะ (Tent Card)';
+      position: absolute;
+      top: -11px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #ffffff;
+      padding: 0 10px;
+      font-size: 0.7rem;
+      color: #94a3b8;
+      font-weight: 500;
+      white-space: nowrap;
+    }
+
+    .qr-header {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.35rem;
+      width: 100%;
+    }
+
+    .qr-logo-wrap {
+      width: 58px;
+      height: 58px;
+      border-radius: 50%;
+      border: 3px solid #f97316;
+      padding: 2px;
+      background: #ffffff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 2px 8px rgba(249, 115, 22, 0.2);
+    }
+
+    .qr-logo-img {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      object-fit: cover;
+    }
+
+    .qr-shop-title {
+      font-size: 1.25rem;
+      font-weight: 800;
+      color: #0f172a;
+      letter-spacing: -0.01em;
+    }
+
+    .qr-shop-sub {
+      font-size: 0.8rem;
+      color: #64748b;
+      font-weight: 500;
+    }
+
+    .qr-table-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #ea580c, #f97316);
+      color: #ffffff;
+      padding: 0.45rem 1.25rem;
+      border-radius: 9999px;
+      font-size: 1.35rem;
+      font-weight: 800;
+      margin: 0.65rem 0;
+      box-shadow: 0 4px 12px rgba(234, 88, 12, 0.25);
+      width: 82%;
+    }
+
+    .qr-image-wrap {
+      background: #ffffff;
+      padding: 0.75rem;
+      border-radius: 12px;
+      border: 2px solid #fed7aa;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin: 0.35rem 0;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.04);
+    }
+
+    .qr-image-wrap img {
+      width: 170px;
+      height: 170px;
+      display: block;
+    }
+
+    .qr-steps {
+      width: 100%;
+      background: #f8fafc;
+      border-radius: 10px;
+      padding: 0.65rem 0.85rem;
+      margin: 0.5rem 0;
+      border: 1px solid #f1f5f9;
+      text-align: left;
+    }
+
+    .qr-step-row {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.82rem;
+      color: #334155;
+      padding: 0.2rem 0;
+    }
+
+    .qr-step-badge {
+      width: 19px;
+      height: 19px;
+      border-radius: 50%;
+      background: #ea580c;
+      color: #ffffff;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.7rem;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    .qr-footer {
+      font-size: 0.75rem;
+      color: #64748b;
+      margin-top: 0.25rem;
+    }
+
+    /* Takeaway Theme */
+    .takeaway-theme {
+      border: 2.5px dashed #ea580c;
+      background: #fffbf7;
+    }
+
+    .takeaway-theme .qr-table-badge {
+      background: linear-gradient(135deg, #d97706, #f59e0b);
+      box-shadow: 0 4px 12px rgba(217, 119, 6, 0.25);
+    }
+
+    .takeaway-theme .qr-image-wrap {
+      border-color: #fde68a;
+    }
+
+    .takeaway-theme .qr-step-badge {
+      background: #d97706;
+    }
+
+    /* Print Styles */
+    @media print {
+      body {
+        background: #ffffff !important;
+        padding: 0 !important;
+      }
+
+      .no-print {
+        display: none !important;
+      }
+
+      .print-container {
+        max-width: 100% !important;
+        width: 100% !important;
+        display: grid !important;
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 8mm !important;
+      }
+
+      .qr-stand-card {
+        box-shadow: none !important;
+        border: 1.5px dashed #94a3b8 !important;
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        margin-bottom: 8mm !important;
+      }
+
+      @page {
+        size: A4 portrait;
+        margin: 8mm;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Control Bar (Hidden when printing) -->
+  <div class="top-controls no-print">
+    <div>
+      <h1>🖨️ ป้าย QR Code ประจำโต๊ะ & จุดสั่งกลับบ้าน (ครัวลุงหนุ่ย)</h1>
+      <p>จัดหน้าพร้อมพิมพ์ลงกระดาษ A4 (2 โต๊ะต่อ 1 หน้า) มีรอยประตัด/พับ หรือใส่กรอบอะคริลิกใสได้ทันที</p>
+    </div>
+    <button class="btn-print" onclick="window.print()">
+      🖨️ สั่งพิมพ์ทันที (Print A4)
+    </button>
+  </div>
+
+  <!-- Main Printable Container -->
+  <div class="print-container">
+    <!-- Takeaway Stand -->
+    
+    <div class="qr-stand-card takeaway-theme">
+      <div class="qr-header">
+        <div class="qr-logo-wrap" style="border-color: #ea580c;">
+          <img src="backend/logo/logo.jpg" alt="โลโก้ครัวลุงหนุ่ย" class="qr-logo-img" onerror="this.src='backend/logo/logo.png'">
+        </div>
+        <div class="qr-shop-title" style="color: #9a3412;">ครัวลุงหนุ่ย (Krua Lung Nui)</div>
+        <div class="qr-shop-sub">จุดบริการสั่งอาหารกลับบ้าน (Takeaway)</div>
+      </div>
+
+      <div class="qr-table-badge">
+        <span>🛍️ สั่งอาหารกลับบ้าน</span>
+      </div>
+
+      <div class="qr-image-wrap">
+        <img src="data:image/png;base64,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" alt="QR Code สั่งกลับบ้าน">
+      </div>
+
+      <div class="qr-steps" style="background: #fff7ed; border-color: #fed7aa;">
+        <div class="qr-step-row">
+          <span class="qr-step-badge">1</span>
+          <span>สแกน QR เพื่อเลือกรายการอาหารบนมือถือ</span>
+        </div>
+        <div class="qr-step-row">
+          <span class="qr-step-badge">2</span>
+          <span>กดสั่งอาหารเพื่อรับ "หมายเลขคิว" ทันที</span>
+        </div>
+        <div class="qr-step-row">
+          <span class="qr-step-badge">3</span>
+          <span>โอนจ่ายผ่านพร้อมเพย์ แล้วรอรับอาหารปรุงสด</span>
+        </div>
+      </div>
+
+      <div class="qr-footer" style="color: #9a3412;">
+        <strong>⚡ สั่งง่าย รวดเร็ว ไม่ต้องยืนรอคิวหน้าร้าน</strong>
+        <div style="font-size: 0.7rem; color: #b45309; margin-top: 2px;">ครัวลุงหนุ่ยยินดีให้บริการครับ 🙏</div>
+      </div>
+    </div>
+    
+
+    <!-- Dine-in Tables (1 to 10) -->
+    
+    <div class="qr-stand-card">
+      <div class="qr-header">
+        <div class="qr-logo-wrap">
+          <img src="backend/logo/logo.jpg" alt="โลโก้ครัวลุงหนุ่ย" class="qr-logo-img" onerror="this.src='backend/logo/logo.png'">
+        </div>
+        <div class="qr-shop-title">ครัวลุงหนุ่ย (Krua Lung Nui)</div>
+        <div class="qr-shop-sub">รสชาติต้นตำรับ • อร่อยเหมือนกินที่บ้าน</div>
+      </div>
+
+      <div class="qr-table-badge">
+        <span>🍽️ โต๊ะ 1</span>
+      </div>
+
+      <div class="qr-image-wrap">
+        <img src="data:image/png;base64,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" alt="QR Code โต๊ะ 1">
+      </div>
+
+      <div class="qr-steps">
+        <div class="qr-step-row">
+          <span class="qr-step-badge">1</span>
+          <span>เปิดกล้องมือถือ หรือ LINE สแกน QR Code</span>
+        </div>
+        <div class="qr-step-row">
+          <span class="qr-step-badge">2</span>
+          <span>เลือกเมนูอาหาร ระบุตัวเลือก แล้วกดส่งสั่ง</span>
+        </div>
+        <div class="qr-step-row">
+          <span class="qr-step-badge">3</span>
+          <span>รายการส่งตรงถึงห้องครัวปรุงสดทันที</span>
+        </div>
+      </div>
+
+      <div class="qr-footer">
+        <div>✨ สแกนสั่งเพิ่มหรือเรียกพนักงานได้ตลอดเวลา</div>
+        <div style="font-size: 0.7rem; color: #94a3b8; margin-top: 2px;">เบอร์โทรติดต่อ: 089-123-4567</div>
+      </div>
+    </div>
+    
+    <div class="qr-stand-card">
+      <div class="qr-header">
+        <div class="qr-logo-wrap">
+          <img src="backend/logo/logo.jpg" alt="โลโก้ครัวลุงหนุ่ย" class="qr-logo-img" onerror="this.src='backend/logo/logo.png'">
+        </div>
+        <div class="qr-shop-title">ครัวลุงหนุ่ย (Krua Lung Nui)</div>
+        <div class="qr-shop-sub">รสชาติต้นตำรับ • อร่อยเหมือนกินที่บ้าน</div>
+      </div>
+
+      <div class="qr-table-badge">
+        <span>🍽️ โต๊ะ 2</span>
+      </div>
+
+      <div class="qr-image-wrap">
+        <img src="data:image/png;base64,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" alt="QR Code โต๊ะ 2">
+      </div>
+
+      <div class="qr-steps">
+        <div class="qr-step-row">
+          <span class="qr-step-badge">1</span>
+          <span>เปิดกล้องมือถือ หรือ LINE สแกน QR Code</span>
+        </div>
+        <div class="qr-step-row">
+          <span class="qr-step-badge">2</span>
+          <span>เลือกเมนูอาหาร ระบุตัวเลือก แล้วกดส่งสั่ง</span>
+        </div>
+        <div class="qr-step-row">
+          <span class="qr-step-badge">3</span>
+          <span>รายการส่งตรงถึงห้องครัวปรุงสดทันที</span>
+        </div>
+      </div>
+
+      <div class="qr-footer">
+        <div>✨ สแกนสั่งเพิ่มหรือเรียกพนักงานได้ตลอดเวลา</div>
+        <div style="font-size: 0.7rem; color: #94a3b8; margin-top: 2px;">เบอร์โทรติดต่อ: 089-123-4567</div>
+      </div>
+    </div>
+    
+    <div class="qr-stand-card">
+      <div class="qr-header">
+        <div class="qr-logo-wrap">
+          <img src="backend/logo/logo.jpg" alt="โลโก้ครัวลุงหนุ่ย" class="qr-logo-img" onerror="this.src='backend/logo/logo.png'">
+        </div>
+        <div class="qr-shop-title">ครัวลุงหนุ่ย (Krua Lung Nui)</div>
+        <div class="qr-shop-sub">รสชาติต้นตำรับ • อร่อยเหมือนกินที่บ้าน</div>
+      </div>
+
+      <div class="qr-table-badge">
+        <span>🍽️ โต๊ะ 3</span>
+      </div>
+
+      <div class="qr-image-wrap">
+        <img src="data:image/png;base64,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" alt="QR Code โต๊ะ 3">
+      </div>
+
+      <div class="qr-steps">
+        <div class="qr-step-row">
+          <span class="qr-step-badge">1</span>
+          <span>เปิดกล้องมือถือ หรือ LINE สแกน QR Code</span>
+        </div>
+        <div class="qr-step-row">
+          <span class="qr-step-badge">2</span>
+          <span>เลือกเมนูอาหาร ระบุตัวเลือก แล้วกดส่งสั่ง</span>
+        </div>
+        <div class="qr-step-row">
+          <span class="qr-step-badge">3</span>
+          <span>รายการส่งตรงถึงห้องครัวปรุงสดทันที</span>
+        </div>
+      </div>
+
+      <div class="qr-footer">
+        <div>✨ สแกนสั่งเพิ่มหรือเรียกพนักงานได้ตลอดเวลา</div>
+        <div style="font-size: 0.7rem; color: #94a3b8; margin-top: 2px;">เบอร์โทรติดต่อ: 089-123-4567</div>
+      </div>
+    </div>
+    
+    <div class="qr-stand-card">
+      <div class="qr-header">
+        <div class="qr-logo-wrap">
+          <img src="backend/logo/logo.jpg" alt="โลโก้ครัวลุงหนุ่ย" class="qr-logo-img" onerror="this.src='backend/logo/logo.png'">
+        </div>
+        <div class="qr-shop-title">ครัวลุงหนุ่ย (Krua Lung Nui)</div>
+        <div class="qr-shop-sub">รสชาติต้นตำรับ • อร่อยเหมือนกินที่บ้าน</div>
+      </div>
+
+      <div class="qr-table-badge">
+        <span>🍽️ โต๊ะ 4</span>
+      </div>
+
+      <div class="qr-image-wrap">
+        <img src="data:image/png;base64,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" alt="QR Code โต๊ะ 4">
+      </div>
+
+      <div class="qr-steps">
+        <div class="qr-step-row">
+          <span class="qr-step-badge">1</span>
+          <span>เปิดกล้องมือถือ หรือ LINE สแกน QR Code</span>
+        </div>
+        <div class="qr-step-row">
+          <span class="qr-step-badge">2</span>
+          <span>เลือกเมนูอาหาร ระบุตัวเลือก แล้วกดส่งสั่ง</span>
+        </div>
+        <div class="qr-step-row">
+          <span class="qr-step-badge">3</span>
+          <span>รายการส่งตรงถึงห้องครัวปรุงสดทันที</span>
+        </div>
+      </div>
+
+      <div class="qr-footer">
+        <div>✨ สแกนสั่งเพิ่มหรือเรียกพนักงานได้ตลอดเวลา</div>
+        <div style="font-size: 0.7rem; color: #94a3b8; margin-top: 2px;">เบอร์โทรติดต่อ: 089-123-4567</div>
+      </div>
+    </div>
+    
+    <div class="qr-stand-card">
+      <div class="qr-header">
+        <div class="qr-logo-wrap">
+          <img src="backend/logo/logo.jpg" alt="โลโก้ครัวลุงหนุ่ย" class="qr-logo-img" onerror="this.src='backend/logo/logo.png'">
+        </div>
+        <div class="qr-shop-title">ครัวลุงหนุ่ย (Krua Lung Nui)</div>
+        <div class="qr-shop-sub">รสชาติต้นตำรับ • อร่อยเหมือนกินที่บ้าน</div>
+      </div>
+
+      <div class="qr-table-badge">
+        <span>🍽️ โต๊ะ 5</span>
+      </div>
+
+      <div class="qr-image-wrap">
+        <img src="data:image/png;base64,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" alt="QR Code โต๊ะ 5">
+      </div>
+
+      <div class="qr-steps">
+        <div class="qr-step-row">
+          <span class="qr-step-badge">1</span>
+          <span>เปิดกล้องมือถือ หรือ LINE สแกน QR Code</span>
+        </div>
+        <div class="qr-step-row">
+          <span class="qr-step-badge">2</span>
+          <span>เลือกเมนูอาหาร ระบุตัวเลือก แล้วกดส่งสั่ง</span>
+        </div>
+        <div class="qr-step-row">
+          <span class="qr-step-badge">3</span>
+          <span>รายการส่งตรงถึงห้องครัวปรุงสดทันที</span>
+        </div>
+      </div>
+
+      <div class="qr-footer">
+        <div>✨ สแกนสั่งเพิ่มหรือเรียกพนักงานได้ตลอดเวลา</div>
+        <div style="font-size: 0.7rem; color: #94a3b8; margin-top: 2px;">เบอร์โทรติดต่อ: 089-123-4567</div>
+      </div>
+    </div>
+    
+    <div class="qr-stand-card">
+      <div class="qr-header">
+        <div class="qr-logo-wrap">
+          <img src="backend/logo/logo.jpg" alt="โลโก้ครัวลุงหนุ่ย" class="qr-logo-img" onerror="this.src='backend/logo/logo.png'">
+        </div>
+        <div class="qr-shop-title">ครัวลุงหนุ่ย (Krua Lung Nui)</div>
+        <div class="qr-shop-sub">รสชาติต้นตำรับ • อร่อยเหมือนกินที่บ้าน</div>
+      </div>
+
+      <div class="qr-table-badge">
+        <span>🍽️ โต๊ะ 6</span>
+      </div>
+
+      <div class="qr-image-wrap">
+        <img src="data:image/png;base64,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" alt="QR Code โต๊ะ 6">
+      </div>
+
+      <div class="qr-steps">
+        <div class="qr-step-row">
+          <span class="qr-step-badge">1</span>
+          <span>เปิดกล้องมือถือ หรือ LINE สแกน QR Code</span>
+        </div>
+        <div class="qr-step-row">
+          <span class="qr-step-badge">2</span>
+          <span>เลือกเมนูอาหาร ระบุตัวเลือก แล้วกดส่งสั่ง</span>
+        </div>
+        <div class="qr-step-row">
+          <span class="qr-step-badge">3</span>
+          <span>รายการส่งตรงถึงห้องครัวปรุงสดทันที</span>
+        </div>
+      </div>
+
+      <div class="qr-footer">
+        <div>✨ สแกนสั่งเพิ่มหรือเรียกพนักงานได้ตลอดเวลา</div>
+        <div style="font-size: 0.7rem; color: #94a3b8; margin-top: 2px;">เบอร์โทรติดต่อ: 089-123-4567</div>
+      </div>
+    </div>
+    
+    <div class="qr-stand-card">
+      <div class="qr-header">
+        <div class="qr-logo-wrap">
+          <img src="backend/logo/logo.jpg" alt="โลโก้ครัวลุงหนุ่ย" class="qr-logo-img" onerror="this.src='backend/logo/logo.png'">
+        </div>
+        <div class="qr-shop-title">ครัวลุงหนุ่ย (Krua Lung Nui)</div>
+        <div class="qr-shop-sub">รสชาติต้นตำรับ • อร่อยเหมือนกินที่บ้าน</div>
+      </div>
+
+      <div class="qr-table-badge">
+        <span>🍽️ โต๊ะ 7</span>
+      </div>
+
+      <div class="qr-image-wrap">
+        <img src="data:image/png;base64,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" alt="QR Code โต๊ะ 7">
+      </div>
+
+      <div class="qr-steps">
+        <div class="qr-step-row">
+          <span class="qr-step-badge">1</span>
+          <span>เปิดกล้องมือถือ หรือ LINE สแกน QR Code</span>
+        </div>
+        <div class="qr-step-row">
+          <span class="qr-step-badge">2</span>
+          <span>เลือกเมนูอาหาร ระบุตัวเลือก แล้วกดส่งสั่ง</span>
+        </div>
+        <div class="qr-step-row">
+          <span class="qr-step-badge">3</span>
+          <span>รายการส่งตรงถึงห้องครัวปรุงสดทันที</span>
+        </div>
+      </div>
+
+      <div class="qr-footer">
+        <div>✨ สแกนสั่งเพิ่มหรือเรียกพนักงานได้ตลอดเวลา</div>
+        <div style="font-size: 0.7rem; color: #94a3b8; margin-top: 2px;">เบอร์โทรติดต่อ: 089-123-4567</div>
+      </div>
+    </div>
+    
+    <div class="qr-stand-card">
+      <div class="qr-header">
+        <div class="qr-logo-wrap">
+          <img src="backend/logo/logo.jpg" alt="โลโก้ครัวลุงหนุ่ย" class="qr-logo-img" onerror="this.src='backend/logo/logo.png'">
+        </div>
+        <div class="qr-shop-title">ครัวลุงหนุ่ย (Krua Lung Nui)</div>
+        <div class="qr-shop-sub">รสชาติต้นตำรับ • อร่อยเหมือนกินที่บ้าน</div>
+      </div>
+
+      <div class="qr-table-badge">
+        <span>🍽️ โต๊ะ 8</span>
+      </div>
+
+      <div class="qr-image-wrap">
+        <img src="data:image/png;base64,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0lMeqZPp0s106SmP1Ml06anp0lMeqaemS095pG6mS0+YAABYzAQAwGImAAAWMwEAsJgJAIDFTAAALGYCAGAxEwAAi/36/Yc+gEfqZrp04pF6arr0XXikTqZL34VH6qnp0qt5pG6mSyceqXeYLn0HHqmnpkufwCN1M1068UjdTJd+Co/UU9OlJ0wAACxmAgBgMRMAAIuZAABYzAQAwGImAAAWMwEAsNiXPsR06RN4pG6mSyceqXeYLp14pG6mSyceqU8wXfoE06V3mC495ZF6tenSd+GRemq6dDJdemq6dOORemq6dOKRemq69B2YAABYzAQAwGImAAAWMwEAsJgJAIDFTAAALGYCAGAxEwAAi33pL/BI3UyXTjxST02X3sEj9dR06SmP1CeYLp14pG6mS6/mkbqZLp14pH6K6dI7eKROpks3HqkTj9Q7eKROpkufYLp045E6mS7deKSemi79ayYAABYzAQCwmAkAgMVMAAAsZgIAYDETAACLmQAAWOzX7z/0kEfqHaZLJx6pm+nSiUfqZrr0CTxST02XPoFH6mS6dOOR+gTTpROP1M106dU8Ut/FdOkpj9TJdOkpj9TNdOmn8EidTJee8kjdTJeeMAEAsJgJAIDFTAAALGYCAGAxEwAAi5kAAFjMBADAYiYAABb79fsPfRMeqZPp0o1H6mS69A4eqaemSyceqaemSzceqS2mSzceqaemS095pE6mS095pG6mSyceqZvpEv7jkXpquvSUR+pkuvQdmAAAWMwEAMBiJgAAFjMBALCYCQCAxUwAACxmAgBgsV+//9BDHql3mC6deKQ2mS495ZF6arp04pF6h+nSq3mkvovp0olH6ma6dOKRupkuPeWRemq6dOKRupkuPeWR+immSyceqZvp0r9mAgBgMRMAAIuZAABYzAQAwGImAAAWMwEAsJgJAIDFTAAALPalN5kunXik3mG69GoeqaemSzceqZPp0s106cQjdeORemq69JRH6mS69A7TpVfzSD01XbrxSJ1Ml95hunTikbrxSD3lkXpqunTikbqZLr2aR+rGI/VqHqmb6dITJgAAFjMBALCYCQCAxUwAACxmAgBgMRMAAIuZAABY7Et/wXTpxiN1Ml268Ui9mkfqZrr01HTpqenSiUfqZrp0Ml268Ug95ZH6BB6pV/NI3UyXvgOP1M106SmP1HcwXfoEHqmb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" alt="QR Code โต๊ะ 8">
+      </div>
+
+      <div class="qr-steps">
+        <div class="qr-step-row">
+          <span class="qr-step-badge">1</span>
+          <span>เปิดกล้องมือถือ หรือ LINE สแกน QR Code</span>
+        </div>
+        <div class="qr-step-row">
+          <span class="qr-step-badge">2</span>
+          <span>เลือกเมนูอาหาร ระบุตัวเลือก แล้วกดส่งสั่ง</span>
+        </div>
+        <div class="qr-step-row">
+          <span class="qr-step-badge">3</span>
+          <span>รายการส่งตรงถึงห้องครัวปรุงสดทันที</span>
+        </div>
+      </div>
+
+      <div class="qr-footer">
+        <div>✨ สแกนสั่งเพิ่มหรือเรียกพนักงานได้ตลอดเวลา</div>
+        <div style="font-size: 0.7rem; color: #94a3b8; margin-top: 2px;">เบอร์โทรติดต่อ: 089-123-4567</div>
+      </div>
+    </div>
+    
+    <div class="qr-stand-card">
+      <div class="qr-header">
+        <div class="qr-logo-wrap">
+          <img src="backend/logo/logo.jpg" alt="โลโก้ครัวลุงหนุ่ย" class="qr-logo-img" onerror="this.src='backend/logo/logo.png'">
+        </div>
+        <div class="qr-shop-title">ครัวลุงหนุ่ย (Krua Lung Nui)</div>
+        <div class="qr-shop-sub">รสชาติต้นตำรับ • อร่อยเหมือนกินที่บ้าน</div>
+      </div>
+
+      <div class="qr-table-badge">
+        <span>🍽️ โต๊ะ 9</span>
+      </div>
+
+      <div class="qr-image-wrap">
+        <img src="data:image/png;base64,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" alt="QR Code โต๊ะ 9">
+      </div>
+
+      <div class="qr-steps">
+        <div class="qr-step-row">
+          <span class="qr-step-badge">1</span>
+          <span>เปิดกล้องมือถือ หรือ LINE สแกน QR Code</span>
+        </div>
+        <div class="qr-step-row">
+          <span class="qr-step-badge">2</span>
+          <span>เลือกเมนูอาหาร ระบุตัวเลือก แล้วกดส่งสั่ง</span>
+        </div>
+        <div class="qr-step-row">
+          <span class="qr-step-badge">3</span>
+          <span>รายการส่งตรงถึงห้องครัวปรุงสดทันที</span>
+        </div>
+      </div>
+
+      <div class="qr-footer">
+        <div>✨ สแกนสั่งเพิ่มหรือเรียกพนักงานได้ตลอดเวลา</div>
+        <div style="font-size: 0.7rem; color: #94a3b8; margin-top: 2px;">เบอร์โทรติดต่อ: 089-123-4567</div>
+      </div>
+    </div>
+    
+    <div class="qr-stand-card">
+      <div class="qr-header">
+        <div class="qr-logo-wrap">
+          <img src="backend/logo/logo.jpg" alt="โลโก้ครัวลุงหนุ่ย" class="qr-logo-img" onerror="this.src='backend/logo/logo.png'">
+        </div>
+        <div class="qr-shop-title">ครัวลุงหนุ่ย (Krua Lung Nui)</div>
+        <div class="qr-shop-sub">รสชาติต้นตำรับ • อร่อยเหมือนกินที่บ้าน</div>
+      </div>
+
+      <div class="qr-table-badge">
+        <span>🍽️ โต๊ะ 10</span>
+      </div>
+
+      <div class="qr-image-wrap">
+        <img src="data:image/png;base64,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" alt="QR Code โต๊ะ 10">
+      </div>
+
+      <div class="qr-steps">
+        <div class="qr-step-row">
+          <span class="qr-step-badge">1</span>
+          <span>เปิดกล้องมือถือ หรือ LINE สแกน QR Code</span>
+        </div>
+        <div class="qr-step-row">
+          <span class="qr-step-badge">2</span>
+          <span>เลือกเมนูอาหาร ระบุตัวเลือก แล้วกดส่งสั่ง</span>
+        </div>
+        <div class="qr-step-row">
+          <span class="qr-step-badge">3</span>
+          <span>รายการส่งตรงถึงห้องครัวปรุงสดทันที</span>
+        </div>
+      </div>
+
+      <div class="qr-footer">
+        <div>✨ สแกนสั่งเพิ่มหรือเรียกพนักงานได้ตลอดเวลา</div>
+        <div style="font-size: 0.7rem; color: #94a3b8; margin-top: 2px;">เบอร์โทรติดต่อ: 089-123-4567</div>
+      </div>
+    </div>
+    
+  </div>
+
+</body>
+</html>

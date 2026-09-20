@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>ครัวลุงหนุ่ย | สั่งอาหารออนไลน์ (ทานที่ร้าน & สั่งกลับบ้าน)</title>
+  <!-- Google Fonts: Prompt & Plus Jakarta Sans -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Prompt:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+  <!-- LINE LIFF SDK -->
+  <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  <!-- QRCode.js -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <!-- HTML5 QR Code Scanner -->
+  <script src="html5-qrcode.min.js"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="mobile-container has-bottom-nav">
+    
+    <!-- Top Sticky Header -->
+    <header class="app-header">
+      <div class="header-main-row">
+        <div class="brand-info">
+          <div class="logo-circle">
+            <img src="logo/logo.jpg" alt="ครัวลุงหนุ่ย" class="shop-logo-img" onerror="this.src='logo/logo.png'">
+          </div>
+          <div>
+            <div class="shop-title-row">
+              <h1 class="shop-title" id="shopNameDisplay">ครัวลุงหนุ่ย</h1>
+              <span class="shop-loc-pill" onclick="switchLiffPage('map')" title="คลิกเพื่อดูแผนที่ร้าน">
+                <i data-lucide="map-pin"></i> ซ.คุ้มเกล้า 20
+              </span>
+            </div>
+            <p class="shop-slogan">🌾 อร่อยเหมือนกินที่บ้าน</p>
+          </div>
+        </div>
+
+        <div class="header-right-actions">
+          <!-- Order Status Tracker Button -->
+          <button class="icon-circle-btn" onclick="openOrderTrackerModal()" title="ติดตามสถานะอาหาร / ดูประวัติสั่ง">
+            <i data-lucide="receipt-text"></i>
+            <span class="active-orders-dot" id="activeOrdersDot" style="display:none;"></span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Dedicated Context Banner (Shows exact Table or Takeaway Queue) - Only in Order mode -->
+      <div class="order-context-banner" id="orderContextBanner">
+        <div class="context-icon-wrap" id="contextIconWrap">🍽️</div>
+        <div class="context-info-wrap">
+          <div class="context-main-title" id="contextMainTitle">กำลังสั่งอาหารสำหรับ <b>โต๊ะ 1</b></div>
+          <div class="context-sub-desc" id="contextSubDesc">อาหารจะนำไปเสิร์ฟที่โต๊ะโดยตรง</div>
+        </div>
+        <div class="context-quick-actions" id="contextQuickActions">
+          <button class="context-action-btn" id="btnContextCallWaiter" onclick="callWaiter()">
+            <i data-lucide="bell"></i> <span>เรียกพนักงาน</span>
+          </button>
+          <button class="context-action-btn bill-action" id="btnContextBill" onclick="requestBill()">
+            <i data-lucide="receipt"></i> <span>ขอเช็คบิล</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Search & Category Filters (For Menu & Order Pages) -->
+      <div id="headerSearchCategoryArea">
+        <div class="search-wrap">
+          <i data-lucide="search"></i>
+          <input type="text" id="searchInput" class="search-input" placeholder="ค้นหาเมนู เช่น ต้มเลือดหมู, ข้าวมันไก่, ส้มตำ..." oninput="handleSearch()">
+        </div>
+
+        <nav class="category-tabs-nav" id="categoryTabsNav">
+          <!-- Dynamically populated categories -->
+        </nav>
+      </div>
+    </header>
+
+    <!-- ========================================== -->
+    <!-- VIEW 1: MENU & ORDER FEED (Tab: menu / order) -->
+    <!-- ========================================== -->
+    <div id="pageViewMenu" class="liff-page-view active">
+      <!-- Rich Menu 6-Action Quick Hub -->
+      <section class="rich-hub-section" id="richHubSection">
+        <div class="rich-hub-header">
+          <span class="rich-hub-title"><i data-lucide="layout-grid"></i> บริการร้านครัวลุงหนุ่ย</span>
+          <span class="rich-hub-sub">กดเลือกบริการตามริชเมนูได้ทันที</span>
+        </div>
+        <div class="rich-action-grid">
+          <button class="rich-hub-btn btn-hub-menu" onclick="switchLiffPage('menu')">
+            <div class="hub-btn-icon">📖</div>
+            <div class="hub-btn-content">
+              <strong>ดูเมนู</strong>
+              <small>รายการทั้งหมด</small>
+            </div>
+          </button>
+          <button class="rich-hub-btn btn-hub-order" onclick="switchLiffPage('order')">
+            <div class="hub-btn-icon">🛍️</div>
+            <div class="hub-btn-content">
+              <strong>สั่งอาหาร</strong>
+              <small>ทานร้าน/กลับบ้าน</small>
+            </div>
+          </button>
+          <button class="rich-hub-btn btn-hub-map" onclick="switchLiffPage('map')">
+            <div class="hub-btn-icon">📍</div>
+            <div class="hub-btn-content">
+              <strong>แผนที่ร้าน</strong>
+              <small>ดูเส้นทางมาร้าน</small>
+            </div>
+          </button>
+          <button class="rich-hub-btn btn-hub-promo" onclick="switchLiffPage('promotion')">
+            <div class="hub-btn-icon">🎁</div>
+            <div class="hub-btn-content">
+              <strong>โปรโมชั่น</strong>
+              <small>โปร & สิทธิพิเศษ</small>
+            </div>
+          </button>
+          <button class="rich-hub-btn btn-hub-contact" onclick="switchLiffPage('contact')">
+            <div class="hub-btn-icon">📞</div>
+            <div class="hub-btn-content">
+              <strong>ติดต่อร้าน</strong>
+              <small>โทร แชท สอบถาม</small>
+            </div>
+          </button>
+          <button class="rich-hub-btn btn-hub-reserve" onclick="switchLiffPage('reservation')">
+            <div class="hub-btn-icon">📅</div>
+            <div class="hub-btn-content">
+              <strong>จองโต๊ะ</strong>
+              <small>สำรองที่นั่งล่วงหน้า</small>
+            </div>
+          </button>
+        </div>
+      </section>
+
+      <main class="menu-feed" id="menuFeed">
+        <!-- Dynamically populated menu cards -->
+      </main>
+
+      <!-- Floating Cart Bar (Bottom Sticky) -->
+      <aside class="floating-cart-bar" id="floatingCartBar" onclick="openCartModal()">
+        <div class="cart-left-info">
+          <div class="cart-badge-icon">
+            <i data-lucide="shopping-bag"></i>
+            <span class="cart-count-badge" id="floatCartItemCount">0</span>
+          </div>
+          <div class="cart-text-sum">
+            <span class="cart-qty-text"><span id="floatCartItemCountText">0</span> รายการในตะกร้า</span>
+            <span class="cart-total-price" id="floatCartTotalPrice">฿0.00</span>
+          </div>
+        </div>
+        <div class="cart-btn-label">
+          <span id="floatCartBtnActionText">ดูตะกร้า & สั่งอาหาร</span> <i data-lucide="arrow-right"></i>
+        </div>
+      </aside>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- VIEW 2: PROMOTIONS (Tab: promotion) -->
+    <!-- ========================================== -->
+    <div id="pageViewPromotion" class="liff-page-view">
+      <div class="promo-list">
+        
+        <div class="promo-card">
+          <div class="promo-header-banner" style="background: linear-gradient(rgba(0,0,0,0.2), rgba(0,0,0,0.7)), url('images/thai_tea.jpg') center/cover;">
+            <span class="promo-badge-tag">🔥 โปรเปิดร้าน</span>
+          </div>
+          <div class="promo-body">
+            <h3 class="promo-title">สั่งอาหารครบ 300 บาท รับฟรี! ชาไทยเย็นเข้มข้น 1 แก้ว</h3>
+            <p class="promo-desc">เมื่อสั่งทานที่ร้านหรือสั่งกลับบ้านครบ 300 บาท รับชาไทยสูตรเด็ดครัวลุงหนุ่ยฟรีทันที</p>
+            <div class="promo-footer-row">
+              <span>📅 ถึง 31 ธ.ค. 2026</span>
+              <button class="btn-confirm-add" style="padding:0.4rem 0.8rem; font-size:0.8rem;" onclick="switchLiffPage('order')">สั่งอาหารเลย</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="promo-card">
+          <div class="promo-header-banner" style="background: linear-gradient(rgba(0,0,0,0.2), rgba(0,0,0,0.7)), url('images/french_fries.jpg') center/cover;">
+            <span class="promo-badge-tag">🍟 เช็คอินแถมฟรี</span>
+          </div>
+          <div class="promo-body">
+            <h3 class="promo-title">เช็คอิน & เพิ่มเพื่อน LINE รับเฟรนช์ฟรายส์กรอบ 1 ที่</h3>
+            <p class="promo-desc">เพียงถ่ายรูปอาหารหรือบรรยากาศร้านแล้วเช็คอิน รับของทานเล่นยอดฮิตไปทานฟรีๆ</p>
+            <div class="promo-footer-row">
+              <span>📍 ครัวลุงหนุ่ย ซ.คุ้มเกล้า 20</span>
+              <button class="btn-confirm-add" style="padding:0.4rem 0.8rem; font-size:0.8rem;" onclick="switchLiffPage('order')">ใช้สิทธิ์</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="promo-card">
+          <div class="promo-header-banner" style="background: linear-gradient(rgba(0,0,0,0.2), rgba(0,0,0,0.7)), url('images/somtum_plara.jpg') center/cover;">
+            <span class="promo-badge-tag">🌶️ เซ็ตสุดคุ้ม</span>
+          </div>
+          <div class="promo-body">
+            <h3 class="promo-title">เซ็ตแซ่บสะท้านทุ่ง ส้มตำปลาร้า + คอหมูย่าง เพียง 120.-</h3>
+            <p class="promo-desc">จับคู่ความอร่อยรสแซ่บอีสานแท้ๆ ส้มตำรสจัดจ้านและคอหมูย่างฉ่ำนุ่ม</p>
+            <div class="promo-footer-row">
+              <span>⚡ ปกติ 130.- ประหยัด 10.-</span>
+              <button class="btn-confirm-add" style="padding:0.4rem 0.8rem; font-size:0.8rem;" onclick="switchLiffPage('order')">สั่งเลย</button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- VIEW 3: STORE MAP & DIRECTIONS (Tab: map)  -->
+    <!-- ========================================== -->
+    <div id="pageViewMap" class="liff-page-view">
+      <div class="map-page-container">
+        <div class="map-store-card">
+          <div class="map-store-header">
+            <div class="map-store-logo">
+              <img src="logo/logo.jpg" alt="ครัวลุงหนุ่ย" onerror="this.src='logo/logo.png'">
+            </div>
+            <div>
+              <h2 class="map-store-name">ครัวลุงหนุ่ย ซ.คุ้มเกล้า 20</h2>
+              <p class="map-store-slogan">🌾 รสชาติต้นตำรับ • อร่อยเหมือนกินที่บ้าน</p>
+            </div>
+          </div>
+
+          <!-- Big Prominent Google Maps Direct CTA -->
+          <a href="https://maps.app.goo.gl/jzQEeRW21uY5UqMQ7" target="_blank" class="btn-direct-maps-cta">
+            <div class="btn-maps-icon">🗺️</div>
+            <div class="btn-maps-text">
+              <strong>เปิด Google Maps นำทางมาร้าน</strong>
+              <small>คลิกเดียว เปิดแอปแผนที่นำทางตรงถึงร้านทันที ↗</small>
+            </div>
+          </a>
+
+          <!-- Details & Transport info -->
+          <div class="map-detail-list">
+            <div class="map-detail-item">
+              <div class="map-detail-icon"><i data-lucide="map-pin"></i></div>
+              <div>
+                <strong>ที่ตั้งร้าน</strong>
+                <p>ซอยคุ้มเกล้า 20 แขวงลำปลาทิว เขตลาดกระบัง กรุงเทพมหานคร</p>
+              </div>
+            </div>
+            <div class="map-detail-item">
+              <div class="map-detail-icon"><i data-lucide="clock"></i></div>
+              <div>
+                <strong>เวลาเปิด-ปิด</strong>
+                <p>เปิดบริการทุกวัน: 10:00 - 22:00 น. (ครัวปิด 21:30 น.)</p>
+              </div>
+            </div>
+            <div class="map-detail-item">
+              <div class="map-detail-icon"><i data-lucide="car"></i></div>
+              <div>
+                <strong>ที่จอดรถ & การเดินทาง</strong>
+                <p>มีที่จอดรถกว้างขวางหน้าร้าน สะดวก ปลอดภัย บรรยากาศร่มรื่น</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Embedded Map Preview -->
+          <div class="map-embed-wrapper">
+            <iframe 
+              src="https://maps.google.com/maps?q=ซอยคุ้มเกล้า+20&t=&z=16&ie=UTF8&iwloc=&output=embed" 
+              width="100%" 
+              height="250" 
+              style="border:0; border-radius: 14px; width: 100%; display: block;" 
+              allowfullscreen="" 
+              loading="lazy">
+            </iframe>
+          </div>
+
+          <div class="map-action-footer">
+            <a href="tel:0901234567" class="btn-map-quick btn-quick-call">
+              <i data-lucide="phone"></i> <span>โทรสอบถามเส้นทาง</span>
+            </a>
+            <button class="btn-map-quick btn-quick-order" onclick="switchLiffPage('order')">
+              <i data-lucide="shopping-bag"></i> <span>สั่งอาหารล่วงหน้า</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- VIEW 4: CONTACT US (Tab: contact)          -->
+    <!-- ========================================== -->
+    <div id="pageViewContact" class="liff-page-view">
+      <div class="contact-container">
+        <div class="contact-card">
+          <h3 style="font-size:1.1rem; font-weight:700; margin-bottom:1rem; display:flex; align-items:center; gap:0.5rem;">
+            <i data-lucide="store" style="color:var(--primary);"></i> ข้อมูลร้านครัวลุงหนุ่ย
+          </h3>
+          
+          <div class="contact-row-item">
+            <div class="contact-icon-box"><i data-lucide="map-pin"></i></div>
+            <div>
+              <strong style="font-size:0.9rem;">ที่ตั้งร้าน</strong>
+              <p style="font-size:0.85rem; color:var(--text-secondary); margin-top:0.2rem;">ซอยคุ้มเกล้า 20 แขวงลำปลาทิว เขตลาดกระบัง กรุงเทพมหานคร</p>
+            </div>
+          </div>
+
+          <div class="contact-row-item">
+            <div class="contact-icon-box"><i data-lucide="clock"></i></div>
+            <div>
+              <strong style="font-size:0.9rem;">เวลาเปิด-ปิด</strong>
+              <p style="font-size:0.85rem; color:var(--text-secondary); margin-top:0.2rem;">เปิดบริการทุกวัน: 10:00 - 22:00 น.</p>
+            </div>
+          </div>
+
+          <div class="contact-row-item">
+            <div class="contact-icon-box"><i data-lucide="phone-call"></i></div>
+            <div>
+              <strong style="font-size:0.9rem;">เบอร์โทรศัพท์</strong>
+              <p style="font-size:0.85rem; color:var(--text-secondary); margin-top:0.2rem;">090-123-4567, 081-999-8888</p>
+            </div>
+          </div>
+
+          <div class="contact-btn-grid">
+            <a href="tel:0901234567" class="btn-contact-action btn-call">
+              <i data-lucide="phone"></i> <span>โทรหาร้าน</span>
+            </a>
+            <a href="https://line.me" target="_blank" class="btn-contact-action btn-line-oa">
+              <i data-lucide="message-circle"></i> <span>แชท LINE OA</span>
+            </a>
+            <a href="https://maps.app.goo.gl/jzQEeRW21uY5UqMQ7" target="_blank" class="btn-contact-action btn-maps">
+              <i data-lucide="navigation"></i> <span>เปิดแผนที่ Google Maps (นำทาง)</span>
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- VIEW 5: TABLE RESERVATION (Tab: reservation) -->
+    <!-- ========================================== -->
+    <div id="pageViewReservation" class="liff-page-view">
+      <div class="reservation-container">
+        <div class="reservation-card">
+          <h3 style="font-size:1.1rem; font-weight:700; margin-bottom:0.5rem; display:flex; align-items:center; gap:0.5rem;">
+            <i data-lucide="calendar" style="color:var(--primary);"></i> จองโต๊ะล่วงหน้า
+          </h3>
+          <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:1.25rem;">กรอกข้อมูลเพื่อสำรองที่นั่ง ทางร้านจะจัดเตรียมโต๊ะรอต้อนรับครับ</p>
+
+          <form id="reservationForm" onsubmit="handleReservationSubmit(event)">
+            <div class="form-group-custom">
+              <label class="form-label-custom">ชื่อผู้จอง <span class="text-danger">*</span></label>
+              <input type="text" id="resCustName" class="form-input-custom" required placeholder="ระบุชื่อของคุณ">
+            </div>
+
+            <div class="form-group-custom">
+              <label class="form-label-custom">เบอร์โทรติดต่อ <span class="text-danger">*</span></label>
+              <input type="tel" id="resCustPhone" class="form-input-custom" required placeholder="เช่น 081-xxx-xxxx">
+            </div>
+
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.75rem;">
+              <div class="form-group-custom">
+                <label class="form-label-custom">วันที่ <span class="text-danger">*</span></label>
+                <input type="date" id="resDate" class="form-input-custom" required>
+              </div>
+              <div class="form-group-custom">
+                <label class="form-label-custom">เวลา <span class="text-danger">*</span></label>
+                <input type="time" id="resTime" class="form-input-custom" required>
+              </div>
+            </div>
+
+            <div class="form-group-custom">
+              <label class="form-label-custom">จำนวนลูกค้า (ท่าน) <span class="text-danger">*</span></label>
+              <select id="resSeats" class="form-input-custom">
+                <option value="1-2">1 - 2 ท่าน</option>
+                <option value="3-4" selected>3 - 4 ท่าน</option>
+                <option value="5-6">5 - 6 ท่าน</option>
+                <option value="7-10">7 - 10 ท่าน</option>
+                <option value="10+">มากกว่า 10 ท่าน (จัดเลี้ยง)</option>
+              </select>
+            </div>
+
+            <div class="form-group-custom">
+              <label class="form-label-custom">ข้อความเพิ่มเติม / ความต้องการพิเศษ</label>
+              <textarea id="resNotes" class="form-input-custom" rows="2" placeholder="เช่น ขอโต๊ะริมหน้าต่าง, มีเด็กเล็ก"></textarea>
+            </div>
+
+            <button type="submit" class="btn-submit-res">
+              <i data-lucide="check-circle"></i> <span>ยืนยันการจองโต๊ะ</span>
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- 6-BUTTON BOTTOM NAVIGATION BAR (MATCHING RICH MENU) -->
+    <!-- ========================================== -->
+    <nav class="liff-bottom-nav">
+      <button class="liff-nav-item active" id="navBtnMenu" onclick="switchLiffPage('menu')">
+        <i data-lucide="book-open"></i>
+        <span>ดูเมนู</span>
+      </button>
+      <button class="liff-nav-item" id="navBtnOrder" onclick="switchLiffPage('order')">
+        <i data-lucide="shopping-bag"></i>
+        <span>สั่งอาหาร</span>
+      </button>
+      <button class="liff-nav-item" id="navBtnMap" onclick="switchLiffPage('map')">
+        <i data-lucide="map-pin"></i>
+        <span>แผนที่ร้าน</span>
+      </button>
+      <button class="liff-nav-item" id="navBtnPromotion" onclick="switchLiffPage('promotion')">
+        <i data-lucide="gift"></i>
+        <span>โปรโมชั่น</span>
+      </button>
+      <button class="liff-nav-item" id="navBtnContact" onclick="switchLiffPage('contact')">
+        <i data-lucide="phone"></i>
+        <span>ติดต่อเรา</span>
+      </button>
+      <button class="liff-nav-item" id="navBtnReservation" onclick="switchLiffPage('reservation')">
+        <i data-lucide="calendar"></i>
+        <span>จองโต๊ะ</span>
+      </button>
+    </nav>
+
+  </div>
+
+  <!-- MODALS -->
+
+  <!-- 1. Item Customization Modal (เลือกความเผ็ด / ท็อปปิ้ง / หมายเหตุ) -->
+  <div id="customizeModal" class="modal-overlay">
+    <div class="modal-sheet">
+      <div class="sheet-header">
+        <div class="sheet-drag-handle"></div>
+        <button class="sheet-close-btn" onclick="closeModal('customizeModal')">&times;</button>
+      </div>
+      <div class="sheet-scroll-body" id="customizeModalBody">
+        <!-- Populated with item details, image, options radio/checkbox, and notes -->
+      </div>
+      <div class="sheet-footer">
+        <div class="qty-stepper">
+          <button type="button" class="stepper-btn" onclick="adjustCustomModalQty(-1)"><i data-lucide="minus"></i></button>
+          <span class="stepper-value" id="customModalQty">1</span>
+          <button type="button" class="stepper-btn" onclick="adjustCustomModalQty(1)"><i data-lucide="plus"></i></button>
+        </div>
+        <button type="button" class="btn-confirm-add" onclick="confirmAddToCartFromModal()">
+          <span>ใส่ตะกร้า</span>
+          <b id="customModalTotalPrice">฿0.00</b>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. Cart & Order Summary Modal -->
+  <div id="cartModal" class="modal-overlay">
+    <div class="modal-sheet">
+      <div class="sheet-header">
+        <div class="sheet-drag-handle"></div>
+        <div class="sheet-title-row">
+          <h3 class="sheet-title">
+            <i data-lucide="shopping-cart"></i> 
+            <span id="cartModalHeaderTitle">ตะกร้าอาหาร (ทานที่ร้าน โต๊ะ 1)</span>
+          </h3>
+          <button class="clear-cart-text-btn" onclick="clearCart()">ล้างตะกร้า</button>
+        </div>
+        <button class="sheet-close-btn" onclick="closeModal('cartModal')">&times;</button>
+      </div>
+      
+      <div class="sheet-scroll-body" id="cartModalScrollBody">
+        <!-- Items container -->
+        <div id="cartModalItemsContainer"></div>
+
+        <!-- Takeaway Extra Details (Visible when in Takeaway mode) -->
+        <div class="takeaway-extra-form" id="takeawayExtraForm" style="display:none; margin-top: 1rem; padding-top: 1rem; border-top: 1px dashed var(--border-color);">
+          <div class="custom-section-title">ข้อมูลสำหรับเรียกรับอาหาร (สั่งกลับบ้าน)</div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin-bottom: 0.75rem;">
+            <input type="text" id="custNameInput" class="special-note-input" placeholder="ชื่อผู้สั่ง (เช่น คุณก้อง)">
+            <input type="tel" id="custPhoneInput" class="special-note-input" placeholder="เบอร์โทรศัพท์">
+          </div>
+          <div class="takeaway-checkboxes">
+            <label class="custom-checkbox-row">
+              <input type="checkbox" id="chkPlasticCutlery" checked>
+              <span>รับช้อน-ส้อมพลาสติก</span>
+            </label>
+            <label class="custom-checkbox-row">
+              <input type="checkbox" id="chkSeparateSauce" checked>
+              <span>แยกน้ำจิ้ม / น้ำส้มตำ</span>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <div class="cart-sheet-summary" id="cartSheetSummary">
+        <div class="summary-line">
+          <span>รวมค่าอาหาร:</span>
+          <span id="cartModalSubtotal">฿0.00</span>
+        </div>
+        <div class="summary-line grand-total">
+          <span>ยอดสุทธิที่ต้องชำระ:</span>
+          <span id="cartModalGrandTotal">฿0.00</span>
+        </div>
+      </div>
+
+      <div class="sheet-footer">
+        <button type="button" class="btn-primary-block" id="btnSubmitOrder" onclick="submitOrder()">
+          <i data-lucide="send"></i> ยืนยันสั่งอาหารเข้าครัวลุงหนุ่ย
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. Live Order Tracker Modal -->
+  <div id="trackerModal" class="modal-overlay">
+    <div class="modal-sheet">
+      <div class="sheet-header">
+        <div class="sheet-drag-handle"></div>
+        <h3 class="sheet-title">
+          <i data-lucide="utensils"></i> 
+          <span id="trackerModalHeaderTitle">สถานะอาหาร (โต๊ะ 1)</span>
+        </h3>
+        <button class="sheet-close-btn" onclick="closeModal('trackerModal')">&times;</button>
+      </div>
+      <div class="sheet-scroll-body" id="trackerModalBody">
+        <!-- Live status tickets -->
+      </div>
+      <div class="sheet-footer" style="flex-direction: column; gap: 0.65rem;">
+        <div class="tracker-total-box" id="trackerTotalBox">
+          <span>ยอดรวมทั้งสิ้น:</span>
+          <b id="trackerGrandTotalDisplay">฿0.00</b>
+        </div>
+        <button type="button" class="btn-primary-block bill-btn" id="btnTrackerBillAction" onclick="requestBill()">
+          <i data-lucide="receipt"></i> ขอเช็คบิล / ชำระเงิน
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 4. Bill & PromptPay Checkout Modal -->
+  <div id="billModal" class="modal-overlay">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3><i data-lucide="receipt"></i> ชำระเงินผ่านพร้อมเพย์</h3>
+        <button class="modal-close" onclick="closeModal('billModal')">&times;</button>
+      </div>
+      <div class="modal-body" style="text-align: center;">
+        <div class="promptpay-payment-card">
+          <div class="thai-qr-header">
+            <div class="thai-qr-badge">THAI QR PAYMENT</div>
+            <div class="promptpay-sub">สแกนจ่ายได้ทุกธนาคาร</div>
+          </div>
+          <div class="qr-box" id="customerBillQRCode">
+            <!-- QR code rendered here -->
+          </div>
+          <div class="bill-pay-meta">
+            <div class="shop-account-name" id="billMerchantName">ครัวลุงหนุ่ย</div>
+            <div class="bill-table-info" id="billTargetDisplay">โต๊ะ 1 • ยอดชำระสุทธิ</div>
+            <div class="bill-pay-amount" id="billPayAmount">฿0.00</div>
+          </div>
+        </div>
+        <p class="bill-instruction-note">
+          💡 สแกนจ่ายผ่าน Mobile Banking หรือแจ้งพนักงานเพื่อชำระเงินสด
+        </p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn-secondary-block" onclick="closeModal('billModal')">ปิดหน้าต่าง</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 5. Table QR Code Scanner & Table Verification Modal -->
+  <div id="tableQrModal" class="modal-overlay">
+    <div class="modal-dialog modal-md" style="max-width: 460px;">
+      <div class="modal-header" style="background: linear-gradient(135deg, #1e293b, #0f172a); color: #ffffff;">
+        <h3 style="color:#fef3c7; display: flex; align-items: center; gap: 0.5rem; font-size: 1.05rem;">
+          <i data-lucide="scan-line" style="color: #f59e0b;"></i>
+          <span>สแกน QR Code ประจำโต๊ะ</span>
+        </h3>
+        <button class="modal-close" onclick="closeTableQrModal()" style="color: #cbd5e1;">&times;</button>
+      </div>
+      <div class="modal-body" style="padding: 1rem;">
+        
+        <!-- Mandatory Notice -->
+        <div class="table-qr-hint-box">
+          <div style="font-size: 1.25rem;">📷</div>
+          <div style="font-size: 0.85rem; color: #1e293b;">
+            <strong style="color: #b45309; display: block; margin-bottom: 0.15rem;">กรุณาสแกน QR Code ประจำโต๊ะก่อนสั่งอาหาร</strong>
+            ระบบจะระบุหมายเลขโต๊ะอัตโนมัติ เพื่อให้ทางร้านเสิร์ฟอาหารถึงโต๊ะและเช็คบิลได้ถูกต้อง
+          </div>
+        </div>
+
+        <!-- Camera Scanner Viewport -->
+        <div class="qr-camera-box">
+          <div id="qrReader" style="width: 100%; min-height: 220px; background: #0f172a; border-radius: 12px; overflow: hidden;"></div>
+          <div id="qrScanStatusMsg" class="qr-status-msg">
+            <i data-lucide="camera"></i> <span>กดปุ่มเปิดกล้อง หรือเลือกหมายเลขโต๊ะด้านล่าง</span>
+          </div>
+
+          <div class="scanner-action-buttons">
+            <button type="button" class="btn-camera-toggle" id="btnToggleQrCamera" onclick="toggleQrCamera()">
+              <i data-lucide="camera"></i> <span id="btnToggleQrCameraText">เปิดกล้องสแกน QR</span>
+            </button>
+            <button type="button" class="btn-liff-camera" id="btnLiffScan" onclick="triggerLiffScan()" style="display:none;">
+              <i data-lucide="qr-code"></i> <span>สแกนด้วย LINE</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Switch to Takeaway -->
+        <div style="text-align: center; margin-top: 1rem; padding-top: 0.85rem; border-top: 1px dashed #e2e8f0;">
+          <button type="button" class="btn-takeaway-link" onclick="switchToTakeawayFromModal()">
+            🛍️ สั่งกลับบ้าน (สั่งใส่กล่อง ไม่ต้องนั่งโต๊ะ)
+          </button>
+        </div>
+
+        <!-- Table QR Preview (For Store Owner / Testing on PC) -->
+        <div class="store-qr-preview-accordion">
+          <button type="button" class="btn-accordion-toggle" onclick="toggleQrPreviewGrid()">
+            <i data-lucide="printer"></i> <span>ดูตัวอย่าง QR Code โต๊ะ 1-6 (สำหรับทดสอบหรือพิมพ์)</span>
+          </button>
+          <div id="tableQrPreviewContainer" style="display:none; margin-top: 0.75rem;">
+            <p style="font-size: 0.75rem; color: #64748b; margin-bottom: 0.5rem; text-align: center;">
+              สามารถใช้มือถือสแกนภาพ QR Code เหล่านี้บนหน้าจอเพื่อทดสอบระบบได้ทันที:
+            </p>
+            <div id="qrPreviewGrid" class="qr-preview-grid"></div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification Popup -->
+  <div id="appToastNotification" class="app-toast-popup">
+    <span class="toast-icon">🎉</span>
+    <span class="toast-message" id="toastMessageText">บันทึกสำเร็จ</span>
+  </div>
+
+  <!-- Audio Chime -->
+  <audio id="orderSuccessSound" preload="auto">
+    <source src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3" type="audio/mpeg">
+  </audio>
+
+  <!-- Scripts -->
+    <!-- Modular Menu Data Layer -->
+  <script src="data/categories.js"></script>
+  <script src="data/menus/recommend.js"></script>
+  <script src="data/menus/alacarte.js"></script>
+  <script src="data/menus/isan.js"></script>
+  <script src="data/menus/soup_yum.js"></script>
+  <script src="data/menus/drink_promo.js"></script>
+  <script src="data/menus/alcohol.js"></script>
+  <script src="data/menus/mixer.js"></script>
+  <script src="data/menus/index.js"></script>
+  <!-- Supabase Official JS SDK & Client Sync Engine -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="config.example.js"></script>
+  <script src="supabaseClient.js"></script>
+  <script src="promptpay.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

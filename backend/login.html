@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>เข้าสู่ระบบแยกผู้ใช้งาน | ครัวลุงหนุ่ย</title>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Prompt:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .pin-dot {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      border: 2px solid #cbd5e1;
+      background: #f8fafc;
+      transition: all 0.15s ease;
+      display: inline-block;
+    }
+    .pin-dot.filled {
+      background: #2563eb;
+      border-color: #2563eb;
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.25);
+      transform: scale(1.1);
+    }
+    .pin-dot.filled.owner-dot {
+      background: #d97706;
+      border-color: #d97706;
+      box-shadow: 0 0 0 3px rgba(217, 119, 6, 0.25);
+    }
+    .num-btn {
+      height: 52px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.45rem;
+      font-weight: 700;
+      color: #0f172a;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 14px;
+      cursor: pointer;
+      transition: all 0.1s ease;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .num-btn:hover {
+      background: #f1f5f9;
+      border-color: #cbd5e1;
+    }
+    .num-btn:active {
+      background: #e2e8f0;
+      transform: scale(0.96);
+    }
+    .num-btn.action-btn {
+      font-size: 1.05rem;
+      font-weight: 600;
+    }
+    .user-select-card {
+      display: flex;
+      align-items: center;
+      gap: 0.85rem;
+      padding: 0.95rem 1.15rem;
+      border: 1.5px solid #e2e8f0;
+      border-radius: 14px;
+      background: #ffffff;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .user-select-card:hover {
+      border-color: #3b82f6;
+      background: #f8fafc;
+      transform: translateY(-1px);
+    }
+  </style>
+</head>
+<body style="background: linear-gradient(135deg, #0f172a, #1e293b); min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 1.5rem;">
+
+  <div style="background: #ffffff; width: 100%; max-width: 490px; border-radius: 24px; padding: 2.25rem 2rem; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); text-align: center;">
+    
+    <!-- Logo & Brand Header -->
+    <div style="width: 78px; height: 78px; margin: 0 auto 0.65rem; border-radius: 50%; overflow: hidden; border: 3px solid #f59e0b; box-shadow: 0 4px 14px rgba(245, 158, 11, 0.35);">
+      <img src="logo/logo.jpg" alt="ครัวลุงหนุ่ย" style="width:100%; height:100%; object-fit:cover;" onerror="this.src='logo/logo.png'">
+    </div>
+    <h1 style="font-size: 1.45rem; font-weight: 800; color: #0f172a; margin-bottom: 0.2rem;">ครัวลุงหนุ่ย (Krua Lung Nui)</h1>
+    <p style="font-size: 0.88rem; color: #64748b; margin-bottom: 1.5rem;">ระบบจัดการร้านอาหาร • เลือกระดับสิทธิ์และผู้ปฏิบัติงาน</p>
+
+    <!-- 1. LEVEL / ROLE SELECTION -->
+    <div id="roleSelectionList" style="display: flex; flex-direction: column; gap: 0.8rem; text-align: left;">
+      
+      <!-- 0. MASTER ROLE: Owner -->
+      <div onclick="selectRole('owner')" style="display: flex; align-items: center; gap: 1rem; padding: 1.1rem 1.25rem; border: 2px solid #f59e0b; border-radius: 16px; cursor: pointer; transition: all 0.2s; background: linear-gradient(135deg, #fffbeb, #ffffff); box-shadow: 0 4px 12px rgba(245, 158, 11, 0.12);">
+        <div style="width: 50px; height: 50px; border-radius: 14px; background: #fef3c7; color: #b45309; display: flex; align-items: center; justify-content: center; font-size: 1.65rem; flex-shrink: 0; border: 1px solid #fde68a;">
+          👑
+        </div>
+        <div style="flex: 1;">
+          <div style="display: flex; align-items: center; gap: 0.4rem;">
+            <strong style="font-size: 1.02rem; color: #92400e;">เจ้าของร้าน (Owner)</strong>
+            <span class="badge" style="background: #f59e0b; color: #ffffff; font-size: 0.72rem; padding: 0.1rem 0.45rem; border-radius: 9999px; font-weight: 700;">สิทธิ์สูงสุด</span>
+          </div>
+          <span style="font-size: 0.8rem; color: #78350f;">รหัสส่วนตัวเด็ดขาด • ดูแลสิทธิ์และตรวจสอบทุกคน</span>
+        </div>
+        <span class="badge" style="background: #fef3c7; color: #b45309; font-size: 0.78rem; display: flex; align-items: center; gap: 0.25rem; border: 1px solid #fde68a;">
+          <i data-lucide="shield-check" style="width: 14px; height: 14px;"></i> Master PIN
+        </span>
+      </div>
+
+      <!-- 1. Admin -->
+      <div onclick="selectRole('admin')" style="display: flex; align-items: center; gap: 1rem; padding: 0.95rem 1.25rem; border: 2px solid #e2e8f0; border-radius: 16px; cursor: pointer; transition: all 0.2s; background: #ffffff;">
+        <div style="width: 48px; height: 48px; border-radius: 14px; background: #eff6ff; color: #2563eb; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; flex-shrink: 0;">
+          🛡️
+        </div>
+        <div style="flex: 1;">
+          <div style="display: flex; align-items: center; justify-content: space-between;">
+            <strong style="font-size: 1rem; color: #0f172a;">แอดมินระบบ (Admin)</strong>
+            <span class="user-count-pill" id="count_admin" style="font-size: 0.75rem; color: #64748b; background: #f1f5f9; padding: 0.1rem 0.5rem; border-radius: 9999px;">1 คน</span>
+          </div>
+          <span style="font-size: 0.8rem; color: #64748b;">เมนู, โต๊ะ, ยอดขาย, ตั้งค่าร้านทั่วไป</span>
+        </div>
+      </div>
+
+      <!-- 2. Manager -->
+      <div onclick="selectRole('manager')" style="display: flex; align-items: center; gap: 1rem; padding: 0.95rem 1.25rem; border: 2px solid #e2e8f0; border-radius: 16px; cursor: pointer; transition: all 0.2s; background: #ffffff;">
+        <div style="width: 48px; height: 48px; border-radius: 14px; background: #f5f3ff; color: #7c3aed; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; flex-shrink: 0;">
+          👨‍💼
+        </div>
+        <div style="flex: 1;">
+          <div style="display: flex; align-items: center; justify-content: space-between;">
+            <strong style="font-size: 1rem; color: #0f172a;">ผู้จัดการร้าน (Manager)</strong>
+            <span class="user-count-pill" id="count_manager" style="font-size: 0.75rem; color: #64748b; background: #f1f5f9; padding: 0.1rem 0.5rem; border-radius: 9999px;">1 คน</span>
+          </div>
+          <span style="font-size: 0.8rem; color: #64748b;">คุมหน้าร้าน, อนุมัติส่วนลด, ปิดกะรายวัน</span>
+        </div>
+      </div>
+
+      <!-- 3. Cashier POS -->
+      <div onclick="selectRole('cashier')" style="display: flex; align-items: center; gap: 1rem; padding: 0.95rem 1.25rem; border: 2px solid #e2e8f0; border-radius: 16px; cursor: pointer; transition: all 0.2s; background: #ffffff;">
+        <div style="width: 48px; height: 48px; border-radius: 14px; background: #ecfdf5; color: #059669; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; flex-shrink: 0;">
+          💵
+        </div>
+        <div style="flex: 1;">
+          <div style="display: flex; align-items: center; justify-content: space-between;">
+            <strong style="font-size: 1rem; color: #0f172a;">แคชเชียร์ & หน้าร้าน (POS)</strong>
+            <span class="user-count-pill" id="count_cashier" style="font-size: 0.75rem; color: #64748b; background: #f1f5f9; padding: 0.1rem 0.5rem; border-radius: 9999px;">1 คน</span>
+          </div>
+          <span style="font-size: 0.8rem; color: #64748b;">เช็คบิลโต๊ะ, สั่งกลับบ้าน, รับชำระเงิน</span>
+        </div>
+      </div>
+
+      <!-- 4. Kitchen KDS -->
+      <div onclick="selectRole('kitchen')" style="display: flex; align-items: center; gap: 1rem; padding: 0.95rem 1.25rem; border: 2px solid #e2e8f0; border-radius: 16px; cursor: pointer; transition: all 0.2s; background: #ffffff;">
+        <div style="width: 48px; height: 48px; border-radius: 14px; background: #fff7ed; color: #ea580c; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; flex-shrink: 0;">
+          👨‍🍳
+        </div>
+        <div style="flex: 1;">
+          <div style="display: flex; align-items: center; justify-content: space-between;">
+            <strong style="font-size: 1rem; color: #0f172a;">แผนกครัว & ปรุงอาหาร (KDS)</strong>
+            <span class="user-count-pill" id="count_kitchen" style="font-size: 0.75rem; color: #64748b; background: #f1f5f9; padding: 0.1rem 0.5rem; border-radius: 9999px;">1 คน</span>
+          </div>
+          <span style="font-size: 0.8rem; color: #64748b;">รับออเดอร์สด, จับเวลาปรุงอาหาร</span>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- 2. USER SELECTION STEP (Shown if multiple people exist in chosen role) -->
+    <div id="userSelectionStep" style="display: none; text-align: left;">
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; border-bottom: 1px solid #e2e8f0; padding-bottom: 0.75rem;">
+        <button type="button" class="btn btn-sm btn-light" onclick="backToRoleList()" style="cursor: pointer;">
+          <i data-lucide="arrow-left"></i> ย้อนกลับ
+        </button>
+        <span id="userSelectRoleDisplay" style="font-weight: 700; color: #0f172a; font-size: 0.95rem;">-</span>
+      </div>
+
+      <p style="font-size: 0.88rem; color: #64748b; margin-bottom: 1rem;">
+        👤 กรุณาเลือกชื่อบัญชีผู้ปฏิบัติงานของคุณ:
+      </p>
+
+      <div id="userCardList" style="display: flex; flex-direction: column; gap: 0.65rem; max-height: 280px; overflow-y: auto;">
+        <!-- Dynamically rendered user cards -->
+      </div>
+    </div>
+
+    <!-- 3. PIN ENTRY FORM -->
+    <div id="pinEntryForm" style="display: none; margin-top: 0.5rem;">
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.25rem; border-bottom: 1px solid #e2e8f0; padding-bottom: 0.75rem;">
+        <button type="button" class="btn btn-sm btn-light" onclick="backFromPinEntry()" style="cursor: pointer;">
+          <i data-lucide="arrow-left"></i> ย้อนกลับ
+        </button>
+        <span id="selectedUserNameDisplay" style="font-weight: 700; color: #0f172a; font-size: 0.95rem;">-</span>
+      </div>
+
+      <!-- Standard Masked PIN Prompt -->
+      <div id="standardPinSection">
+        <div class="form-group" style="text-align: center; margin-bottom: 0.5rem;">
+          <label class="form-label" id="pinInputLabel" style="margin-bottom: 0.75rem; color: #475569; font-weight: 600; font-size: 0.95rem;">
+            🔒 กรุณากรอกรหัส PIN ประจำตัว
+          </label>
+          
+          <!-- PIN Dots Indicator (Masks digits completely) -->
+          <div id="pinDotsDisplay" style="display: flex; justify-content: center; gap: 0.85rem; margin: 0.75rem 0 0.5rem;">
+            <span class="pin-dot" id="dot-0"></span>
+            <span class="pin-dot" id="dot-1"></span>
+            <span class="pin-dot" id="dot-2"></span>
+            <span class="pin-dot" id="dot-3"></span>
+          </div>
+
+          <!-- Hidden input for keyboard capture -->
+          <input type="password" id="loginPinInput" maxlength="6" autocomplete="off" style="position: absolute; opacity: 0; pointer-events: none;" oninput="syncDotsFromInput()" onkeyup="handleKeyInput(event)">
+          
+          <div id="loginErrorMsg" style="color: #ef4444; font-size: 0.85rem; margin-top: 0.5rem; display: none; font-weight: 600;"></div>
+        </div>
+
+        <!-- Touch-friendly Number Pad -->
+        <div class="pin-keypad" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.55rem; max-width: 270px; margin: 1rem auto 0;">
+          <button type="button" class="num-btn" onclick="pressPinKey('1')">1</button>
+          <button type="button" class="num-btn" onclick="pressPinKey('2')">2</button>
+          <button type="button" class="num-btn" onclick="pressPinKey('3')">3</button>
+          <button type="button" class="num-btn" onclick="pressPinKey('4')">4</button>
+          <button type="button" class="num-btn" onclick="pressPinKey('5')">5</button>
+          <button type="button" class="num-btn" onclick="pressPinKey('6')">6</button>
+          <button type="button" class="num-btn" onclick="pressPinKey('7')">7</button>
+          <button type="button" class="num-btn" onclick="pressPinKey('8')">8</button>
+          <button type="button" class="num-btn" onclick="pressPinKey('9')">9</button>
+          <button type="button" class="num-btn action-btn" onclick="pressPinKey('clear')" title="ล้างทั้งหมด" style="color: #ef4444;">ล้าง</button>
+          <button type="button" class="num-btn" onclick="pressPinKey('0')">0</button>
+          <button type="button" class="num-btn action-btn" onclick="pressPinKey('backspace')" title="ลบทีละตัว">⌫</button>
+        </div>
+
+        <div style="margin-top: 1.15rem; max-width: 270px; margin-left: auto; margin-right: auto;">
+          <button type="button" id="loginSubmitBtn" class="btn btn-primary btn-lg" onclick="handlePinSubmit()" style="justify-content: center; width: 100%;">
+            <i data-lucide="log-in"></i> เข้าสู่ระบบ
+          </button>
+        </div>
+      </div>
+
+      <!-- Owner First-Time PIN Setup Section -->
+      <div id="ownerSetupSection" style="display: none; text-align: left;">
+        <div style="background: #fffbeb; border: 1px solid #fde68a; border-radius: 12px; padding: 0.85rem; margin-bottom: 1.25rem; color: #92400e; font-size: 0.88rem;">
+          👑 <b>ยินดีต้อนรับท่านเจ้าของร้าน (Owner)</b><br>
+          กรุณากำหนดรหัส PIN ส่วนตัวของท่านครั้งแรก (4-6 หลัก) รหัสนี้จะใช้ควบคุมทุกระบบและมีท่านรู้เพียงคนเดียว
+        </div>
+
+        <div class="form-group" style="margin-bottom: 0.85rem;">
+          <label class="form-label" style="font-weight: 600; font-size: 0.88rem;">ตั้งรหัสผ่าน PIN เจ้าของร้าน (4-6 หลัก) <span style="color:#ef4444;">*</span></label>
+          <input type="password" id="setupOwnerPin1" class="form-control" maxlength="6" placeholder="กำหนดรหัส PIN 4-6 หลัก" style="font-size: 1.2rem; letter-spacing: 0.25em;">
+        </div>
+
+        <div class="form-group" style="margin-bottom: 1rem;">
+          <label class="form-label" style="font-weight: 600; font-size: 0.88rem;">ยืนยันรหัส PIN อีกครั้ง <span style="color:#ef4444;">*</span></label>
+          <input type="password" id="setupOwnerPin2" class="form-control" maxlength="6" placeholder="กรอกรหัส PIN เดิมอีกครั้ง" style="font-size: 1.2rem; letter-spacing: 0.25em;">
+        </div>
+
+        <div id="ownerSetupErrorMsg" style="color: #ef4444; font-size: 0.85rem; margin-bottom: 0.75rem; display: none; font-weight: 600;"></div>
+
+        <button type="button" class="btn btn-primary btn-lg" onclick="handleOwnerInitialSetup()" style="width: 100%; justify-content: center; background: #d97706; border-color: #b45309;">
+          <i data-lucide="shield-check"></i> บันทึกรหัสเจ้าของร้าน & เข้าสู่ระบบ
+        </button>
+      </div>
+
+    </div>
+
+  </div>
+
+  <script src="js/auth.js"></script>
+  <script>
+    let currentChosenRole = null;
+    let selectedUser = null;
+    let pinBuffer = "";
+
+    function refreshUserCounts() {
+      const users = getAllUsers();
+      ['admin', 'manager', 'cashier', 'kitchen'].forEach(role => {
+        const count = users.filter(u => u.role === role && u.active).length;
+        const el = document.getElementById(`count_${role}`);
+        if (el) el.innerText = `${count} คน`;
+      });
+    }
+
+    function selectRole(role) {
+      currentChosenRole = role;
+      const roleInfo = ROLES[role];
+      const activeUsers = getUsersByRole(role).filter(u => u.active);
+
+      if (activeUsers.length === 0) {
+        alert(`⚠️ ยังไม่มีผู้ใช้งานในระดับ ${roleInfo.name} ที่เปิดใช้งาน กรุณาให้ Owner เพิ่มผู้ใช้งานก่อน`);
+        return;
+      }
+
+      // If Owner role and PIN not set yet
+      if (role === 'owner' && !isOwnerPinConfigured()) {
+        selectedUser = activeUsers[0];
+        showOwnerSetupScreen();
+        return;
+      }
+
+      // If only 1 user in role, proceed directly to PIN
+      if (activeUsers.length === 1) {
+        selectedUser = activeUsers[0];
+        showPinScreen(selectedUser);
+      } else {
+        // Multiple users exist in this role -> show user selection list
+        showUserSelectionScreen(role, activeUsers);
+      }
+    }
+
+    function showUserSelectionScreen(role, users) {
+      const roleInfo = ROLES[role];
+      document.getElementById("roleSelectionList").style.display = "none";
+      document.getElementById("pinEntryForm").style.display = "none";
+      document.getElementById("userSelectionStep").style.display = "block";
+
+      document.getElementById("userSelectRoleDisplay").innerText = `${roleInfo.icon} ${roleInfo.name}`;
+
+      const container = document.getElementById("userCardList");
+      container.innerHTML = "";
+
+      users.forEach(u => {
+        const card = document.createElement("div");
+        card.className = "user-select-card";
+        card.onclick = () => {
+          selectedUser = u;
+          showPinScreen(u);
+        };
+        card.innerHTML = `
+          <div style="width: 42px; height: 42px; border-radius: 12px; background: ${roleInfo.bg}; color: ${roleInfo.color}; display: flex; align-items: center; justify-content: center; font-size: 1.3rem;">
+            ${roleInfo.icon}
+          </div>
+          <div style="flex: 1;">
+            <strong style="font-size: 0.98rem; color: #0f172a; display: block;">${u.name}</strong>
+            <span style="font-size: 0.78rem; color: #64748b;">สิทธิ์: ${roleInfo.name}</span>
+          </div>
+          <span style="font-size: 0.8rem; color: #3b82f6; font-weight: 600;">เลือกล็อกอิน ➔</span>
+        `;
+        container.appendChild(card);
+      });
+
+      refreshLucideIcons();
+    }
+
+    function showPinScreen(user) {
+      pinBuffer = "";
+      document.getElementById("roleSelectionList").style.display = "none";
+      document.getElementById("userSelectionStep").style.display = "none";
+      document.getElementById("pinEntryForm").style.display = "block";
+      document.getElementById("standardPinSection").style.display = "block";
+      document.getElementById("ownerSetupSection").style.display = "none";
+
+      const roleInfo = ROLES[user.role];
+      document.getElementById("selectedUserNameDisplay").innerText = `${roleInfo.icon} ${user.name}`;
+      document.getElementById("pinInputLabel").innerText = `🔒 กรุณากรอกรหัส PIN ของ "${user.name}"`;
+      document.getElementById("loginErrorMsg").style.display = "none";
+
+      const submitBtn = document.getElementById("loginSubmitBtn");
+      if (user.role === 'owner') {
+        submitBtn.style.background = "#d97706";
+        submitBtn.style.borderColor = "#b45309";
+      } else {
+        submitBtn.style.background = "#2563eb";
+        submitBtn.style.borderColor = "#1d4ed8";
+      }
+
+      updateDots();
+      const pinInput = document.getElementById("loginPinInput");
+      pinInput.value = "";
+      pinInput.focus();
+      refreshLucideIcons();
+    }
+
+    function showOwnerSetupScreen() {
+      document.getElementById("roleSelectionList").style.display = "none";
+      document.getElementById("userSelectionStep").style.display = "none";
+      document.getElementById("pinEntryForm").style.display = "block";
+      document.getElementById("standardPinSection").style.display = "none";
+      document.getElementById("ownerSetupSection").style.display = "block";
+      document.getElementById("selectedUserNameDisplay").innerText = "👑 เจ้าของร้าน (Owner)";
+      document.getElementById("setupOwnerPin1").value = "";
+      document.getElementById("setupOwnerPin2").value = "";
+      document.getElementById("ownerSetupErrorMsg").style.display = "none";
+      document.getElementById("setupOwnerPin1").focus();
+      refreshLucideIcons();
+    }
+
+    function backToRoleList() {
+      currentChosenRole = null;
+      selectedUser = null;
+      pinBuffer = "";
+      document.getElementById("roleSelectionList").style.display = "flex";
+      document.getElementById("userSelectionStep").style.display = "none";
+      document.getElementById("pinEntryForm").style.display = "none";
+      refreshUserCounts();
+    }
+
+    function backFromPinEntry() {
+      const activeUsers = getUsersByRole(currentChosenRole).filter(u => u.active);
+      if (activeUsers.length > 1) {
+        showUserSelectionScreen(currentChosenRole, activeUsers);
+      } else {
+        backToRoleList();
+      }
+    }
+
+    function updateDots() {
+      const dotsContainer = document.getElementById("pinDotsDisplay");
+      const count = Math.max(4, pinBuffer.length);
+      const isOwnerRole = selectedUser && selectedUser.role === 'owner';
+      dotsContainer.innerHTML = "";
+      for (let i = 0; i < count; i++) {
+        const dot = document.createElement("span");
+        dot.className = "pin-dot" + (i < pinBuffer.length ? (" filled" + (isOwnerRole ? " owner-dot" : "")) : "");
+        dotsContainer.appendChild(dot);
+      }
+    }
+
+    function pressPinKey(key) {
+      if (key === "clear") {
+        pinBuffer = "";
+      } else if (key === "backspace") {
+        pinBuffer = pinBuffer.slice(0, -1);
+      } else if (pinBuffer.length < 6) {
+        pinBuffer += key;
+      }
+      
+      document.getElementById("loginPinInput").value = pinBuffer;
+      updateDots();
+      document.getElementById("loginErrorMsg").style.display = "none";
+
+      if (pinBuffer.length === 4) {
+        setTimeout(handlePinSubmit, 150);
+      }
+    }
+
+    function syncDotsFromInput() {
+      const input = document.getElementById("loginPinInput");
+      pinBuffer = input.value.replace(/\D/g, '').slice(0, 6);
+      input.value = pinBuffer;
+      updateDots();
+    }
+
+    function handleKeyInput(e) {
+      if (e.key === "Enter") {
+        handlePinSubmit();
+      }
+    }
+
+    function handlePinSubmit() {
+      if (!selectedUser) return;
+      if (!pinBuffer || pinBuffer.length < 4) {
+        showError("⚠️ กรุณากรอกรหัส PIN ให้ครบถ้วนอย่างน้อย 4 หลัก");
+        return;
+      }
+
+      const success = loginUser(selectedUser.id, pinBuffer);
+      if (!success) {
+        pinBuffer = "";
+        document.getElementById("loginPinInput").value = "";
+        updateDots();
+        const pinInput = document.getElementById("loginPinInput");
+        pinInput.focus();
+      }
+    }
+
+    function handleOwnerInitialSetup() {
+      const pin1 = document.getElementById("setupOwnerPin1").value.trim();
+      const pin2 = document.getElementById("setupOwnerPin2").value.trim();
+      const errEl = document.getElementById("ownerSetupErrorMsg");
+
+      if (!pin1 || pin1.length < 4) {
+        errEl.innerText = "⚠️ รหัส PIN ต้องมีความยาวอย่างน้อย 4 หลัก";
+        errEl.style.display = "block";
+        return;
+      }
+      if (pin1 !== pin2) {
+        errEl.innerText = "⚠️ รหัส PIN ทั้งสองช่องไม่ตรงกัน กรุณากรอกให้ตรงกัน";
+        errEl.style.display = "block";
+        return;
+      }
+
+      updateDepartmentPin(selectedUser ? selectedUser.id : "usr_owner", pin1);
+      alert("👑 บันทึกรหัส PIN เจ้าของร้านสำเร็จแล้ว!\nเข้าสู่ระบบในฐานะเจ้าของร้าน (Owner)...");
+      loginUser(selectedUser ? selectedUser.id : "usr_owner", pin1);
+    }
+
+    function showError(msg) {
+      const errEl = document.getElementById("loginErrorMsg");
+      errEl.innerText = msg;
+      errEl.style.display = "block";
+    }
+
+    function refreshLucideIcons() {
+      if (window.lucide) lucide.createIcons();
+    }
+
+    document.addEventListener("keydown", (e) => {
+      const standardSection = document.getElementById("standardPinSection");
+      if (document.getElementById("pinEntryForm").style.display === "block" && standardSection.style.display !== "none") {
+        const input = document.getElementById("loginPinInput");
+        if (document.activeElement !== input && /^[0-9]$/.test(e.key)) {
+          pressPinKey(e.key);
+        } else if (e.key === "Backspace") {
+          pressPinKey("backspace");
+        } else if (e.key === "Enter") {
+          handlePinSubmit();
+        }
+      }
+    });
+
+    document.addEventListener("DOMContentLoaded", () => {
+      refreshUserCounts();
+      refreshLucideIcons();
+    });
+  </script>
+</body>
+</html>

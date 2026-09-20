@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ครัวลุงหนุ่ย (Krua Lung Nui) | อร่อย สะอาด วัตถุดิบสดใหม่</title>
+  <!-- Google Fonts: Prompt & Plus Jakarta Sans -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Prompt:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script>
+    // ถ้าเปิดผ่าน LINE LIFF หรือมีพารามิเตอร์ liff/table/type ให้พาไปหน้าสั่งอาหารของลูกค้าทันที
+    const urlParams = new URLSearchParams(window.location.search);
+    const isLiff = /Line\//i.test(navigator.userAgent) || urlParams.has('liff.state') || urlParams.has('table') || urlParams.has('type') || urlParams.has('page');
+    if (isLiff || window.location.hash.includes('liff')) {
+      window.location.replace('frontend/index.html' + window.location.search + window.location.hash);
+    }
+  </script>
+  <style>
+    :root {
+      --wood-dark: #1b1008;
+      --wood-main: #2b1810;
+      --wood-border: #4a2818;
+      --gold-primary: #d97706;
+      --gold-hover: #b45309;
+      --gold-light: #fef3c7;
+      --card-bg: #fffbf2;
+      --card-border: #e6ccb2;
+      --text-dark: #2d1810;
+      --text-muted: #7c6a59;
+      --font-family: 'Prompt', 'Plus Jakarta Sans', sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: var(--font-family);
+      background: #140b06 url('banner.jpg') no-repeat center top / cover fixed;
+      background-attachment: fixed;
+      color: var(--text-dark);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem 1rem;
+      position: relative;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: radial-gradient(circle at center, rgba(20, 11, 6, 0.72) 0%, rgba(10, 5, 2, 0.94) 100%);
+      z-index: 0;
+    }
+
+    .main-wrapper {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      max-width: 980px;
+      background: rgba(255, 251, 242, 0.97);
+      border-radius: 28px;
+      box-shadow: 0 30px 70px rgba(0, 0, 0, 0.75), 0 0 0 1px rgba(217, 119, 6, 0.3);
+      overflow: hidden;
+      border: 3px solid #78350f;
+    }
+
+    /* Top Wooden Banner */
+    .hero-banner-wrap {
+      background: linear-gradient(180deg, #2b1810 0%, #1a0d06 100%);
+      padding: 2.2rem 1.5rem 1.8rem;
+      text-align: center;
+      color: #ffffff;
+      position: relative;
+      border-bottom: 4px solid #b45309;
+      box-shadow: inset 0 -10px 25px rgba(0, 0, 0, 0.5);
+    }
+
+    .hero-banner-wrap::after {
+      content: '';
+      position: absolute;
+      bottom: -4px;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, #d97706, #fbbf24, #d97706);
+    }
+
+    .brand-logo-img {
+      width: 130px;
+      height: 130px;
+      border-radius: 50%;
+      border: 4px solid #f59e0b;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6), 0 0 25px rgba(245, 158, 11, 0.4);
+      margin: 0 auto 1.25rem;
+      display: block;
+      object-fit: cover;
+      background: #fff;
+    }
+
+    .brand-title {
+      font-size: 2.4rem;
+      font-weight: 800;
+      color: #fef3c7;
+      text-shadow: 0 3px 8px rgba(0, 0, 0, 0.8), 0 0 20px rgba(217, 119, 6, 0.5);
+      letter-spacing: -0.01em;
+      margin-bottom: 0.25rem;
+    }
+
+    .brand-sub {
+      font-size: 1.1rem;
+      color: #fcd34d;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+    }
+
+    .brand-tagline-box {
+      display: inline-block;
+      margin-top: 0.85rem;
+      background: rgba(245, 158, 11, 0.18);
+      border: 1px solid rgba(245, 158, 11, 0.4);
+      padding: 0.35rem 1.25rem;
+      border-radius: 9999px;
+      font-size: 0.85rem;
+      color: #fed7aa;
+    }
+
+    /* Navigation 8-Grid Section */
+    .portal-content {
+      padding: 2.25rem 2rem;
+      background: #fffbf2 url('data:image/svg+xml;utf8,<svg width="40" height="40" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg"><g fill="%23d97706" fill-opacity="0.025" fill-rule="evenodd"><path d="M0 40L40 0H20L0 20M40 40V20L20 40"/></g></svg>');
+    }
+
+    .section-headline {
+      text-align: center;
+      margin-bottom: 1.75rem;
+    }
+
+    .section-headline h2 {
+      font-size: 1.4rem;
+      font-weight: 800;
+      color: #451a03;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .section-headline p {
+      font-size: 0.9rem;
+      color: #78350f;
+      margin-top: 0.2rem;
+    }
+
+    /* 8 Iconic Grid Cards matching User Reference Banner */
+    .iconic-grid-8 {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1.15rem;
+      margin-bottom: 2.25rem;
+    }
+
+    @media (max-width: 860px) {
+      .iconic-grid-8 {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (max-width: 480px) {
+      .iconic-grid-8 {
+        grid-template-columns: 1fr;
+      }
+      .brand-title {
+        font-size: 1.8rem;
+      }
+      .portal-content {
+        padding: 1.5rem 1rem;
+      }
+    }
+
+    .iconic-card {
+      background: #ffffff;
+      border: 2px solid #edd5be;
+      border-radius: 20px;
+      padding: 1.25rem 1rem;
+      text-align: center;
+      text-decoration: none;
+      color: var(--text-dark);
+      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      box-shadow: 0 6px 14px rgba(120, 53, 15, 0.06);
+      position: relative;
+      cursor: pointer;
+    }
+
+    .iconic-card:hover {
+      transform: translateY(-5px);
+      border-color: #d97706;
+      box-shadow: 0 16px 28px rgba(180, 83, 9, 0.18);
+      background: #fffdfa;
+    }
+
+    .iconic-card-img {
+      width: 76px;
+      height: 76px;
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2.5rem;
+      margin-bottom: 0.75rem;
+      background: #fff7ed;
+      border: 1px solid #ffedd5;
+      transition: all 0.2s;
+    }
+
+    .iconic-card:hover .iconic-card-img {
+      transform: scale(1.08);
+      background: #fef3c7;
+    }
+
+    .iconic-card-title {
+      font-size: 1.15rem;
+      font-weight: 800;
+      color: #451a03;
+      margin-bottom: 0.25rem;
+    }
+
+    .iconic-card-sub {
+      font-size: 0.8rem;
+      color: #92400e;
+      line-height: 1.3;
+    }
+
+    .iconic-badge-pill {
+      margin-top: 0.65rem;
+      font-size: 0.72rem;
+      font-weight: 700;
+      padding: 0.25rem 0.65rem;
+      border-radius: 9999px;
+      background: #fef3c7;
+      color: #b45309;
+      border: 1px solid #fde68a;
+    }
+
+    /* Staff & Backoffice Section */
+    .staff-section {
+      background: #fef7ed;
+      border: 2px dashed #d97706;
+      border-radius: 20px;
+      padding: 1.5rem;
+      text-align: center;
+    }
+
+    .staff-title {
+      font-size: 1.05rem;
+      font-weight: 800;
+      color: #78350f;
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.4rem;
+    }
+
+    .staff-buttons-row {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 0.75rem;
+    }
+
+    .btn-staff {
+      background: #ffffff;
+      border: 1.5px solid #d97706;
+      color: #78350f;
+      padding: 0.6rem 1.1rem;
+      border-radius: 12px;
+      text-decoration: none;
+      font-size: 0.9rem;
+      font-weight: 700;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      transition: all 0.2s;
+    }
+
+    .btn-staff:hover {
+      background: #78350f;
+      color: #ffffff;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 14px rgba(120, 53, 15, 0.2);
+    }
+
+    /* Footer Info Bar */
+    .info-footer-bar {
+      background: #1c0f08;
+      padding: 1.1rem 1.5rem;
+      color: #d7ba9d;
+      font-size: 0.85rem;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1rem;
+      border-top: 2px solid #78350f;
+    }
+
+    .footer-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .footer-item i {
+      color: #f59e0b;
+      width: 16px;
+      height: 16px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="main-wrapper">
+    
+    <!-- Top Wooden Thai Header Banner (Matching Krua Lung Nui Signboard) -->
+    <header class="hero-banner-wrap">
+      <img src="backend/logo/logo.jpg" alt="ครัวลุงหนุ่ย" class="brand-logo-img" onerror="this.src='logo.jpg'">
+      <h1 class="brand-title">ครัวลุงหนุ่ย</h1>
+      <div class="brand-sub">• Krua Lung Nui •</div>
+      <div class="brand-tagline-box">
+        ✨ อร่อย สะอาด วัตถุดิบสดใหม่ • รสชาติจัดจ้านเหมือนทำกินที่บ้าน ❤️
+      </div>
+    </header>
+
+    <!-- Main 8-Grid Navigation Content -->
+    <main class="portal-content">
+      
+      <div class="section-headline">
+        <h2><i data-lucide="sparkles" style="color: #d97706;"></i> บริการสั่งอาหารออนไลน์ & จัดการร้าน</h2>
+        <p>เลือกรายการที่ท่านต้องการใช้บริการด้านล่างนี้ได้ทันที</p>
+      </div>
+
+      <!-- 8 Signature Cards (Matching User Graphic) -->
+      <div class="iconic-grid-8">
+        
+        <!-- 1. เมนูอาหาร -->
+        <a href="frontend/index.html?table=1" class="iconic-card">
+          <div class="iconic-card-img">📖</div>
+          <div class="iconic-card-title">เมนูอาหาร</div>
+          <div class="iconic-card-sub">ดูเมนูแนะนำรสเด็ด</div>
+          <span class="iconic-badge-pill">สูตรลุงหนุ่ย</span>
+        </a>
+
+        <!-- 2. สั่งอาหาร (ทานที่ร้าน) -->
+        <a href="frontend/index.html?table=1" class="iconic-card" style="border-color: #f59e0b; background: #fffdf5;">
+          <div class="iconic-card-img" style="background: #fef3c7;">🍽️</div>
+          <div class="iconic-card-title" style="color: #b45309;">สั่งอาหาร</div>
+          <div class="iconic-card-sub">นั่งทานที่ร้าน โต๊ะ 1-6</div>
+          <span class="iconic-badge-pill" style="background: #d97706; color: #fff;">สั่งเข้าโต๊ะทันที</span>
+        </a>
+
+        <!-- 3. สั่งกลับบ้าน -->
+        <a href="frontend/index.html?type=takeaway" class="iconic-card" style="border-color: #ea580c; background: #fffaf5;">
+          <div class="iconic-card-img" style="background: #ffedd5;">🛵</div>
+          <div class="iconic-card-title" style="color: #ea580c;">สั่งกลับบ้าน</div>
+          <div class="iconic-card-sub">รับบัตรคิวในมือถือ</div>
+          <span class="iconic-badge-pill" style="background: #ea580c; color: #fff;">แพ็กกล่อง/ถุง</span>
+        </a>
+
+        <!-- 4. เช็คออเดอร์ -->
+        <a href="frontend/index.html" class="iconic-card">
+          <div class="iconic-card-img">📋</div>
+          <div class="iconic-card-title">เช็คออเดอร์</div>
+          <div class="iconic-card-sub">ตรวจสถานะการสั่งซื้อ</div>
+          <span class="iconic-badge-pill">Real-time</span>
+        </a>
+
+        <!-- 5. โปรโมชั่น -->
+        <a href="frontend/index.html" class="iconic-card">
+          <div class="iconic-card-img">📢</div>
+          <div class="iconic-card-title">โปรโมชั่น</div>
+          <div class="iconic-card-sub">โปรโมชั่นสุดพิเศษ</div>
+          <span class="iconic-badge-pill">ลดพิเศษ</span>
+        </a>
+
+        <!-- 6. สะสมแต้ม -->
+        <a href="frontend/index.html" class="iconic-card">
+          <div class="iconic-card-img">🎟️</div>
+          <div class="iconic-card-title">สะสมแต้ม</div>
+          <div class="iconic-card-sub">สะสมแต้มแลกรางวัล</div>
+          <span class="iconic-badge-pill">สมาชิก</span>
+        </a>
+
+        <!-- 7. เกี่ยวกับเรา -->
+        <div class="iconic-card" onclick="alert('ร้านครัวลุงหนุ่ย\nอร่อย สะอาด วัตถุดิบสดใหม่\nอาหารไทยรสจัดจ้าน ไก่ย่างหอมกลิ่นเตา ตำแซ่บถึงเครื่อง\nใส่ใจทุกจานเหมือนทำให้ครอบครัวทานครับ 🙏')">
+          <div class="iconic-card-img">🏡</div>
+          <div class="iconic-card-title">เกี่ยวกับเรา</div>
+          <div class="iconic-card-sub">รู้จักครัวลุงหนุ่ย</div>
+          <span class="iconic-badge-pill">ประวัติร้าน</span>
+        </div>
+
+        <!-- 8. ติดต่อเรา -->
+        <div class="iconic-card" onclick="alert('📞 ติดต่อครัวลุงหนุ่ย\nเบอร์โทร: 090-123-4567\nLINE: @krualungnui\nเปิดบริการทุกวัน 10:00 - 22:00 น.')">
+          <div class="iconic-card-img">💬</div>
+          <div class="iconic-card-title">ติดต่อเรา</div>
+          <div class="iconic-card-sub">สอบถาม / แผนที่ร้าน</div>
+          <span class="iconic-badge-pill">090-123-4567</span>
+        </div>
+
+      </div>
+
+      <!-- Staff Backoffice Section -->
+      <div class="staff-section">
+        <div class="staff-title">
+          <i data-lucide="shield-check"></i>
+          <span>ระบบพนักงาน & เจ้าหน้าที่ร้าน (Staff Portal)</span>
+        </div>
+        <div class="staff-buttons-row">
+          <a href="backend/admin.html" class="btn-staff">
+            <span>👨‍💼</span> ผู้จัดการ (Admin)
+          </a>
+          <a href="backend/cashier.html" class="btn-staff">
+            <span>💵</span> แคชเชียร์ (POS)
+          </a>
+          <a href="backend/kitchen.html" class="btn-staff">
+            <span>👨‍🍳</span> จอในครัว (KDS)
+          </a>
+          <a href="backend/login.html" class="btn-staff" style="background:#78350f; color:#fff;">
+            <span>🔐</span> เข้าสู่ระบบแยกแผนก
+          </a>
+        </div>
+      </div>
+
+    </main>
+
+    <!-- Bottom Info Bar (Matching Reference Graphic Footer) -->
+    <footer class="info-footer-bar">
+      <div class="footer-item">
+        <i data-lucide="clock"></i>
+        <span>เปิดทุกวัน 10:00 - 22:00 น.</span>
+      </div>
+      <div class="footer-item">
+        <i data-lucide="phone"></i>
+        <span>090-123-4567</span>
+      </div>
+      <div class="footer-item">
+        <i data-lucide="message-circle"></i>
+        <span>LINE: @krualungnui</span>
+      </div>
+      <div class="footer-item">
+        <i data-lucide="map-pin"></i>
+        <span>ครัวลุงหนุ่ย อร่อยเหมือนกินที่บ้าน</span>
+      </div>
+    </footer>
+
+  </div>
+
+  <script>
+    if (window.lucide) {
+      lucide.createIcons();
+    }
+  </script>
+</body>
+</html>

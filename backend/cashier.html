@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>เคาน์เตอร์คิดเงิน (Cashier POS) | ครัวลุงหนุ่ย</title>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Prompt:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+  <!-- QRCode.js (Local Offline-First + CDN Fallback) -->
+  <script src="js/qrcode.min.js"></script>
+  <script>
+    if (typeof QRCode === 'undefined') {
+      document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"><\/script>');
+    }
+  </script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .cashier-filter-tab-bar {
+      display: flex;
+      gap: 0.5rem;
+      padding: 0.75rem 1rem;
+      background: #ffffff;
+      border-bottom: 1px solid var(--border-color);
+    }
+    .cashier-filter-tab {
+      flex: 1;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.4rem;
+      padding: 0.5rem;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border-color);
+      background: #f8fafc;
+      color: var(--text-secondary);
+      font-family: var(--font-family);
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .cashier-filter-tab.active {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: #ffffff;
+    }
+    .cashier-filter-tab.takeaway-tab.active {
+      background: #ea580c;
+      border-color: #ea580c;
+    }
+  </style>
+</head>
+<body>
+  <div id="app" class="app-container">
+    
+    <!-- Top System Bar -->
+    <header class="top-nav">
+      <div class="nav-brand">
+        <div class="brand-logo-wrap">
+          <img src="logo/logo.jpg" alt="ครัวลุงหนุ่ย" class="brand-logo-img" onerror="this.src='logo/logo.png'">
+        </div>
+        <div class="brand-text">
+          <h1 id="headerShopName">ครัวลุงหนุ่ย (Krua Lung Nui)</h1>
+          <span class="badge badge-success-subtle"><span class="dot-online"></span> แผนกแคชเชียร์ & หน้าร้าน</span>
+        </div>
+      </div>
+
+      <!-- Quick Switch -->
+      <div class="mode-switch-group">
+        <a href="cashier.html" class="mode-btn active">
+          <i data-lucide="calculator"></i>
+          <span>แคชเชียร์ (POS)</span>
+        </a>
+        <a href="../frontend/index.html" target="_blank" class="mode-btn">
+          <i data-lucide="smartphone"></i>
+          <span>ลูกค้าสแกนสั่ง</span>
+        </a>
+      </div>
+
+      <div class="nav-actions">
+        <div class="user-role-pill" id="navUserBadge" style="display:flex; align-items:center; gap:0.4rem; background:#ecfdf5; padding:0.35rem 0.75rem; border-radius:9999px; border:1px solid #a7f3d0; font-size:0.85rem; font-weight:700; color:#059669;">
+          <span>💵</span> <span>แคชเชียร์ (POS)</span>
+        </div>
+        <div class="live-clock" id="liveClock">--:--:--</div>
+        <button class="btn btn-danger-subtle btn-sm" onclick="logoutDepartment()" title="ออกจากระบบ">
+          <i data-lucide="log-out"></i>
+          <span>ออกจากระบบ</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Main Container for CASHIER POS -->
+    <div id="cashierView" class="cashier-layout" style="display: grid; grid-template-columns: 340px 1fr; height: calc(100vh - 65px);">
+      
+      <!-- Left Column: Tables & Takeaway Filter -->
+      <div class="cashier-left-col">
+        
+        <!-- Tab Bar: Dine-in vs Takeaway -->
+        <div class="cashier-filter-tab-bar">
+          <button class="cashier-filter-tab active" data-tab="dinein" onclick="switchCashierTab('dinein')">
+            <i data-lucide="utensils"></i> โต๊ะในร้าน (<span id="badgeDineinUnpaid">0</span>)
+          </button>
+          <button class="cashier-filter-tab takeaway-tab" data-tab="takeaway" onclick="switchCashierTab('takeaway')">
+            <i data-lucide="shopping-bag"></i> สั่งกลับบ้าน (<span id="badgeTakeawayUnpaid">0</span>)
+          </button>
+        </div>
+
+        <div class="cashier-table-list" id="cashierTableList">
+          <!-- Dynamically listed tables / queues -->
+        </div>
+      </div>
+
+      <!-- Right Column: Bill Details & Payment Engine -->
+      <div class="cashier-right-col">
+        <div class="cashier-bill-panel">
+          <div class="bill-panel-header">
+            <div>
+              <h2 class="bill-panel-title" id="cashierSelectedTableTitle">กรุณาเลือกโต๊ะทางซ้ายมือ</h2>
+              <span class="bill-panel-meta" id="cashierSelectedTableMeta">-</span>
+            </div>
+            <div class="bill-header-actions" id="cashierHeaderActions" style="display:none;">
+              <button class="btn btn-primary btn-lg" onclick="openPaymentModal()">
+                <i data-lucide="credit-card"></i> คิดเงิน / เช็คบิล
+              </button>
+            </div>
+          </div>
+
+          <div class="bill-panel-body" id="cashierBillItems">
+            <div class="empty-state" style="text-align:center; padding:4rem; color:var(--text-muted);">
+              <i data-lucide="receipt-text" style="width:48px; height:48px; margin:0 auto 1rem; opacity:0.4;"></i>
+              <p>เลือกโต๊ะจากแถบด้านซ้าย เพื่อดูรายการอาหารและคิดเงิน</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- Modal: Payment & Checkout Modal -->
+  <div id="paymentModal" class="modal-overlay">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-header">
+        <h3 id="paymentModalTitle">ชำระเงิน - โต๊ะ 1</h3>
+        <button class="modal-close" onclick="closeModal('paymentModal')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="payment-modal-grid">
+          <!-- Left: Receipt summary -->
+          <div class="payment-bill-breakdown">
+            <h4>สรุปรายการอาหาร</h4>
+            <div class="bill-items-scroll" id="paymentBillSummaryList"></div>
+            <div class="bill-summary-totals">
+              <div class="sum-row"><span>รวมค่าอาหาร:</span> <span id="paySubtotal">฿0.00</span></div>
+              <div class="sum-row" id="payServiceChargeRow"><span>Service Charge:</span> <span id="payServiceCharge">฿0.00</span></div>
+              <div class="sum-row" id="payVatRow"><span>VAT:</span> <span id="payVat">฿0.00</span></div>
+              <div class="sum-row sum-grand-total"><span>ยอดสุทธิที่ต้องชำระ:</span> <span id="payGrandTotal">฿0.00</span></div>
+            </div>
+          </div>
+
+          <!-- Right: Payment Method & Dynamic PromptPay -->
+          <div class="payment-method-panel">
+            <h4>เลือกช่องทางการชำระ</h4>
+            <div class="payment-tabs">
+              <button class="pay-method-tab active" onclick="selectPaymentTab('promptpay')">
+                <i data-lucide="qr-code"></i> พร้อมเพย์ QR
+              </button>
+              <button class="pay-method-tab" onclick="selectPaymentTab('cash')">
+                <i data-lucide="banknote"></i> เงินสด
+              </button>
+            </div>
+
+            <div id="payPromptPaySection" class="pay-tab-view active">
+              <div class="promptpay-modal-box">
+                <div class="thai-qr-badge-mini">THAI QR PAYMENT</div>
+                <div class="modal-qr-canvas" id="modalPromptPayQR"></div>
+                <div class="modal-qr-amount" id="modalPromptPayAmount">฿0.00</div>
+                <small class="text-muted">สแกนผ่าน Mobile Banking ได้ทุกธนาคาร</small>
+              </div>
+            </div>
+
+            <div id="payCashSection" class="pay-tab-view" style="display:none;">
+              <div class="cash-input-group">
+                <label class="form-label">จำนวนเงินที่รับมา (บาท):</label>
+                <input type="number" id="cashReceivedInput" class="form-control form-control-lg" placeholder="0.00" oninput="calcCashChange()">
+                <div class="quick-cash-pills">
+                  <button type="button" class="btn-pill" onclick="setQuickCash(100)">100</button>
+                  <button type="button" class="btn-pill" onclick="setQuickCash(500)">500</button>
+                  <button type="button" class="btn-pill" onclick="setQuickCash(1000)">1,000</button>
+                  <button type="button" class="btn-pill" onclick="setExactCash()">พอดี</button>
+                </div>
+                <div class="cash-change-box">
+                  <span>เงินทอน:</span>
+                  <b id="cashChangeDisplay">฿0.00</b>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeModal('paymentModal')">ยกเลิก</button>
+        <button type="button" class="btn btn-success btn-lg" onclick="confirmPaymentAndCloseTable()">
+          <i data-lucide="check-circle-2"></i> ยืนยันการรับเงิน & ปิดบิล
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+    <!-- Modular Menu Data Layer -->
+  <script src="data/categories.js"></script>
+  <script src="data/menus/recommend.js"></script>
+  <script src="data/menus/alacarte.js"></script>
+  <script src="data/menus/isan.js"></script>
+  <script src="data/menus/soup_yum.js"></script>
+  <script src="data/menus/drink_promo.js"></script>
+  <script src="data/menus/alcohol.js"></script>
+  <script src="data/menus/mixer.js"></script>
+  <script src="data/menus/index.js"></script>
+  <!-- Supabase Official JS SDK & Client Sync Engine -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="config.example.js"></script>
+  <script src="js/supabaseClient.js"></script>
+  <script src="js/state.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/promptpay.js"></script>
+  <script src="js/cashier.js"></script>
+</body>
+</html>

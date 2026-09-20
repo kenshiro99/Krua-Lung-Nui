@@ -1,0 +1,89 @@
+{
+  "size": {
+    "width": 2500,
+    "height": 1686
+  },
+  "selected": true,
+  "name": "Krua_Lung_Nui_RichMenu_6Buttons",
+  "chatBarText": "แตะเปิดเมนูร้าน 🍲",
+  "areas": [
+    {
+      "bounds": {
+        "x": 0,
+        "y": 560,
+        "width": 833,
+        "height": 560
+      },
+      "action": {
+        "type": "uri",
+        "label": "ดูเมนูอาหาร",
+        "uri": "https://kenshiro99.github.io/Krua-Lung-Nui/frontend/index.html?page=menu"
+      }
+    },
+    {
+      "bounds": {
+        "x": 833,
+        "y": 560,
+        "width": 834,
+        "height": 560
+      },
+      "action": {
+        "type": "uri",
+        "label": "สั่งอาหาร",
+        "uri": "https://kenshiro99.github.io/Krua-Lung-Nui/frontend/index.html?page=order&type=takeaway"
+      }
+    },
+    {
+      "bounds": {
+        "x": 1667,
+        "y": 560,
+        "width": 833,
+        "height": 560
+      },
+      "action": {
+        "type": "uri",
+        "label": "แผนที่ร้าน",
+        "uri": "https://www.google.com/maps/search/?api=1&query=%E0%B8%8B%E0%B8%AD%E0%B8%A2%E0%B8%84%E0%B8%B8%E0%B9%89%E0%B8%A1%E0%B9%80%E0%B8%81%E0%B8%A5%E0%B9%89%E0%B8%B2+20"
+      }
+    },
+    {
+      "bounds": {
+        "x": 0,
+        "y": 1120,
+        "width": 833,
+        "height": 566
+      },
+      "action": {
+        "type": "uri",
+        "label": "โปรโมชั่น",
+        "uri": "https://kenshiro99.github.io/Krua-Lung-Nui/frontend/index.html?page=promotion"
+      }
+    },
+    {
+      "bounds": {
+        "x": 833,
+        "y": 1120,
+        "width": 834,
+        "height": 566
+      },
+      "action": {
+        "type": "uri",
+        "label": "ติดต่อร้าน",
+        "uri": "https://kenshiro99.github.io/Krua-Lung-Nui/frontend/index.html?page=contact"
+      }
+    },
+    {
+      "bounds": {
+        "x": 1667,
+        "y": 1120,
+        "width": 833,
+        "height": 566
+      },
+      "action": {
+        "type": "uri",
+        "label": "จองโต๊ะ",
+        "uri": "https://kenshiro99.github.io/Krua-Lung-Nui/frontend/index.html?page=reservation"
+      }
+    }
+  ]
+}
