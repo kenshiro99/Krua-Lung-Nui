@@ -3,6 +3,8 @@
  */
 
 let lastPendingCount = 0;
+const announcedOrderIds = new Set();
+let isAudioUnlocked = false;
 
 document.addEventListener("DOMContentLoaded", () => {
   if (!verifyPageAccess("kitchen")) return;
@@ -12,15 +14,35 @@ document.addEventListener("DOMContentLoaded", () => {
   renderKitchenView();
   refreshLucideIcons();
 
+  // Mark existing orders as already announced on page load to prevent replay
+  const existing = JSON.parse(localStorage.getItem("pos_orders")) || [];
+  existing.forEach(o => { if (o && o.id) announcedOrderIds.add(o.id); });
+
   // Initial Cloud Sync
-  syncFromCloud();
+  syncFromCloud().then(() => {
+    if (window.posState && Array.isArray(window.posState.orders)) {
+      window.posState.orders.forEach(o => { if (o && o.id) announcedOrderIds.add(o.id); });
+    }
+  });
+
+  // Audio Unlocker for modern browser autoplay policy
+  const unlockAudio = () => {
+    isAudioUnlocked = true;
+    const audio = document.getElementById("bellSound");
+    if (audio) {
+      audio.play().then(() => { audio.pause(); audio.currentTime = 0; }).catch(() => {});
+    }
+  };
+  document.addEventListener("click", unlockAudio, { once: true });
+  document.addEventListener("touchstart", unlockAudio, { once: true });
 
   // Realtime subscription from Supabase Cloud
   if (window.SupabaseService && typeof window.SupabaseService.subscribeOrders === "function") {
     window.SupabaseService.subscribeOrders(
       (newOrder) => {
         console.log("🔔 [Kitchen KDS] New Cloud Order received:", newOrder);
-        playKitchenBell();
+        const norm = normalizeOrderFormat(newOrder);
+        announceNewOrder(norm);
         syncFromCloud();
       },
       (updatedOrder) => {
@@ -36,10 +58,13 @@ document.addEventListener("DOMContentLoaded", () => {
     window.posState.orders = JSON.parse(localStorage.getItem("pos_orders")) || [];
     const activeOrders = window.posState.orders.filter(o => o.status === "pending" || o.status === "cooking");
     
-    // Play bell if new order arrived
-    if (activeOrders.length > lastPendingCount) {
-      playKitchenBell();
-    }
+    // Announce any active order that hasn't been announced yet
+    activeOrders.forEach(o => {
+      if (!announcedOrderIds.has(o.id)) {
+        announceNewOrder(o);
+      }
+    });
+
     lastPendingCount = activeOrders.length;
     renderKitchenView();
   }, 3000);
@@ -62,6 +87,7 @@ async function clearAllTestData() {
 
   // 1. Clear Local Storage
   localStorage.removeItem("pos_orders");
+  announcedOrderIds.clear();
   if (window.posState) {
     window.posState.orders = [];
     if (Array.isArray(window.posState.tables)) {
@@ -193,7 +219,74 @@ function playKitchenBell() {
     const audio = document.getElementById("bellSound");
     if (audio) {
       audio.currentTime = 0;
-      audio.play().catch(e => console.log("Audio autoplay"));
+      audio.play().catch(e => console.log("Audio autoplay prevented:", e.message));
     }
   }
+}
+
+/**
+ * ประกาศเสียงพูดภาษาไทยแจ้งเตือนออเดอร์ใหม่เข้าห้องครัว (Thai Voice Announcement)
+ * ตัวอย่าง: "มีออเดอร์โต๊ะ 1 ค่ะ" หรือ "มีออเดอร์กลับบ้าน คิว 12 ค่ะ"
+ */
+function announceNewOrder(order) {
+  if (!order || !order.id) return;
+  if (announcedOrderIds.has(order.id)) return;
+  announcedOrderIds.add(order.id);
+
+  const soundToggle = document.getElementById("kitchenSoundToggle");
+  if (soundToggle && !soundToggle.checked) return;
+
+  // 1. เล่นเสียงกระดิ่งเตือน (Chime)
+  playKitchenBell();
+
+  // 2. จัดเตรียมข้อความเสียงพูดภาษาไทย
+  let text = "มีออเดอร์ใหม่เข้ามาค่ะ";
+  const isTakeaway = order.orderType === "takeaway" || order.tableId === "takeaway" || String(order.tableName || "").startsWith("Q-");
+
+  if (isTakeaway) {
+    const q = String(order.tableName || "").replace(/^Q-/, '').trim();
+    text = `มีออเดอร์กลับบ้าน คิว ${q} ค่ะ`;
+  } else {
+    const t = String(order.tableName || "").replace(/^โต๊ะ\s*/, '').replace(/^t-/, '').trim();
+    text = `มีออเดอร์โต๊ะ ${t} ค่ะ`;
+  }
+
+  // 3. เริ่มพูดเสียงภาษาไทยหลังกระดิ่งสั่นเล็กน้อย (450ms)
+  setTimeout(() => {
+    speakThai(text);
+  }, 450);
+}
+
+function speakThai(text) {
+  if (!('speechSynthesis' in window)) {
+    console.warn("SpeechSynthesis is not supported in this browser.");
+    return;
+  }
+
+  try {
+    window.speechSynthesis.cancel(); // ตัดเสียงพูดเดิมก่อนหน้า
+
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = "th-TH";
+    utterance.rate = 0.95; // จังหวะพูดชัดเจน นุ่มนวล
+    utterance.pitch = 1.05; // น้ำเสียงสุภาพ เป็นกันเอง
+
+    // ตรวจหาเสียงภาษาไทยจากระบบ
+    const voices = window.speechSynthesis.getVoices();
+    const thVoice = voices.find(v => v.lang === "th-TH" || v.lang.startsWith("th") || (v.name && v.name.includes("Thai")));
+    if (thVoice) {
+      utterance.voice = thVoice;
+    }
+
+    window.speechSynthesis.speak(utterance);
+  } catch (err) {
+    console.warn("speakThai failed:", err);
+  }
+}
+
+function testVoiceNotification() {
+  playKitchenBell();
+  setTimeout(() => {
+    speakThai("ทดสอบเสียงพูดครัวลุงหนุ่ย มีออเดอร์โต๊ะ 1 ค่ะ");
+  }, 450);
 }
