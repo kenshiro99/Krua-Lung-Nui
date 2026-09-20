@@ -122,6 +122,15 @@ document.addEventListener("DOMContentLoaded", () => {
   const typeParam = urlParams.get("type");
   const tableParam = urlParams.get("table");
 
+  if (urlParams.has("reset") || urlParams.has("clear")) {
+    sessionStorage.removeItem("pos_scanned_table");
+    localStorage.removeItem("pos_scanned_table");
+    localStorage.removeItem("pos_orders");
+    state.currentTable = null;
+    state.isTableScanned = false;
+    state.cart = [];
+  }
+
   if (typeParam === "takeaway") {
     setOrderMode("takeaway");
   } else if (tableParam) {

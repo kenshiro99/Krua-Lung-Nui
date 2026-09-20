@@ -48,13 +48,42 @@ document.addEventListener("DOMContentLoaded", () => {
 async function syncFromCloud() {
   if (window.SupabaseService && window.SupabaseService.isConfigured()) {
     const cloudOrders = await window.SupabaseService.getOrders();
-    if (cloudOrders && Array.isArray(cloudOrders) && cloudOrders.length > 0) {
-      const mapped = cloudOrders.map(normalizeOrderFormat);
+    if (cloudOrders && Array.isArray(cloudOrders)) {
+      const mapped = cloudOrders.map(normalizeOrderFormat).filter(Boolean);
       window.posState.orders = mapped;
       localStorage.setItem("pos_orders", JSON.stringify(mapped));
       renderKitchenView();
     }
   }
+}
+
+async function clearAllTestData() {
+  if (!confirm("⚠️ ต้องการล้างรายการอาหารที่ทดสอบทั้งหมด และรีเซ็ตทุกโต๊ะให้ว่าง ใช่หรือไม่?")) return;
+
+  // 1. Clear Local Storage
+  localStorage.removeItem("pos_orders");
+  if (window.posState) {
+    window.posState.orders = [];
+    if (Array.isArray(window.posState.tables)) {
+      window.posState.tables.forEach(t => t.status = "available");
+      localStorage.setItem("pos_tables", JSON.stringify(window.posState.tables));
+    }
+  }
+
+  // 2. Clear Supabase Cloud Orders
+  if (window.SupabaseService && window.SupabaseService.isConfigured()) {
+    try {
+      const client = window.SupabaseService.getClient();
+      if (client) {
+        await client.from('orders').delete().neq('id', '___NEVER_MATCH___');
+      }
+    } catch (e) {
+      console.warn("Supabase clear orders:", e);
+    }
+  }
+
+  alert("✅ ล้างข้อมูลการทดสอบทั้งหมดเรียบร้อยแล้ว! ทุกโต๊ะว่างและพร้อมทดสอบใหม่ครับ");
+  window.location.reload();
 }
 
 function normalizeOrderFormat(o) {
