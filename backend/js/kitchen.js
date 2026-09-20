@@ -215,18 +215,50 @@ async function updateOrderStatus(orderId, newStatus) {
 
 function playKitchenBell() {
   const soundToggle = document.getElementById("kitchenSoundToggle");
-  if (soundToggle && soundToggle.checked) {
-    const audio = document.getElementById("bellSound");
-    if (audio) {
-      audio.currentTime = 0;
-      audio.play().catch(e => console.log("Audio autoplay prevented:", e.message));
-    }
+  if (soundToggle && !soundToggle.checked) return;
+
+  // 1. ลองเล่นไฟล์กระดิ่งที่คุณลงไว้ใน sounds/bell.mp3 ก่อน
+  const customBell = new Audio("sounds/bell.mp3");
+  const playPromise = customBell.play();
+
+  if (playPromise !== undefined) {
+    playPromise.catch(() => {
+      // 2. ถ้าไม่มีไฟล์ bell.mp3 ให้เล่นเสียงกระดิ่ง Mixkit ออนไลน์เดิม
+      const audio = document.getElementById("bellSound");
+      if (audio) {
+        audio.currentTime = 0;
+        audio.play().catch(e => console.log("Audio autoplay prevented:", e.message));
+      }
+    });
   }
 }
 
 /**
- * ประกาศเสียงพูดภาษาไทยแจ้งเตือนออเดอร์ใหม่เข้าห้องครัว (Thai Voice Announcement)
- * ตัวอย่าง: "มีออเดอร์โต๊ะ 1 ค่ะ" หรือ "มีออเดอร์กลับบ้าน คิว 12 ค่ะ"
+ * เล่นไฟล์เสียงพูดแบบกำหนดเอง (Custom MP3 ใน sounds/)
+ * หากยังไม่มีไฟล์ หรือเล่นไม่ได้ จะสลับไปใช้เสียงสังเคราะห์ภาษาไทยอัตโนมัติ
+ */
+function playCustomVoiceAudio(soundSrc, fallbackText) {
+  const audio = new Audio(soundSrc);
+  const playPromise = audio.play();
+
+  if (playPromise !== undefined) {
+    playPromise.catch(err => {
+      // เมื่อไม่พบไฟล์ หรือเล่นไม่ได้ ให้ใช้เสียงสังเคราะห์ภาษาไทยของระบบแทน
+      console.log(`[Audio] Custom audio "${soundSrc}" not found or failed, using speech synthesis.`);
+      if (fallbackText) {
+        speakThai(fallbackText);
+      }
+    });
+  } else {
+    audio.onerror = () => {
+      if (fallbackText) speakThai(fallbackText);
+    };
+  }
+}
+
+/**
+ * ประกาศเสียงพูดแจ้งเตือนออเดอร์ใหม่เข้าห้องครัว
+ * ดึงไฟล์เสียงที่คุณอัดไว้ใน sounds/ เช่น table_1.mp3, table_2.mp3, takeaway.mp3
  */
 function announceNewOrder(order) {
   if (!order || !order.id) return;
@@ -239,21 +271,24 @@ function announceNewOrder(order) {
   // 1. เล่นเสียงกระดิ่งเตือน (Chime)
   playKitchenBell();
 
-  // 2. จัดเตรียมข้อความเสียงพูดภาษาไทย
-  let text = "มีออเดอร์ใหม่เข้ามาค่ะ";
+  // 2. ระบุไฟล์เสียง และข้อความเสียงสำรอง
+  let soundPath = "sounds/new_order.mp3";
+  let fallbackText = "มีออเดอร์ใหม่เข้ามาค่ะ";
   const isTakeaway = order.orderType === "takeaway" || order.tableId === "takeaway" || String(order.tableName || "").startsWith("Q-");
 
   if (isTakeaway) {
     const q = String(order.tableName || "").replace(/^Q-/, '').trim();
-    text = `มีออเดอร์กลับบ้าน คิว ${q} ค่ะ`;
+    soundPath = "sounds/takeaway.mp3";
+    fallbackText = `มีออเดอร์กลับบ้าน คิว ${q} ค่ะ`;
   } else {
     const t = String(order.tableName || "").replace(/^โต๊ะ\s*/, '').replace(/^t-/, '').trim();
-    text = `มีออเดอร์โต๊ะ ${t} ค่ะ`;
+    soundPath = `sounds/table_${t}.mp3`;
+    fallbackText = `มีออเดอร์โต๊ะ ${t} ค่ะ`;
   }
 
-  // 3. เริ่มพูดเสียงภาษาไทยหลังกระดิ่งสั่นเล็กน้อย (450ms)
+  // 3. เริ่มเล่นไฟล์เสียง (หรือเสียงระบบ) หลังกระดิ่งสั่นเล็กน้อย (450ms)
   setTimeout(() => {
-    speakThai(text);
+    playCustomVoiceAudio(soundPath, fallbackText);
   }, 450);
 }
 
@@ -284,9 +319,27 @@ function speakThai(text) {
   }
 }
 
-function testVoiceNotification() {
+function testVoiceNotification(tableNum = 1) {
   playKitchenBell();
   setTimeout(() => {
-    speakThai("ทดสอบเสียงพูดครัวลุงหนุ่ย มีออเดอร์โต๊ะ 1 ค่ะ");
+    playCustomVoiceAudio(`sounds/table_${tableNum}.mp3`, `ทดสอบเสียงพูดครัวลุงหนุ่ย มีออเดอร์โต๊ะ ${tableNum} ค่ะ`);
   }, 450);
+}
+
+function testTakeawayVoice() {
+  playKitchenBell();
+  setTimeout(() => {
+    playCustomVoiceAudio("sounds/takeaway.mp3", "ทดสอบเสียงพูดครัวลุงหนุ่ย มีออเดอร์กลับบ้านค่ะ");
+  }, 450);
+}
+
+function openModal(modalId) {
+  const modal = document.getElementById(modalId);
+  if (modal) modal.classList.add("active");
+  refreshLucideIcons();
+}
+
+function closeModal(modalId) {
+  const modal = document.getElementById(modalId);
+  if (modal) modal.classList.remove("active");
 }
