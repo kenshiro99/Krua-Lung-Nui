@@ -389,15 +389,15 @@
   </div>
 
   <!-- Supabase Official JS SDK & Client Sync Engine (Local Offline-First + CDN Fallback) -->
-  <script src="js/supabase.min.js?v=20260922_c2"></script>
+  <script src="js/supabase.min.js?v=20260922_c3"></script>
   <script>
     if (typeof supabase === 'undefined' || typeof supabase.createClient !== 'function') {
       document.write('<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"><\/script>');
     }
   </script>
-  <script src="config.js?v=20260922_c2" onerror="this.onerror=null;"></script>
-  <script src="js/supabaseClient.js?v=20260922_c2"></script>
-  <script src="js/auth.js?v=20260922_c2"></script>
+  <script src="config.js?v=20260922_c3" onerror="this.onerror=null;"></script>
+  <script src="js/supabaseClient.js?v=20260922_c3"></script>
+  <script src="js/auth.js?v=20260922_c3"></script>
   <script>
     let currentChosenRole = null;
     let selectedUser = null;
@@ -448,13 +448,6 @@
 
       if (activeUsers.length === 0) {
         alert(`⚠️ ยังไม่มีผู้ใช้งานในระดับ ${roleInfo.name} ที่เปิดใช้งาน กรุณาให้ Owner เพิ่มผู้ใช้งานก่อน`);
-        return;
-      }
-
-      // If Owner role and PIN not set yet
-      if (role === 'owner' && !isOwnerPinConfigured()) {
-        selectedUser = activeUsers[0];
-        showOwnerSetupScreen();
         return;
       }
 
@@ -589,8 +582,11 @@
       updateDots();
       document.getElementById("loginErrorMsg").style.display = "none";
 
-      if (pinBuffer.length === 4) {
-        setTimeout(handlePinSubmit, 150);
+      if (pinBuffer.length >= 4) {
+        const userTarget = selectedUser ? selectedUser.id : currentChosenRole;
+        if (pinBuffer.length === 6 || (typeof verifyDepartmentPin === "function" && verifyDepartmentPin(userTarget, pinBuffer))) {
+          setTimeout(handlePinSubmit, 150);
+        }
       }
     }
 

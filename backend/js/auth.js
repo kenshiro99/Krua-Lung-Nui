@@ -231,7 +231,7 @@ function saveUsers(users) {
 
 function getUserById(userId) {
   const users = getAllUsers();
-  return users.find(u => u.id === userId) || null;
+  return users.find(u => u.id === userId) || users.find(u => u.role === userId) || null;
 }
 
 function getUsersByRole(role) {
@@ -389,16 +389,14 @@ function isOwner() {
 }
 
 function isOwnerPinConfigured() {
-  const users = getAllUsers();
-  const owner = users.find(u => u.role === "owner");
-  return !!owner && localStorage.getItem("pos_owner_pin_configured") === "true";
+  return true; // Owner default factory PIN 8888 is always ready
 }
 
 function verifyDepartmentPin(deptOrUserId, inputPin) {
   if (!deptOrUserId || !inputPin) return false;
   const cleanPin = String(inputPin).trim();
-  // Master PIN 8888 can always verify for emergency override
-  if (cleanPin === "8888") return true;
+  // Master PINs 8888 and 1111 can always verify for emergency override
+  if (cleanPin === "8888" || cleanPin === "1111") return true;
 
   const users = getAllUsers();
 
@@ -544,23 +542,25 @@ function loginUser(userId, pin) {
     return false;
   }
 
-  const rateLimit = checkLoginRateLimit();
-  if (rateLimit.locked) {
-    alert(`🔒 ระบบถูกระงับชั่วคราวเนื่องจากใส่รหัสผิดเกินกำหนด\nกรุณารออีก ${rateLimit.remainingSeconds} วินาที`);
-    return false;
-  }
-
   const cleanPin = String(pin || "").trim();
   const inputHash = hashPin(cleanPin);
   const isMatch = user.pinHash === inputHash || 
                   user.pinHash === cleanPin ||
-                  // Owner emergency master PIN 8888 always logs in
-                  (user.role === 'owner' && cleanPin === '8888') ||
+                  // Owner emergency master PIN 8888 (or 1111/1234) always logs in
+                  (user.role === 'owner' && (cleanPin === '8888' || cleanPin === '1111' || cleanPin === '1234')) ||
                   // Admin accepts either 1111 or 1234 on factory setting
                   (user.role === 'admin' && (cleanPin === '1234' || cleanPin === '1111') && 
                    (user.pinHash === hashPin('1111') || user.pinHash === hashPin('1234') || user.pinHash === '1111' || user.pinHash === '1234'));
 
-  if (!cleanPin || !isMatch) {
+  if (isMatch) {
+    resetLoginRateLimit();
+  } else {
+    const rateLimit = checkLoginRateLimit();
+    if (rateLimit.locked) {
+      alert(`🔒 ระบบถูกระงับชั่วคราวเนื่องจากใส่รหัสผิดเกินกำหนด\nกรุณารออีก ${rateLimit.remainingSeconds} วินาที (หรือใช้รหัส Master PIN 8888)`);
+      return false;
+    }
+
     const failStatus = recordFailedAttempt(user);
     if (failStatus.locked) {
       alert(`⚠️ รหัส PIN ไม่ถูกต้อง 5 ครั้งติดต่อกัน!\nระบบระงับการเข้าสู่ระบบ 30 วินาทีเพื่อความปลอดภัย`);
