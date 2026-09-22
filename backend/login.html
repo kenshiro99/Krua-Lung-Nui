@@ -102,7 +102,8 @@
             <strong style="font-size: 1.02rem; color: #92400e;">เจ้าของร้าน (Owner)</strong>
             <span class="badge" style="background: #f59e0b; color: #ffffff; font-size: 0.72rem; padding: 0.1rem 0.45rem; border-radius: 9999px; font-weight: 700;">สิทธิ์สูงสุด</span>
           </div>
-          <span style="font-size: 0.8rem; color: #78350f;">รหัสส่วนตัวเด็ดขาด • ดูแลสิทธิ์และตรวจสอบทุกคน</span>
+          <div id="names_owner" style="font-size: 0.84rem; color: #92400e; font-weight: 700; margin: 2px 0;">👤 เจ้าของร้าน (Owner Main)</div>
+          <span style="font-size: 0.78rem; color: #78350f;">รหัสส่วนตัวเด็ดขาด • ดูแลสิทธิ์และตรวจสอบทุกคน</span>
         </div>
         <span class="badge" style="background: #fef3c7; color: #b45309; font-size: 0.78rem; display: flex; align-items: center; gap: 0.25rem; border: 1px solid #fde68a;">
           <i data-lucide="shield-check" style="width: 14px; height: 14px;"></i> Master PIN
@@ -119,7 +120,8 @@
             <strong style="font-size: 1rem; color: #0f172a;">แอดมินระบบ (Admin)</strong>
             <span class="user-count-pill" id="count_admin" style="font-size: 0.75rem; color: #64748b; background: #f1f5f9; padding: 0.1rem 0.5rem; border-radius: 9999px;">1 คน</span>
           </div>
-          <span style="font-size: 0.8rem; color: #64748b;">เมนู, โต๊ะ, ยอดขาย, ตั้งค่าร้านทั่วไป</span>
+          <div id="names_admin" style="font-size: 0.84rem; margin: 2px 0;"></div>
+          <span style="font-size: 0.78rem; color: #64748b;">เมนู, โต๊ะ, ยอดขาย, ตั้งค่าร้านทั่วไป</span>
         </div>
       </div>
 
@@ -133,7 +135,8 @@
             <strong style="font-size: 1rem; color: #0f172a;">ผู้จัดการร้าน (Manager)</strong>
             <span class="user-count-pill" id="count_manager" style="font-size: 0.75rem; color: #64748b; background: #f1f5f9; padding: 0.1rem 0.5rem; border-radius: 9999px;">1 คน</span>
           </div>
-          <span style="font-size: 0.8rem; color: #64748b;">คุมหน้าร้าน, อนุมัติส่วนลด, ปิดกะรายวัน</span>
+          <div id="names_manager" style="font-size: 0.84rem; margin: 2px 0;"></div>
+          <span style="font-size: 0.78rem; color: #64748b;">คุมหน้าร้าน, อนุมัติส่วนลด, ปิดกะรายวัน</span>
         </div>
       </div>
 
@@ -147,7 +150,8 @@
             <strong style="font-size: 1rem; color: #0f172a;">แคชเชียร์ & หน้าร้าน (POS)</strong>
             <span class="user-count-pill" id="count_cashier" style="font-size: 0.75rem; color: #64748b; background: #f1f5f9; padding: 0.1rem 0.5rem; border-radius: 9999px;">1 คน</span>
           </div>
-          <span style="font-size: 0.8rem; color: #64748b;">เช็คบิลโต๊ะ, สั่งกลับบ้าน, รับชำระเงิน</span>
+          <div id="names_cashier" style="font-size: 0.84rem; margin: 2px 0;"></div>
+          <span style="font-size: 0.78rem; color: #64748b;">เช็คบิลโต๊ะ, สั่งกลับบ้าน, รับชำระเงิน</span>
         </div>
       </div>
 
@@ -161,7 +165,8 @@
             <strong style="font-size: 1rem; color: #0f172a;">แผนกครัว & ปรุงอาหาร (KDS)</strong>
             <span class="user-count-pill" id="count_kitchen" style="font-size: 0.75rem; color: #64748b; background: #f1f5f9; padding: 0.1rem 0.5rem; border-radius: 9999px;">1 คน</span>
           </div>
-          <span style="font-size: 0.8rem; color: #64748b;">รับออเดอร์สด, จับเวลาปรุงอาหาร</span>
+          <div id="names_kitchen" style="font-size: 0.84rem; margin: 2px 0;"></div>
+          <span style="font-size: 0.78rem; color: #64748b;">รับออเดอร์สด, จับเวลาปรุงอาหาร</span>
         </div>
       </div>
 
@@ -380,10 +385,39 @@
 
     function refreshUserCounts() {
       const users = getAllUsers();
+
+      // 1. Update Owner card
+      const owners = users.filter(u => u.role === 'owner' && u.active);
+      const ownerNamesEl = document.getElementById("names_owner");
+      if (ownerNamesEl) {
+        if (owners.length > 0) {
+          ownerNamesEl.innerHTML = `👑 ผู้ใช้งาน: <strong style="color: #92400e;">${owners[0].name}</strong>`;
+        } else {
+          ownerNamesEl.innerHTML = `<span style="color: #ef4444; font-weight: 600;">⚠️ ยังไม่พบผู้ใช้งาน Owner</span>`;
+        }
+      }
+
+      // 2. Update other roles
       ['admin', 'manager', 'cashier', 'kitchen'].forEach(role => {
-        const count = users.filter(u => u.role === role && u.active).length;
-        const el = document.getElementById(`count_${role}`);
-        if (el) el.innerText = `${count} คน`;
+        const activeInRole = users.filter(u => u.role === role && u.active);
+        const countEl = document.getElementById(`count_${role}`);
+        const namesEl = document.getElementById(`names_${role}`);
+
+        if (countEl) {
+          countEl.innerText = activeInRole.length === 0 ? "0 คน" : `${activeInRole.length} คน`;
+          countEl.style.color = activeInRole.length === 0 ? "#ef4444" : "#64748b";
+          countEl.style.background = activeInRole.length === 0 ? "#fee2e2" : "#f1f5f9";
+        }
+
+        if (namesEl) {
+          if (activeInRole.length === 0) {
+            namesEl.innerHTML = `<span style="color: #ef4444; font-size: 0.82rem; font-weight: 600;">⚠️ ยังไม่มีผู้ใช้งาน (ต้องให้ Owner เพิ่ม)</span>`;
+          } else if (activeInRole.length === 1) {
+            namesEl.innerHTML = `<span style="color: #0f172a; font-weight: 700;">👤 ${activeInRole[0].name}</span>`;
+          } else {
+            namesEl.innerHTML = `<span style="color: #0f172a; font-weight: 700;">👥 ${activeInRole.map(u => u.name).join(', ')}</span>`;
+          }
+        }
       });
     }
 
@@ -708,6 +742,17 @@
     document.addEventListener("DOMContentLoaded", () => {
       refreshUserCounts();
       refreshLucideIcons();
+    });
+
+    // Real-time sync across browser tabs & on focus
+    window.addEventListener("storage", (e) => {
+      if (e.key === "pos_users" || e.key === "pos_owner_pin_configured") {
+        refreshUserCounts();
+      }
+    });
+
+    window.addEventListener("focus", () => {
+      refreshUserCounts();
     });
   </script>
 </body>

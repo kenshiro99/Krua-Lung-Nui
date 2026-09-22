@@ -114,9 +114,9 @@ const DEFAULT_ROLE_PERMISSIONS = {
 function getAllUsers() {
   try {
     const raw = localStorage.getItem("pos_users");
-    if (raw) {
+    if (raw !== null) {
       const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed) && parsed.length > 0) {
+      if (Array.isArray(parsed)) {
         return parsed;
       }
     }
@@ -194,6 +194,14 @@ function updateUser(userId, { name, role, pin, active }) {
   users[userIndex] = user;
   saveUsers(users);
 
+  // Sync active session if this user is currently logged in
+  const cur = getCurrentUser();
+  if (cur && cur.id === userId) {
+    localStorage.setItem("pos_current_user", JSON.stringify(user));
+    localStorage.setItem("pos_user_role", user.role);
+    if (typeof updateTopNavUserBadge === "function") updateTopNavUserBadge();
+  }
+
   logUserActivity(
     getCurrentUser()?.id || "system",
     getCurrentUser()?.name || "เจ้าของร้าน",
@@ -220,6 +228,20 @@ function deleteUser(userId) {
 
   const remaining = users.filter(u => u.id !== userId);
   saveUsers(remaining);
+
+  // Sync active session if the deleted user was currently logged in
+  const cur = getCurrentUser();
+  if (cur && cur.id === userId) {
+    const nextUser = remaining.find(u => u.role === cur.role && u.active) || remaining.find(u => u.active);
+    if (nextUser) {
+      localStorage.setItem("pos_current_user", JSON.stringify(nextUser));
+      localStorage.setItem("pos_user_role", nextUser.role);
+    } else {
+      localStorage.removeItem("pos_current_user");
+      localStorage.removeItem("pos_user_role");
+    }
+    if (typeof updateTopNavUserBadge === "function") updateTopNavUserBadge();
+  }
 
   logUserActivity(
     getCurrentUser()?.id || "system",

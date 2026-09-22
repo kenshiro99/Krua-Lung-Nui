@@ -1360,3 +1360,18 @@ function autoResetMenusAndTables() {
     console.log("✅ Auto-Reset: Restored 43 menus & tables successfully");
   }
 }
+
+// Live sync across tabs & window focus
+window.addEventListener("storage", (e) => {
+  if (e.key === "pos_users" || e.key === "pos_current_user") {
+    if (typeof renderOwnerUserTable === "function") renderOwnerUserTable();
+    if (typeof renderOwnerAuditLogs === "function") renderOwnerAuditLogs();
+    if (typeof updateTopNavUserBadge === "function") updateTopNavUserBadge();
+  }
+});
+
+window.addEventListener("focus", () => {
+  if (typeof renderOwnerUserTable === "function") renderOwnerUserTable();
+  if (typeof renderOwnerAuditLogs === "function") renderOwnerAuditLogs();
+  if (typeof updateTopNavUserBadge === "function") updateTopNavUserBadge();
+});
