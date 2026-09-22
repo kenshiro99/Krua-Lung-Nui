@@ -918,8 +918,7 @@ async function submitOrder() {
   }).catch(() => console.log("Local-only mode"));
 
   // 4. Play success audio
-  const audio = document.getElementById("orderSuccessSound");
-  if (audio) audio.play().catch(() => {});
+  playScanBeepSound();
 
   // 5. Clear Cart & Close Modal
   state.cart = [];
@@ -1264,6 +1263,36 @@ function handleScannedQrResult(decodedText) {
   }
 }
 
+// Web Audio API Sound Synthesizer (Instant & 100% Reliable Chime/Beep on All Devices)
+function playScanBeepSound() {
+  try {
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    if (AudioContext) {
+      const ctx = new AudioContext();
+      if (ctx.state === 'suspended') ctx.resume();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(880, ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(1760, ctx.currentTime + 0.1);
+      gain.gain.setValueAtTime(0.35, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.18);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start();
+      osc.stop(ctx.currentTime + 0.18);
+    }
+  } catch (e) {
+    console.log("[Audio] WebAudio synthesis note:", e);
+  }
+
+  const audio = document.getElementById("orderSuccessSound");
+  if (audio) {
+    audio.currentTime = 0;
+    audio.play().catch(() => {});
+  }
+}
+
 function confirmScannedTable(tableNum) {
   const cleanTable = String(tableNum).trim().replace(/^โต๊ะ\s*/, '').replace(/^t-/, '');
   state.currentTable = cleanTable;
@@ -1276,9 +1305,8 @@ function confirmScannedTable(tableNum) {
   renderMenuFeed(); // Render menus immediately upon successful table scan!
   updateMascotGreeting("table_confirmed"); // Mascot welcomes this specific table!
 
-  // Play confirmation chime
-  const audio = document.getElementById("orderSuccessSound");
-  if (audio) audio.play().catch(() => {});
+  // Play confirmation chime & beep
+  playScanBeepSound();
 
   // Show Toast
   showNotificationToast(`🎉 สแกนสำเร็จ! ยืนยัน [ โต๊ะ ${state.currentTable} ] สำหรับเสิร์ฟและเช็คบิล`);

@@ -26,15 +26,21 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   // Audio Unlocker for modern browser autoplay policy
-  const unlockAudio = () => {
+  window.unlockKitchenAudio = function() {
     isAudioUnlocked = true;
     const audio = document.getElementById("bellSound");
     if (audio) {
       audio.play().then(() => { audio.pause(); audio.currentTime = 0; }).catch(() => {});
     }
+    const banner = document.getElementById("kitchenAudioUnlockBanner");
+    if (banner) {
+      banner.style.background = "#16a34a";
+      banner.innerHTML = "<span>🔊 ระบบเสียงห้องครัวพร้อมทำงาน (เสียงพูดโต๊ะ 1-10 และกระดิ่งเปิดแล้ว)</span>";
+      setTimeout(() => { banner.style.display = "none"; }, 3500);
+    }
   };
-  document.addEventListener("click", unlockAudio, { once: true });
-  document.addEventListener("touchstart", unlockAudio, { once: true });
+  document.addEventListener("click", () => { if (!isAudioUnlocked) window.unlockKitchenAudio(); }, { once: true });
+  document.addEventListener("touchstart", () => { if (!isAudioUnlocked) window.unlockKitchenAudio(); }, { once: true });
 
   // Realtime subscription from Supabase Cloud
   if (window.SupabaseService && typeof window.SupabaseService.subscribeOrders === "function") {

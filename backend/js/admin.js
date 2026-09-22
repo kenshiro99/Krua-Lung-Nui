@@ -307,8 +307,16 @@ function deleteCategory(catId) {
   }
 }
 
-// Robust URL helper for QR Codes (Works on GitHub Pages, Vercel, Netlify, and Localhost)
+// Robust URL helper for QR Codes (Always generates scannable public URLs for mobile phones)
 function getFrontendUrl(queryParams = "") {
+  const origin = (window.location.origin && window.location.origin !== "null") ? window.location.origin : "";
+  const isLocalOrFile = !origin || origin === "null" || origin.includes("localhost") || origin.includes("127.0.0.1") || window.location.protocol === "file:";
+
+  if (isLocalOrFile) {
+    // When run on local PC (file:// or localhost), mobile phones scanning the QR code need the live public URL
+    return `https://kenshiro99.github.io/Krua-Lung-Nui/frontend/index.html${queryParams}`;
+  }
+
   const path = window.location.pathname;
   const backendIndex = path.indexOf("/backend/");
   let basePath = "";
@@ -320,7 +328,6 @@ function getFrontendUrl(queryParams = "") {
   }
   
   const cleanBase = basePath.endsWith("/") ? basePath.slice(0, -1) : basePath;
-  const origin = (window.location.origin && window.location.origin !== "null") ? window.location.origin : "";
   return `${origin}${cleanBase}/frontend/index.html${queryParams}`;
 }
 
