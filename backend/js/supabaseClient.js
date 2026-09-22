@@ -266,7 +266,134 @@
       }
     },
 
-    // 6. Realtime Subscriptions
+    // 6. User Accounts & Multi-User RBAC Cloud Sync
+    async syncUsersToCloud(users) {
+      if (!isReady) initClient();
+      if (!isReady || !supabase) {
+        await new Promise(r => setTimeout(r, 600));
+        if (!isReady) initClient();
+        if (!isReady || !supabase) return false;
+      }
+      try {
+        const userList = (users && Array.isArray(users)) 
+          ? users 
+          : (typeof getAllUsers === 'function' ? getAllUsers() : []);
+          
+        if (!userList || userList.length === 0) return false;
+
+        const payload = userList.map(u => ({
+          id: u.id,
+          name: u.name,
+          role: u.role,
+          pinHash: u.pinHash,
+          active: u.active !== false,
+          createdAt: u.createdAt || new Date().toISOString()
+        }));
+
+        const now = new Date().toISOString();
+        const { error } = await supabase.from('shop_settings').upsert({
+          id: 99,
+          shop_name: 'SYS_CONFIG_USERS',
+          address: JSON.stringify(payload),
+          updated_at: now
+        });
+
+        if (error) {
+          console.warn("⚠️ [Supabase] syncUsersToCloud failed:", error.message);
+          return false;
+        }
+
+        localStorage.setItem("pos_users_updated_at", now);
+        console.log("☁️ [Supabase] Successfully synced users to cloud:", payload.length, "users");
+        return true;
+      } catch (e) {
+        console.warn("⚠️ [Supabase] syncUsersToCloud error:", e.message);
+        return false;
+      }
+    },
+
+    async syncUsersFromCloud(onUpdated) {
+      if (!isReady) initClient();
+      if (!isReady || !supabase) {
+        await new Promise(r => setTimeout(r, 600));
+        if (!isReady) initClient();
+        if (!isReady || !supabase) return null;
+      }
+      try {
+        const { data, error } = await supabase
+          .from('shop_settings')
+          .select('id, shop_name, address, updated_at')
+          .eq('id', 99)
+          .maybeSingle();
+
+        if (error || !data || !data.address) return null;
+
+        const cloudUsers = JSON.parse(data.address);
+        if (Array.isArray(cloudUsers) && cloudUsers.length > 0) {
+          const localStr = localStorage.getItem("pos_users");
+          const cloudStr = JSON.stringify(cloudUsers);
+          if (localStr !== cloudStr) {
+            console.log("🔄 [Supabase] Synced updated users from cloud:", cloudUsers.length, "users");
+            localStorage.setItem("pos_users", cloudStr);
+            if (data.updated_at) {
+              localStorage.setItem("pos_users_updated_at", data.updated_at);
+            }
+            if (typeof onUpdated === 'function') {
+              try { onUpdated(cloudUsers); } catch(err) { console.error(err); }
+            }
+            window.dispatchEvent(new Event('storage'));
+            return cloudUsers;
+          }
+        }
+        return cloudUsers;
+      } catch (e) {
+        console.warn("⚠️ [Supabase] syncUsersFromCloud error:", e.message);
+        return null;
+      }
+    },
+
+    subscribeUsers(onUpdated) {
+      if (!isReady) initClient();
+      if (!isReady || !supabase) {
+        setTimeout(() => this.subscribeUsers(onUpdated), 2500);
+        return null;
+      }
+      try {
+        return supabase
+          .channel('public:shop_settings_users')
+          .on('postgres_changes', {
+            event: '*',
+            schema: 'public',
+            table: 'shop_settings',
+            filter: 'id=eq.99'
+          }, payload => {
+            if (payload.new && payload.new.address) {
+              try {
+                const cloudUsers = JSON.parse(payload.new.address);
+                if (Array.isArray(cloudUsers) && cloudUsers.length > 0) {
+                  const localStr = localStorage.getItem("pos_users");
+                  const cloudStr = JSON.stringify(cloudUsers);
+                  if (localStr !== cloudStr) {
+                    console.log("⚡ [Supabase Realtime] User accounts updated from remote:", cloudUsers);
+                    localStorage.setItem("pos_users", cloudStr);
+                    if (payload.new.updated_at) localStorage.setItem("pos_users_updated_at", payload.new.updated_at);
+                    if (onUpdated) onUpdated(cloudUsers);
+                    window.dispatchEvent(new Event('storage'));
+                  }
+                }
+              } catch (err) {
+                console.error("Realtime user parse error:", err);
+              }
+            }
+          })
+          .subscribe();
+      } catch (e) {
+        console.warn("⚠️ [Supabase] Realtime subscribeUsers error:", e);
+        return null;
+      }
+    },
+
+    // 7. Realtime Subscriptions
     subscribeOrders(onInsert, onUpdate) {
       if (!isReady) initClient();
       if (!isReady || !supabase) {

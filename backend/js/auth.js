@@ -137,6 +137,9 @@ function getAllUsers() {
 
 function saveUsers(users) {
   localStorage.setItem("pos_users", JSON.stringify(users));
+  if (typeof window !== "undefined" && window.SupabaseService && typeof window.SupabaseService.syncUsersToCloud === "function") {
+    window.SupabaseService.syncUsersToCloud(users);
+  }
 }
 
 function getUserById(userId) {
@@ -683,3 +686,25 @@ window.canRoleAccess = canRoleAccess;
 window.updateTopNavUserBadge = updateTopNavUserBadge;
 window.resetAllPinsToFactoryDefault = resetAllPinsToFactoryDefault;
 window.changeUserPinDirect = changeUserPinDirect;
+
+// Auto-sync users with Supabase Cloud
+if (typeof window !== "undefined") {
+  const tryCloudSync = () => {
+    if (window.SupabaseService && typeof window.SupabaseService.syncUsersFromCloud === "function") {
+      window.SupabaseService.syncUsersFromCloud((users) => {
+        if (typeof refreshUserCounts === "function") refreshUserCounts();
+        if (typeof renderOwnerUserTable === "function") renderOwnerUserTable();
+        if (typeof updateTopNavUserBadge === "function") updateTopNavUserBadge();
+      });
+    }
+  };
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", () => setTimeout(tryCloudSync, 300));
+  } else {
+    setTimeout(tryCloudSync, 300);
+  }
+
+  window.addEventListener("focus", () => setTimeout(tryCloudSync, 100));
+}
+

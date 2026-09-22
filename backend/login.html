@@ -377,6 +377,15 @@
     </div>
   </div>
 
+  <!-- Supabase Official JS SDK & Client Sync Engine (Local Offline-First + CDN Fallback) -->
+  <script src="js/supabase.min.js"></script>
+  <script>
+    if (typeof supabase === 'undefined' || typeof supabase.createClient !== 'function') {
+      document.write('<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"><\/script>');
+    }
+  </script>
+  <script src="config.js" onerror="this.onerror=null;"></script>
+  <script src="js/supabaseClient.js"></script>
   <script src="js/auth.js"></script>
   <script>
     let currentChosenRole = null;
@@ -742,17 +751,38 @@
     document.addEventListener("DOMContentLoaded", () => {
       refreshUserCounts();
       refreshLucideIcons();
+
+      // Cloud user sync on startup
+      if (window.SupabaseService && typeof window.SupabaseService.syncUsersFromCloud === 'function') {
+        window.SupabaseService.syncUsersFromCloud(() => {
+          refreshUserCounts();
+          refreshLucideIcons();
+        });
+      }
+      if (window.SupabaseService && typeof window.SupabaseService.subscribeUsers === 'function') {
+        window.SupabaseService.subscribeUsers(() => {
+          refreshUserCounts();
+          refreshLucideIcons();
+        });
+      }
     });
 
     // Real-time sync across browser tabs & on focus
     window.addEventListener("storage", (e) => {
-      if (e.key === "pos_users" || e.key === "pos_owner_pin_configured") {
+      if (!e.key || e.key === "pos_users" || e.key === "pos_owner_pin_configured") {
         refreshUserCounts();
+        refreshLucideIcons();
       }
     });
 
     window.addEventListener("focus", () => {
       refreshUserCounts();
+      if (window.SupabaseService && typeof window.SupabaseService.syncUsersFromCloud === 'function') {
+        window.SupabaseService.syncUsersFromCloud(() => {
+          refreshUserCounts();
+          refreshLucideIcons();
+        });
+      }
     });
   </script>
 </body>
