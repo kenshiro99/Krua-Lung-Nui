@@ -238,6 +238,10 @@ function renderCashierBillDetails() {
 
   titleEl.innerText = displayTitle;
   actionsEl.style.display = unpaidOrders.length > 0 ? "flex" : "none";
+  const btnCallQ = document.getElementById("btnCashierCallQueue");
+  if (btnCallQ) {
+    btnCallQ.style.display = currentCashierTab === "takeaway" ? "inline-flex" : "none";
+  }
 
   if (unpaidOrders.length === 0) {
     itemsContainer.innerHTML = `
@@ -464,4 +468,114 @@ function openModal(modalId) {
 function closeModal(modalId) {
   const modal = document.getElementById(modalId);
   if (modal) modal.classList.remove("active");
+}
+
+function cashierCallCurrentQueue() {
+  if (currentCashierTab === "takeaway" && selectedCashierTableId) {
+    const order = window.posState.orders.find(o => o.id === selectedCashierTableId);
+    if (order) {
+      callQueueSound(order.tableName, order.customerName);
+    }
+  }
+}
+
+/**
+ * ระบบเรียกคิวอาหารด้วยเสียง AI ภาษาไทย (AI Voice Queue Calling Engine)
+ */
+function callQueueSound(queueRaw, customerName = "") {
+  if (!queueRaw) return;
+
+  const cleanQ = String(queueRaw).replace(/^Q-/, '').replace(/^คิว\s*/, '').trim();
+
+  let speechText = "";
+  if (customerName && customerName.trim() && customerName !== "ลูกค้าหน้าร้าน") {
+    speechText = `ขอเชิญคุณ ${customerName.trim()} หมายเลขคิว ${cleanQ} รับอาหารที่ช่องรับอาหารได้เลยค่ะ`;
+  } else {
+    speechText = `ขอเชิญหมายเลขคิว ${cleanQ} รับอาหารที่ช่องรับอาหารได้เลยค่ะ`;
+  }
+
+  // เล่นเสียงกระดิ่ง Chime เตือนนำ
+  playBellSound();
+
+  // ส่งเสียงพูดภาษาไทยผ่าน AI Speech
+  setTimeout(() => {
+    speakThai(speechText);
+  }, 450);
+
+  // แสดงการแจ้งเตือน Pop-up บนหน้าจอ
+  showQueueCallingToast(cleanQ, customerName);
+}
+
+function playBellSound() {
+  const customBell = new Audio("sounds/bell.mp3");
+  customBell.play().catch(() => {
+    const audio = document.getElementById("bellSound");
+    if (audio) {
+      audio.currentTime = 0;
+      audio.play().catch(() => {});
+    }
+  });
+}
+
+function speakThai(text) {
+  if (!('speechSynthesis' in window)) return;
+  try {
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = "th-TH";
+    utterance.rate = 0.95;
+    utterance.pitch = 1.05;
+
+    const voices = window.speechSynthesis.getVoices();
+    const thVoice = voices.find(v => v.lang === "th-TH" || v.lang.startsWith("th") || (v.name && v.name.includes("Thai")));
+    if (thVoice) utterance.voice = thVoice;
+
+    window.speechSynthesis.speak(utterance);
+  } catch (err) {
+    console.warn("speakThai failed:", err);
+  }
+}
+
+function showQueueCallingToast(q, custName) {
+  let toast = document.getElementById("queueCallingToast");
+  if (!toast) {
+    toast = document.createElement("div");
+    toast.id = "queueCallingToast";
+    toast.style.cssText = `
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: #ea580c;
+      color: #ffffff;
+      padding: 1rem 1.5rem;
+      border-radius: 12px;
+      box-shadow: 0 10px 25px rgba(234, 88, 12, 0.4);
+      font-size: 1rem;
+      font-weight: 700;
+      z-index: 99999;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      border: 2px solid #fed7aa;
+      transition: all 0.3s ease;
+      pointer-events: none;
+    `;
+    document.body.appendChild(toast);
+  }
+
+  toast.innerHTML = `
+    <span style="font-size:1.6rem;">📢</span>
+    <div>
+      <div>กำลังประกาศเรียกคิว: <span style="font-size:1.25rem; color:#fef08a; text-decoration:underline;">คิว ${q}</span></div>
+      ${custName ? `<div style="font-size:0.85rem; font-weight:normal; opacity:0.9;">ลูกค้า: ${custName}</div>` : ''}
+    </div>
+  `;
+  toast.style.opacity = "1";
+  toast.style.transform = "scale(1)";
+
+  clearTimeout(window.__queueToastTimeout);
+  window.__queueToastTimeout = setTimeout(() => {
+    toast.style.opacity = "0";
+    toast.style.transform = "scale(0.9)";
+  }, 3500);
 }

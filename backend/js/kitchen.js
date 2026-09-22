@@ -184,7 +184,7 @@ function renderKitchenView() {
             </div>
           `).join("")}
         </div>
-        <div class="ticket-actions">
+        <div class="ticket-actions" style="display:flex; gap:0.5rem; flex-wrap:wrap;">
           ${!isCooking ? `
             <button class="btn btn-warning" style="flex:1;" onclick="updateOrderStatus('${o.id}', 'cooking')">
               <i data-lucide="flame"></i> กำลังปรุงอาหาร
@@ -194,6 +194,11 @@ function renderKitchenView() {
               <i data-lucide="check-circle"></i> ${isTakeaway ? '📦 ปรุงเสร็จ / พร้อมส่งมอบลูกค้า' : '🍽️ ปรุงเสร็จ / พร้อมเสิร์ฟที่โต๊ะ'}
             </button>
           `}
+          ${isTakeaway ? `
+            <button class="btn btn-outline" style="border:1px solid #ea580c; color:#ea580c; background:#fff7ed; padding:0.4rem 0.75rem; font-weight:700; display:inline-flex; align-items:center; gap:0.3rem;" onclick="callQueueSound('${o.tableName}', '${(o.customerName || '').replace(/'/g, "\\'")}')" title="กดเรียกคิวออกลำโพงทันที">
+              <i data-lucide="megaphone"></i> 📢 เรียกคิว
+            </button>
+          ` : ''}
         </div>
       </div>
     `;
@@ -209,6 +214,11 @@ async function updateOrderStatus(orderId, newStatus) {
     renderKitchenView();
     if (window.SupabaseService && window.SupabaseService.isConfigured()) {
       await window.SupabaseService.updateOrderStatus(orderId, newStatus);
+    }
+    // เมื่อพ่อครัวกดปรุงเสร็จ (served) สำหรับสั่งกลับบ้าน ให้ระบบเรียกคิวเสียง AI อัตโนมัติทันที
+    const isTakeaway = order.orderType === "takeaway" || order.tableId === "takeaway" || String(order.tableName).startsWith("Q-");
+    if (newStatus === "served" && isTakeaway) {
+      callQueueSound(order.tableName, order.customerName);
     }
   }
 }
@@ -331,6 +341,82 @@ function testTakeawayVoice() {
   setTimeout(() => {
     playCustomVoiceAudio("sounds/takeaway.mp3", "ทดสอบเสียงพูดครัวลุงหนุ่ย มีออเดอร์กลับบ้านค่ะ");
   }, 450);
+}
+
+/**
+ * ระบบเรียกคิวอาหารด้วยเสียง AI ภาษาไทย (AI Voice Queue Calling Engine)
+ * ตัวอย่าง: "ขอเชิญหมายเลขคิว 15 รับอาหารที่ช่องรับอาหารได้เลยค่ะ"
+ * หรือ: "ขอเชิญคุณสมชาย หมายเลขคิว 15 รับอาหารที่ช่องรับอาหารได้เลยค่ะ"
+ */
+function callQueueSound(queueRaw, customerName = "") {
+  if (!queueRaw) return;
+
+  const soundToggle = document.getElementById("kitchenSoundToggle");
+  if (soundToggle && !soundToggle.checked) return;
+
+  const cleanQ = String(queueRaw).replace(/^Q-/, '').replace(/^คิว\s*/, '').trim();
+
+  let speechText = "";
+  if (customerName && customerName.trim() && customerName !== "ลูกค้าหน้าร้าน") {
+    speechText = `ขอเชิญคุณ ${customerName.trim()} หมายเลขคิว ${cleanQ} รับอาหารที่ช่องรับอาหารได้เลยค่ะ`;
+  } else {
+    speechText = `ขอเชิญหมายเลขคิว ${cleanQ} รับอาหารที่ช่องรับอาหารได้เลยค่ะ`;
+  }
+
+  // 1. เล่นเสียงกระดิ่ง Chime เตือนความสนใจก่อน
+  playKitchenBell();
+
+  // 2. ส่งเสียงพูดภาษาไทยผ่าน AI Speech
+  setTimeout(() => {
+    speakThai(speechText);
+  }, 450);
+
+  // 3. แสดงการแจ้งเตือน Pop-up บนหน้าจอ
+  showQueueCallingToast(cleanQ, customerName);
+}
+
+function showQueueCallingToast(q, custName) {
+  let toast = document.getElementById("queueCallingToast");
+  if (!toast) {
+    toast = document.createElement("div");
+    toast.id = "queueCallingToast";
+    toast.style.cssText = `
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: #ea580c;
+      color: #ffffff;
+      padding: 1rem 1.5rem;
+      border-radius: 12px;
+      box-shadow: 0 10px 25px rgba(234, 88, 12, 0.4);
+      font-size: 1rem;
+      font-weight: 700;
+      z-index: 99999;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      border: 2px solid #fed7aa;
+      transition: all 0.3s ease;
+      pointer-events: none;
+    `;
+    document.body.appendChild(toast);
+  }
+
+  toast.innerHTML = `
+    <span style="font-size:1.6rem;">📢</span>
+    <div>
+      <div>กำลังประกาศเรียกคิว: <span style="font-size:1.25rem; color:#fef08a; text-decoration:underline;">คิว ${q}</span></div>
+      ${custName ? `<div style="font-size:0.85rem; font-weight:normal; opacity:0.9;">ลูกค้า: ${custName}</div>` : ''}
+    </div>
+  `;
+  toast.style.opacity = "1";
+  toast.style.transform = "scale(1)";
+
+  clearTimeout(window.__queueToastTimeout);
+  window.__queueToastTimeout = setTimeout(() => {
+    toast.style.opacity = "0";
+    toast.style.transform = "scale(0.9)";
+  }, 3500);
 }
 
 function openModal(modalId) {

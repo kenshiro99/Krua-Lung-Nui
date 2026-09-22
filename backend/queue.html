@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>สถานะคิวอาหารหน้าร้าน | ครัวลุงหนุ่ย (Live Food Queue)</title>
+  <!-- Google Fonts: Prompt & Plus Jakarta Sans -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800;900&family=Prompt:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    :root {
+      --bg-dark: #090d16;
+      --card-dark: #131b2e;
+      --card-border: #1e293b;
+      --amber: #f59e0b;
+      --amber-bg: rgba(245, 158, 11, 0.12);
+      --green: #10b981;
+      --green-bg: rgba(16, 185, 129, 0.15);
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --font-family: 'Prompt', 'Plus Jakarta Sans', sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: var(--font-family);
+      background: var(--bg-dark);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
+      user-select: none;
+    }
+
+    /* Top Bar */
+    .queue-topbar {
+      background: #0f172a;
+      border-bottom: 2px solid #1e293b;
+      padding: 0.75rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .brand-wrap {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .brand-logo {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      border: 2px solid var(--amber);
+      object-fit: cover;
+    }
+
+    .brand-title {
+      font-size: 1.4rem;
+      font-weight: 800;
+      color: #ffffff;
+      letter-spacing: 0.5px;
+    }
+
+    .brand-sub {
+      font-size: 0.85rem;
+      color: var(--amber);
+      font-weight: 600;
+    }
+
+    .topbar-controls {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .live-clock {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: #38bdf8;
+      font-variant-numeric: tabular-nums;
+      background: #1e293b;
+      padding: 0.35rem 1rem;
+      border-radius: 9999px;
+      border: 1px solid #334155;
+    }
+
+    .btn-ctrl {
+      background: #1e293b;
+      color: #f8fafc;
+      border: 1px solid #334155;
+      padding: 0.5rem 1rem;
+      border-radius: 8px;
+      font-family: var(--font-family);
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      transition: all 0.2s;
+    }
+
+    .btn-ctrl:hover {
+      background: #334155;
+      border-color: #475569;
+    }
+
+    /* Main Grid */
+    .queue-board-grid {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 1fr 1.2fr;
+      gap: 1.5rem;
+      padding: 1.5rem 2rem;
+    }
+
+    .queue-column {
+      background: var(--card-dark);
+      border-radius: 16px;
+      border: 2px solid var(--card-border);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+    }
+
+    .col-header {
+      padding: 1.25rem 1.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 2px solid var(--card-border);
+    }
+
+    .col-header.cooking {
+      background: linear-gradient(135deg, rgba(245, 158, 11, 0.15) 0%, rgba(245, 158, 11, 0.05) 100%);
+      border-bottom-color: rgba(245, 158, 11, 0.3);
+    }
+
+    .col-header.ready {
+      background: linear-gradient(135deg, rgba(16, 185, 129, 0.25) 0%, rgba(16, 185, 129, 0.08) 100%);
+      border-bottom-color: rgba(16, 185, 129, 0.4);
+    }
+
+    .col-title {
+      font-size: 1.5rem;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+    }
+
+    .col-header.cooking .col-title {
+      color: #fbbf24;
+    }
+
+    .col-header.ready .col-title {
+      color: #34d399;
+    }
+
+    .col-badge {
+      padding: 0.35rem 0.85rem;
+      border-radius: 9999px;
+      font-weight: 800;
+      font-size: 0.95rem;
+    }
+
+    .col-header.cooking .col-badge {
+      background: #d97706;
+      color: #ffffff;
+    }
+
+    .col-header.ready .col-badge {
+      background: #059669;
+      color: #ffffff;
+      animation: pulseGlow 2s infinite;
+    }
+
+    .col-body {
+      flex: 1;
+      padding: 1.5rem;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      align-content: start;
+      gap: 1.25rem;
+      overflow-y: auto;
+    }
+
+    .ready-body {
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 1.5rem;
+    }
+
+    /* Queue Cards */
+    .queue-card {
+      border-radius: 14px;
+      padding: 1.25rem 1rem;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+    }
+
+    .queue-card.cooking-card {
+      background: #1e293b;
+      border: 2px solid #334155;
+    }
+
+    .queue-card.cooking-card .q-num {
+      font-size: 2.2rem;
+      font-weight: 900;
+      color: #fbbf24;
+      line-height: 1.1;
+    }
+
+    .queue-card.ready-card {
+      background: linear-gradient(145deg, #064e3b 0%, #022c22 100%);
+      border: 3px solid #10b981;
+      box-shadow: 0 8px 20px rgba(16, 185, 129, 0.25);
+      animation: popIn 0.4s ease-out;
+    }
+
+    .queue-card.ready-card.calling {
+      animation: flashHighlight 1.2s infinite;
+      border-color: #fef08a;
+    }
+
+    .queue-card.ready-card .q-num {
+      font-size: 3.5rem;
+      font-weight: 900;
+      color: #6ee7b7;
+      line-height: 1;
+      text-shadow: 0 0 15px rgba(110, 231, 183, 0.5);
+    }
+
+    .queue-card .q-name {
+      font-size: 0.95rem;
+      color: #e2e8f0;
+      margin-top: 0.4rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 100%;
+    }
+
+    .queue-card .q-tag {
+      font-size: 0.75rem;
+      margin-top: 0.5rem;
+      padding: 0.2rem 0.6rem;
+      border-radius: 9999px;
+      font-weight: 600;
+    }
+
+    .queue-card.cooking-card .q-tag {
+      background: #334155;
+      color: #94a3b8;
+    }
+
+    .queue-card.ready-card .q-tag {
+      background: #059669;
+      color: #ffffff;
+    }
+
+    .empty-state {
+      grid-column: 1 / -1;
+      text-align: center;
+      padding: 4rem 1rem;
+      color: var(--text-muted);
+    }
+
+    .empty-state i {
+      width: 56px;
+      height: 56px;
+      margin: 0 auto 1rem;
+      opacity: 0.4;
+    }
+
+    /* Manual Quick Call Bar */
+    .quick-call-bar {
+      background: #0f172a;
+      border-top: 2px solid #1e293b;
+      padding: 0.75rem 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+    }
+
+    .quick-call-input-group {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .quick-call-input {
+      background: #1e293b;
+      border: 1px solid #334155;
+      color: #ffffff;
+      padding: 0.5rem 1rem;
+      border-radius: 8px;
+      font-family: var(--font-family);
+      font-size: 1rem;
+      width: 160px;
+    }
+
+    .quick-call-input:focus {
+      outline: none;
+      border-color: var(--amber);
+    }
+
+    .btn-call {
+      background: #ea580c;
+      color: #ffffff;
+      border: none;
+      padding: 0.55rem 1.25rem;
+      border-radius: 8px;
+      font-family: var(--font-family);
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      transition: all 0.2s;
+    }
+
+    .btn-call:hover {
+      background: #c2410c;
+    }
+
+    /* Animations */
+    @keyframes pulseGlow {
+      0%, 100% { box-shadow: 0 0 15px rgba(16, 185, 129, 0.4); }
+      50% { box-shadow: 0 0 25px rgba(16, 185, 129, 0.8); }
+    }
+
+    @keyframes flashHighlight {
+      0%, 100% {
+        transform: scale(1);
+        box-shadow: 0 0 20px rgba(245, 158, 11, 0.5);
+      }
+      50% {
+        transform: scale(1.05);
+        box-shadow: 0 0 35px rgba(245, 158, 11, 0.9);
+      }
+    }
+
+    @keyframes popIn {
+      from { transform: scale(0.8); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+
+    @media (max-width: 900px) {
+      .queue-board-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Bar -->
+  <header class="queue-topbar">
+    <div class="brand-wrap">
+      <img src="logo/logo.jpg" alt="ครัวลุงหนุ่ย" class="brand-logo" onerror="this.src='logo/logo.png'">
+      <div>
+        <h1 class="brand-title">ครัวลุงหนุ่ย • สถานะคิวอาหารหน้าร้าน</h1>
+        <span class="brand-sub">✨ อร่อย สะอาด วัตถุดิบสดใหม่ รับอาหารเมื่อเรียกคิวครับ</span>
+      </div>
+    </div>
+
+    <div class="topbar-controls">
+      <div class="live-clock" id="liveClock">--:--:--</div>
+      <button class="btn-ctrl" onclick="toggleSound()" id="btnSoundToggle">
+        <i data-lucide="volume-2" id="iconSound"></i>
+        <span id="txtSound">เปิดเสียงเรียก</span>
+      </button>
+      <button class="btn-ctrl" onclick="toggleFullscreen()">
+        <i data-lucide="maximize" id="iconFullscreen"></i>
+        <span>เต็มจอ</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Main 2-Column Grid -->
+  <main class="queue-board-grid">
+    
+    <!-- Left: Preparing / Cooking -->
+    <section class="queue-column">
+      <div class="col-header cooking">
+        <div class="col-title">
+          <i data-lucide="flame" style="width: 28px; height: 28px;"></i>
+          <span>กำลังปรุงอาหาร (Preparing)</span>
+        </div>
+        <span class="col-badge" id="badgeCookingCount">0 คิว</span>
+      </div>
+      <div class="col-body" id="cookingCardsList">
+        <!-- Dynamically rendered -->
+      </div>
+    </section>
+
+    <!-- Right: Ready for Pickup -->
+    <section class="queue-column">
+      <div class="col-header ready">
+        <div class="col-title">
+          <i data-lucide="bell-ring" style="width: 28px; height: 28px;"></i>
+          <span>อาหารพร้อมรับ (Ready for Pickup)</span>
+        </div>
+        <span class="col-badge" id="badgeReadyCount">0 คิว</span>
+      </div>
+      <div class="col-body ready-body" id="readyCardsList">
+        <!-- Dynamically rendered -->
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Bottom Quick Call Action Bar -->
+  <footer class="quick-call-bar">
+    <div style="font-size:0.9rem; color:var(--text-muted); display:flex; align-items:center; gap:0.5rem;">
+      <i data-lucide="info" style="width:18px; height:18px; color:var(--amber);"></i>
+      <span>หน้าจอนี้จะอัปเดตและส่งเสียงเรียกคิวอัตโนมัติเมื่อห้องครัวกดปรุงเสร็จ</span>
+    </div>
+
+    <div class="quick-call-input-group">
+      <input type="text" id="manualQueueInput" class="quick-call-input" placeholder="ใส่เลขคิว เช่น 15" onkeydown="if(event.key==='Enter') manualCallQueue()">
+      <button class="btn-call" onclick="manualCallQueue()">
+        <i data-lucide="megaphone"></i>
+        <span>กดเรียกคิวทันที</span>
+      </button>
+    </div>
+  </footer>
+
+  <!-- Audio element for Chime -->
+  <audio id="bellSound" preload="auto">
+    <source src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3" type="audio/mpeg">
+  </audio>
+
+  <!-- Scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="config.example.js"></script>
+  <script src="config.js" onerror="this.onerror=null;"></script>
+  <script src="js/supabaseClient.js"></script>
+  <script src="js/state.js"></script>
+  <script>
+    let isSoundEnabled = true;
+    let recentlyCalledId = null;
+    const previouslyServedIds = new Set();
+
+    document.addEventListener("DOMContentLoaded", () => {
+      startClock();
+      refreshLucideIcons();
+      loadQueueState();
+
+      // Audio unlock on click
+      document.addEventListener("click", () => {
+        const audio = document.getElementById("bellSound");
+        if (audio) {
+          audio.play().then(() => { audio.pause(); audio.currentTime = 0; }).catch(() => {});
+        }
+      }, { once: true });
+
+      // Supabase Realtime
+      if (window.SupabaseService && typeof window.SupabaseService.subscribeOrders === "function") {
+        window.SupabaseService.subscribeOrders(
+          () => loadQueueState(),
+          () => loadQueueState()
+        );
+      }
+
+      // 3-second sync polling
+      setInterval(loadQueueState, 3000);
+    });
+
+    function startClock() {
+      const clockEl = document.getElementById("liveClock");
+      const tick = () => {
+        const now = new Date();
+        clockEl.innerText = now.toLocaleTimeString("th-TH");
+      };
+      tick();
+      setInterval(tick, 1000);
+    }
+
+    async function loadQueueState() {
+      let orders = [];
+
+      // Cloud First
+      if (window.SupabaseService && window.SupabaseService.isConfigured()) {
+        const cloud = await window.SupabaseService.getOrders();
+        if (cloud && Array.isArray(cloud)) {
+          orders = cloud;
+        }
+      }
+
+      // Local fallback
+      if (orders.length === 0) {
+        orders = JSON.parse(localStorage.getItem("pos_orders")) || [];
+      }
+
+      renderQueues(orders);
+    }
+
+    function renderQueues(orders) {
+      const takeawayOrders = orders.filter(o => 
+        o.order_type === "takeaway" || 
+        o.orderType === "takeaway" || 
+        o.table_id === "takeaway" || 
+        o.tableId === "takeaway" || 
+        String(o.table_name || o.tableName || "").startsWith("Q-")
+      );
+
+      // Cooking / Pending
+      const cookingOrders = takeawayOrders.filter(o => o.status === "pending" || o.status === "cooking");
+      // Ready / Served (within last 30 minutes)
+      const readyOrders = takeawayOrders.filter(o => o.status === "served");
+
+      // Badge Counts
+      document.getElementById("badgeCookingCount").innerText = `${cookingOrders.length} คิว`;
+      document.getElementById("badgeReadyCount").innerText = `${readyOrders.length} คิว`;
+
+      // Check for newly ready orders to announce
+      readyOrders.forEach(o => {
+        if (!previouslyServedIds.has(o.id)) {
+          previouslyServedIds.add(o.id);
+          recentlyCalledId = o.id;
+          callQueueSpeech(o.table_name || o.tableName, o.customer_name || o.customerName);
+        }
+      });
+
+      // Render Cooking
+      const cookingContainer = document.getElementById("cookingCardsList");
+      if (cookingOrders.length === 0) {
+        cookingContainer.innerHTML = `
+          <div class="empty-state">
+            <i data-lucide="coffee"></i>
+            <p>ไม่มีออเดอร์ที่กำลังปรุงในขณะนี้</p>
+          </div>
+        `;
+      } else {
+        cookingContainer.innerHTML = cookingOrders.map(o => {
+          const q = String(o.table_name || o.tableName || "").replace(/^Q-/, '');
+          const name = o.customer_name || o.customerName || '';
+          return `
+            <div class="queue-card cooking-card">
+              <div class="q-num">${q}</div>
+              ${name ? `<div class="q-name">${name}</div>` : ''}
+              <div class="q-tag">กำลังปรุง...</div>
+            </div>
+          `;
+        }).join("");
+      }
+
+      // Render Ready
+      const readyContainer = document.getElementById("readyCardsList");
+      if (readyOrders.length === 0) {
+        readyContainer.innerHTML = `
+          <div class="empty-state">
+            <i data-lucide="check-circle-2"></i>
+            <p>ยังไม่มีคิวที่พร้อมรับอาหาร</p>
+          </div>
+        `;
+      } else {
+        readyContainer.innerHTML = readyOrders.map(o => {
+          const q = String(o.table_name || o.tableName || "").replace(/^Q-/, '');
+          const name = o.customer_name || o.customerName || '';
+          const isCalling = o.id === recentlyCalledId;
+          return `
+            <div class="queue-card ready-card ${isCalling ? 'calling' : ''}">
+              <div class="q-num">${q}</div>
+              ${name ? `<div class="q-name">👤 ${name}</div>` : ''}
+              <div class="q-tag">พร้อมรับอาหาร ✨</div>
+            </div>
+          `;
+        }).join("");
+      }
+
+      refreshLucideIcons();
+    }
+
+    // AI Voice Queue Calling
+    function callQueueSpeech(queueRaw, customerName = "") {
+      if (!isSoundEnabled || !queueRaw) return;
+
+      const cleanQ = String(queueRaw).replace(/^Q-/, '').replace(/^คิว\s*/, '').trim();
+
+      let text = "";
+      if (customerName && customerName.trim() && customerName !== "ลูกค้าหน้าร้าน") {
+        text = `ขอเชิญคุณ ${customerName.trim()} หมายเลขคิว ${cleanQ} รับอาหารที่ช่องรับอาหารได้เลยค่ะ`;
+      } else {
+        text = `ขอเชิญหมายเลขคิว ${cleanQ} รับอาหารที่ช่องรับอาหารได้เลยค่ะ`;
+      }
+
+      // Play Chime
+      playBell();
+
+      // Speak AI
+      setTimeout(() => {
+        speakThai(text);
+      }, 500);
+    }
+
+    function playBell() {
+      const customBell = new Audio("sounds/bell.mp3");
+      customBell.play().catch(() => {
+        const audio = document.getElementById("bellSound");
+        if (audio) {
+          audio.currentTime = 0;
+          audio.play().catch(() => {});
+        }
+      });
+    }
+
+    function speakThai(text) {
+      if (!('speechSynthesis' in window)) return;
+      try {
+        window.speechSynthesis.cancel();
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = "th-TH";
+        utterance.rate = 0.95;
+        utterance.pitch = 1.05;
+
+        const voices = window.speechSynthesis.getVoices();
+        const thVoice = voices.find(v => v.lang === "th-TH" || v.lang.startsWith("th") || (v.name && v.name.includes("Thai")));
+        if (thVoice) utterance.voice = thVoice;
+
+        window.speechSynthesis.speak(utterance);
+      } catch (e) {
+        console.warn(e);
+      }
+    }
+
+    function manualCallQueue() {
+      const input = document.getElementById("manualQueueInput");
+      const val = input.value.trim();
+      if (!val) return;
+      callQueueSpeech(val);
+      input.value = "";
+    }
+
+    function toggleSound() {
+      isSoundEnabled = !isSoundEnabled;
+      document.getElementById("txtSound").innerText = isSoundEnabled ? "เปิดเสียงเรียก" : "ปิดเสียงเรียก";
+      document.getElementById("iconSound").setAttribute("data-lucide", isSoundEnabled ? "volume-2" : "volume-x");
+      refreshLucideIcons();
+    }
+
+    function toggleFullscreen() {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(() => {});
+      } else {
+        document.exitFullscreen().catch(() => {});
+      }
+    }
+
+    function refreshLucideIcons() {
+      if (typeof lucide !== 'undefined' && lucide.createIcons) {
+        lucide.createIcons();
+      }
+    }
+  </script>
+</body>
+</html>
