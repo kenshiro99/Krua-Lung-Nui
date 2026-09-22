@@ -1,9 +1,56 @@
-/**
- * ครัวลุงหนุ่ย (Krua Lung Nui) - Cashier POS Module
- */
-
 let selectedCashierTableId = null;
 let currentCashierTab = "dinein"; // "dinein" | "takeaway"
+const cashierAnnouncedIds = new Set();
+let cashierPageReady = false;
+
+// เสียงแจ้งเตือนออเดอร์ใหม่ (Cashier) โดยใช้ Web Audio API — ไม่ต้องการไฟล์เสียง
+function playCashierNewOrderSound() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    // เล่น 2 tone: "ding-dong" แจ้งเตือน
+    const tones = [880, 1109]; // A5, C#6
+    tones.forEach((freq, i) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.type = "sine";
+      osc.frequency.value = freq;
+      gain.gain.setValueAtTime(0.001, ctx.currentTime + i * 0.18);
+      gain.gain.exponentialRampToValueAtTime(0.4, ctx.currentTime + i * 0.18 + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.18 + 0.25);
+      osc.start(ctx.currentTime + i * 0.18);
+      osc.stop(ctx.currentTime + i * 0.18 + 0.3);
+    });
+    setTimeout(() => ctx.close(), 1000);
+  } catch (e) {
+    console.warn("Cashier sound error:", e);
+  }
+}
+
+function showCashierNewOrderToast(tableName, orderType) {
+  let toast = document.getElementById("cashierNewOrderToast");
+  if (!toast) {
+    toast = document.createElement("div");
+    toast.id = "cashierNewOrderToast";
+    toast.style.cssText = `
+      position: fixed; top: 80px; right: 20px;
+      background: #2563eb; color: #fff;
+      padding: 0.85rem 1.25rem; border-radius: 12px;
+      box-shadow: 0 8px 24px rgba(37,99,235,0.4);
+      font-size: 0.95rem; font-weight: 700;
+      z-index: 99999; display: flex; align-items: center; gap: 0.6rem;
+      border: 2px solid #93c5fd; pointer-events: none;
+      transition: opacity 0.3s ease;
+    `;
+    document.body.appendChild(toast);
+  }
+  const label = orderType === "takeaway" ? `🛍️ ออเดอร์กลับบ้าน ${tableName}` : `🍽️ ออเดอร์โต๊ะ ${tableName}`;
+  toast.innerHTML = `<span style="font-size:1.4rem;">🔔</span><div>${label}<div style="font-size:0.75rem;font-weight:normal;opacity:0.85;">ออเดอร์ใหม่เข้ามา — กรุณาตรวจสอบ</div></div>`;
+  toast.style.opacity = "1";
+  clearTimeout(window.__cashierToastTimeout);
+  window.__cashierToastTimeout = setTimeout(() => { toast.style.opacity = "0"; }, 4000);
+}
 
 document.addEventListener("DOMContentLoaded", () => {
   if (!verifyPageAccess("cashier")) return;
@@ -13,14 +60,27 @@ document.addEventListener("DOMContentLoaded", () => {
   renderCashierView();
   refreshLucideIcons();
 
-  // Initial Cloud Sync
-  syncCashierFromCloud();
+  // Initial Cloud Sync — load without announcing
+  syncCashierFromCloud().then(() => {
+    if (window.posState && Array.isArray(window.posState.orders)) {
+      window.posState.orders.forEach(o => { if (o && o.id) cashierAnnouncedIds.add(o.id); });
+    }
+    cashierPageReady = true;
+    console.log("🟢 [Cashier] Ready — รอออเดอร์ใหม่...");
+  });
 
   // Realtime subscription from Supabase Cloud
   if (window.SupabaseService && typeof window.SupabaseService.subscribeOrders === "function") {
     window.SupabaseService.subscribeOrders(
       (newOrder) => {
+        if (!cashierPageReady) return;
         console.log("💵 [Cashier POS] New Cloud Order received:", newOrder);
+        const norm = normalizeCashierOrderFormat(newOrder);
+        if (norm && norm.id && !cashierAnnouncedIds.has(norm.id)) {
+          cashierAnnouncedIds.add(norm.id);
+          playCashierNewOrderSound();
+          showCashierNewOrderToast(norm.tableName, norm.orderType);
+        }
         syncCashierFromCloud();
       },
       (updatedOrder) => {
@@ -31,13 +91,25 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Polling to update live cashier bills (every 3s)
   setInterval(() => {
-    syncCashierFromCloud();
-
-    window.posState.orders = JSON.parse(localStorage.getItem("pos_orders")) || [];
-    window.posState.tables = JSON.parse(localStorage.getItem("pos_tables")) || [];
-    renderCashierView();
+    syncCashierFromCloud().then(() => {
+      if (!cashierPageReady) return;
+      // Check for unannounced orders (in case Realtime missed them)
+      if (window.posState && Array.isArray(window.posState.orders)) {
+        window.posState.orders.forEach(o => {
+          if (o && o.id && !cashierAnnouncedIds.has(o.id) && o.paymentStatus === "unpaid") {
+            cashierAnnouncedIds.add(o.id);
+            playCashierNewOrderSound();
+            showCashierNewOrderToast(o.tableName, o.orderType);
+          }
+        });
+      }
+      window.posState.orders = JSON.parse(localStorage.getItem("pos_orders")) || [];
+      window.posState.tables = JSON.parse(localStorage.getItem("pos_tables")) || [];
+      renderCashierView();
+    });
   }, 3000);
 });
+
 
 async function syncCashierFromCloud() {
   if (window.SupabaseService && window.SupabaseService.isConfigured()) {

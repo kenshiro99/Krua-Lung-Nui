@@ -5,6 +5,7 @@
 let lastPendingCount = 0;
 const announcedOrderIds = new Set();
 let isAudioUnlocked = false;
+let kitchenPageReady = false; // Flag: true only AFTER initial cloud sync completes
 
 document.addEventListener("DOMContentLoaded", () => {
   if (!verifyPageAccess("kitchen")) return;
@@ -14,15 +15,21 @@ document.addEventListener("DOMContentLoaded", () => {
   renderKitchenView();
   refreshLucideIcons();
 
-  // Mark existing orders as already announced on page load to prevent replay
+  // Mark existing localStorage orders as announced (from PREVIOUS session only)
+  // These are orders we already knew about before this page load
   const existing = JSON.parse(localStorage.getItem("pos_orders")) || [];
   existing.forEach(o => { if (o && o.id) announcedOrderIds.add(o.id); });
 
-  // Initial Cloud Sync
+  // Initial Cloud Sync: Load current orders WITHOUT announcing them
+  // Then set kitchenPageReady = true so new orders AFTER this point trigger sounds
   syncFromCloud().then(() => {
+    // Add all currently-in-cloud orders to announcedOrderIds (no sound for old orders)
     if (window.posState && Array.isArray(window.posState.orders)) {
       window.posState.orders.forEach(o => { if (o && o.id) announcedOrderIds.add(o.id); });
     }
+    // ✅ Page is now ready — orders arriving after this will trigger announcements
+    kitchenPageReady = true;
+    console.log("🟢 [Kitchen KDS] Ready — รอออเดอร์ใหม่...");
   });
 
   // Audio Unlocker for modern browser autoplay policy
@@ -42,10 +49,11 @@ document.addEventListener("DOMContentLoaded", () => {
   document.addEventListener("click", () => { if (!isAudioUnlocked) window.unlockKitchenAudio(); }, { once: true });
   document.addEventListener("touchstart", () => { if (!isAudioUnlocked) window.unlockKitchenAudio(); }, { once: true });
 
-  // Realtime subscription from Supabase Cloud
+  // Realtime subscription from Supabase Cloud (instant notification)
   if (window.SupabaseService && typeof window.SupabaseService.subscribeOrders === "function") {
     window.SupabaseService.subscribeOrders(
       (newOrder) => {
+        if (!kitchenPageReady) return; // Ignore events before page is ready
         console.log("🔔 [Kitchen KDS] New Cloud Order received:", newOrder);
         const norm = normalizeOrderFormat(newOrder);
         announceNewOrder(norm);
@@ -57,22 +65,23 @@ document.addEventListener("DOMContentLoaded", () => {
     );
   }
 
-  // Polling every 3 seconds for new incoming orders (Cloud & Local)
+  // Polling every 3 seconds — catches any orders Realtime might have missed
   setInterval(() => {
-    syncFromCloud();
+    syncFromCloud().then(() => {
+      if (!kitchenPageReady) return; // Don't announce during initial load
+      window.posState.orders = JSON.parse(localStorage.getItem("pos_orders")) || [];
+      const activeOrders = window.posState.orders.filter(o => o.status === "pending" || o.status === "cooking");
+      
+      // Announce any active order that hasn't been announced yet
+      activeOrders.forEach(o => {
+        if (!announcedOrderIds.has(o.id)) {
+          announceNewOrder(o);
+        }
+      });
 
-    window.posState.orders = JSON.parse(localStorage.getItem("pos_orders")) || [];
-    const activeOrders = window.posState.orders.filter(o => o.status === "pending" || o.status === "cooking");
-    
-    // Announce any active order that hasn't been announced yet
-    activeOrders.forEach(o => {
-      if (!announcedOrderIds.has(o.id)) {
-        announceNewOrder(o);
-      }
+      lastPendingCount = activeOrders.length;
+      renderKitchenView();
     });
-
-    lastPendingCount = activeOrders.length;
-    renderKitchenView();
   }, 3000);
 });
 
