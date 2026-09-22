@@ -268,88 +268,139 @@
 
     // 6. User Accounts & Multi-User RBAC Cloud Sync
     async syncUsersToCloud(users) {
-      if (!isReady) initClient();
-      if (!isReady || !supabase) {
-        await new Promise(r => setTimeout(r, 600));
-        if (!isReady) initClient();
-        if (!isReady || !supabase) return false;
-      }
+      const config = getConfig();
+      const userList = (users && Array.isArray(users)) 
+        ? users 
+        : (typeof getAllUsers === 'function' ? getAllUsers() : []);
+        
+      if (!userList || userList.length === 0) return false;
+
+      const payload = userList.map(u => ({
+        id: u.id,
+        name: u.name,
+        role: u.role,
+        pinHash: u.pinHash,
+        active: u.active !== false,
+        createdAt: u.createdAt || new Date().toISOString()
+      }));
+
+      const now = new Date().toISOString();
+      const body = JSON.stringify([{
+        id: 99,
+        shop_name: 'SYS_CONFIG_USERS',
+        address: JSON.stringify(payload),
+        updated_at: now
+      }]);
+
+      // 1. Direct REST Call (Instant, zero-dependency)
       try {
-        const userList = (users && Array.isArray(users)) 
-          ? users 
-          : (typeof getAllUsers === 'function' ? getAllUsers() : []);
-          
-        if (!userList || userList.length === 0) return false;
-
-        const payload = userList.map(u => ({
-          id: u.id,
-          name: u.name,
-          role: u.role,
-          pinHash: u.pinHash,
-          active: u.active !== false,
-          createdAt: u.createdAt || new Date().toISOString()
-        }));
-
-        const now = new Date().toISOString();
-        const { error } = await supabase.from('shop_settings').upsert({
-          id: 99,
-          shop_name: 'SYS_CONFIG_USERS',
-          address: JSON.stringify(payload),
-          updated_at: now
+        const res = await fetch(`${config.url}/rest/v1/shop_settings`, {
+          method: 'POST',
+          headers: {
+            'apikey': config.key,
+            'Authorization': `Bearer ${config.key}`,
+            'Content-Type': 'application/json',
+            'Prefer': 'resolution=merge-duplicates,return=representation'
+          },
+          body: body
         });
-
-        if (error) {
-          console.warn("⚠️ [Supabase] syncUsersToCloud failed:", error.message);
-          return false;
+        if (res.ok) {
+          localStorage.setItem("pos_users_updated_at", now);
+          console.log("☁️ [Supabase REST] Synced users to cloud successfully:", payload.length, "users");
+          return true;
         }
-
-        localStorage.setItem("pos_users_updated_at", now);
-        console.log("☁️ [Supabase] Successfully synced users to cloud:", payload.length, "users");
-        return true;
-      } catch (e) {
-        console.warn("⚠️ [Supabase] syncUsersToCloud error:", e.message);
-        return false;
+      } catch (err) {
+        console.warn("⚠️ [Supabase REST] Direct POST failed, trying SDK:", err.message);
       }
+
+      // 2. SDK Fallback
+      if (!isReady) initClient();
+      if (isReady && supabase) {
+        try {
+          const { error } = await supabase.from('shop_settings').upsert({
+            id: 99,
+            shop_name: 'SYS_CONFIG_USERS',
+            address: JSON.stringify(payload),
+            updated_at: now
+          });
+          if (!error) {
+            localStorage.setItem("pos_users_updated_at", now);
+            console.log("☁️ [Supabase SDK] Synced users to cloud successfully");
+            return true;
+          }
+        } catch(e) {}
+      }
+
+      return false;
     },
 
     async syncUsersFromCloud(onUpdated) {
-      if (!isReady) initClient();
-      if (!isReady || !supabase) {
-        await new Promise(r => setTimeout(r, 600));
-        if (!isReady) initClient();
-        if (!isReady || !supabase) return null;
-      }
+      const config = getConfig();
+
+      // 1. Direct REST Call with Cache-Busting
       try {
-        const { data, error } = await supabase
-          .from('shop_settings')
-          .select('id, shop_name, address, updated_at')
-          .eq('id', 99)
-          .maybeSingle();
+        const res = await fetch(`${config.url}/rest/v1/shop_settings?id=eq.99&select=id,shop_name,address,updated_at&_cb=${Date.now()}`, {
+          method: 'GET',
+          headers: {
+            'apikey': config.key,
+            'Authorization': `Bearer ${config.key}`,
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            'Pragma': 'no-cache'
+          }
+        });
 
-        if (error || !data || !data.address) return null;
-
-        const cloudUsers = JSON.parse(data.address);
-        if (Array.isArray(cloudUsers) && cloudUsers.length > 0) {
-          const localStr = localStorage.getItem("pos_users");
-          const cloudStr = JSON.stringify(cloudUsers);
-          if (localStr !== cloudStr) {
-            console.log("🔄 [Supabase] Synced updated users from cloud:", cloudUsers.length, "users");
-            localStorage.setItem("pos_users", cloudStr);
-            if (data.updated_at) {
-              localStorage.setItem("pos_users_updated_at", data.updated_at);
+        if (res.ok) {
+          const rows = await res.json();
+          if (Array.isArray(rows) && rows.length > 0 && rows[0].address) {
+            const cloudUsers = JSON.parse(rows[0].address);
+            if (Array.isArray(cloudUsers) && cloudUsers.length > 0) {
+              const localStr = localStorage.getItem("pos_users");
+              const cloudStr = JSON.stringify(cloudUsers);
+              if (localStr !== cloudStr) {
+                console.log("🔄 [Supabase REST] Synced updated users from cloud:", cloudUsers.length, "users");
+                localStorage.setItem("pos_users", cloudStr);
+                if (rows[0].updated_at) localStorage.setItem("pos_users_updated_at", rows[0].updated_at);
+                if (typeof onUpdated === 'function') {
+                  try { onUpdated(cloudUsers); } catch(err) { console.error(err); }
+                }
+                window.dispatchEvent(new Event('storage'));
+              }
+              return cloudUsers;
             }
-            if (typeof onUpdated === 'function') {
-              try { onUpdated(cloudUsers); } catch(err) { console.error(err); }
-            }
-            window.dispatchEvent(new Event('storage'));
-            return cloudUsers;
           }
         }
-        return cloudUsers;
-      } catch (e) {
-        console.warn("⚠️ [Supabase] syncUsersFromCloud error:", e.message);
-        return null;
+      } catch (err) {
+        console.warn("⚠️ [Supabase REST] Direct GET failed, trying SDK:", err.message);
       }
+
+      // 2. SDK Fallback
+      if (!isReady) initClient();
+      if (isReady && supabase) {
+        try {
+          const { data, error } = await supabase
+            .from('shop_settings')
+            .select('id, shop_name, address, updated_at')
+            .eq('id', 99)
+            .maybeSingle();
+
+          if (!error && data && data.address) {
+            const cloudUsers = JSON.parse(data.address);
+            if (Array.isArray(cloudUsers) && cloudUsers.length > 0) {
+              const localStr = localStorage.getItem("pos_users");
+              const cloudStr = JSON.stringify(cloudUsers);
+              if (localStr !== cloudStr) {
+                localStorage.setItem("pos_users", cloudStr);
+                if (data.updated_at) localStorage.setItem("pos_users_updated_at", data.updated_at);
+                if (typeof onUpdated === 'function') onUpdated(cloudUsers);
+                window.dispatchEvent(new Event('storage'));
+              }
+              return cloudUsers;
+            }
+          }
+        } catch (e) {}
+      }
+
+      return null;
     },
 
     subscribeUsers(onUpdated) {

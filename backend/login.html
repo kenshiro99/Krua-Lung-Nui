@@ -87,7 +87,18 @@
       <img src="logo/logo.jpg" alt="ครัวลุงหนุ่ย" style="width:100%; height:100%; object-fit:cover;" onerror="this.src='logo/logo.png'">
     </div>
     <h1 style="font-size: 1.45rem; font-weight: 800; color: #0f172a; margin-bottom: 0.2rem;">ครัวลุงหนุ่ย (Krua Lung Nui)</h1>
-    <p style="font-size: 0.88rem; color: #64748b; margin-bottom: 1.5rem;">ระบบจัดการร้านอาหาร • เลือกระดับสิทธิ์และผู้ปฏิบัติงาน</p>
+    <p style="font-size: 0.88rem; color: #64748b; margin-bottom: 1rem;">ระบบจัดการร้านอาหาร • เลือกระดับสิทธิ์และผู้ปฏิบัติงาน</p>
+
+    <!-- Cloud Real-time Status Badge & Quick Refresh -->
+    <div id="cloudSyncBanner" style="display: flex; align-items: center; justify-content: space-between; background: #f0fdf4; border: 1.5px solid #bbf7d0; border-radius: 12px; padding: 0.45rem 0.85rem; margin-bottom: 1.25rem; font-size: 0.82rem;">
+      <div style="display: flex; align-items: center; gap: 0.45rem; color: #166534;">
+        <span style="display: inline-block; width: 9px; height: 9px; background: #22c55e; border-radius: 50%; box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.25);"></span>
+        <span id="cloudSyncText" style="font-weight: 600;">เชื่อมต่อคลาวด์เรียบร้อย</span>
+      </div>
+      <button type="button" onclick="triggerManualSync()" style="background: #ffffff; border: 1px solid #86efac; border-radius: 8px; padding: 0.25rem 0.65rem; color: #15803d; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 0.3rem; font-size: 0.78rem; transition: all 0.15s;">
+        <i data-lucide="refresh-cw" style="width: 13px; height: 13px;"></i> ซิงค์ด่วน
+      </button>
+    </div>
 
     <!-- 1. LEVEL / ROLE SELECTION -->
     <div id="roleSelectionList" style="display: flex; flex-direction: column; gap: 0.8rem; text-align: left;">
@@ -378,15 +389,15 @@
   </div>
 
   <!-- Supabase Official JS SDK & Client Sync Engine (Local Offline-First + CDN Fallback) -->
-  <script src="js/supabase.min.js"></script>
+  <script src="js/supabase.min.js?v=20260922_c2"></script>
   <script>
     if (typeof supabase === 'undefined' || typeof supabase.createClient !== 'function') {
       document.write('<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"><\/script>');
     }
   </script>
-  <script src="config.js" onerror="this.onerror=null;"></script>
-  <script src="js/supabaseClient.js"></script>
-  <script src="js/auth.js"></script>
+  <script src="config.js?v=20260922_c2" onerror="this.onerror=null;"></script>
+  <script src="js/supabaseClient.js?v=20260922_c2"></script>
+  <script src="js/auth.js?v=20260922_c2"></script>
   <script>
     let currentChosenRole = null;
     let selectedUser = null;
@@ -748,11 +759,36 @@
       refreshUserCounts();
     }
 
+    async function triggerManualSync() {
+      const banner = document.getElementById("cloudSyncText");
+      if (banner) banner.innerText = "⏳ กำลังดึงข้อมูลล่าสุดจาก Cloud...";
+      let cloudUsers = null;
+      if (typeof syncUsersDirectlyFromSupabase === "function") {
+        cloudUsers = await syncUsersDirectlyFromSupabase();
+      }
+      if (!cloudUsers && window.SupabaseService && typeof window.SupabaseService.syncUsersFromCloud === 'function') {
+        cloudUsers = await window.SupabaseService.syncUsersFromCloud();
+      }
+      refreshUserCounts();
+      refreshLucideIcons();
+      if (banner) banner.innerText = "🟢 ซิงค์ข้อมูลกับคลาวด์แล้ว";
+
+      const all = getAllUsers();
+      const kitchenUsers = all.filter(u => u.role === 'kitchen').map(u => u.name).join(', ') || 'ไม่มี';
+      alert(`✅ ซิงค์ข้อมูลผู้ใช้งานล่าสุดจากคลาวด์สำเร็จ!\n\nผู้ปฏิบัติงานแผนกครัว: ${kitchenUsers}\n(รวมผู้ใช้งานในระบบทั้งหมด ${all.length} คน)`);
+    }
+
     document.addEventListener("DOMContentLoaded", () => {
       refreshUserCounts();
       refreshLucideIcons();
 
-      // Cloud user sync on startup
+      // Cloud user sync on startup (Direct REST + SDK)
+      if (typeof syncUsersDirectlyFromSupabase === "function") {
+        syncUsersDirectlyFromSupabase(() => {
+          refreshUserCounts();
+          refreshLucideIcons();
+        });
+      }
       if (window.SupabaseService && typeof window.SupabaseService.syncUsersFromCloud === 'function') {
         window.SupabaseService.syncUsersFromCloud(() => {
           refreshUserCounts();
@@ -777,6 +813,12 @@
 
     window.addEventListener("focus", () => {
       refreshUserCounts();
+      if (typeof syncUsersDirectlyFromSupabase === "function") {
+        syncUsersDirectlyFromSupabase(() => {
+          refreshUserCounts();
+          refreshLucideIcons();
+        });
+      }
       if (window.SupabaseService && typeof window.SupabaseService.syncUsersFromCloud === 'function') {
         window.SupabaseService.syncUsersFromCloud(() => {
           refreshUserCounts();

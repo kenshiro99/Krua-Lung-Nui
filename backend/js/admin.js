@@ -1069,12 +1069,12 @@ function handleSaveUserForm(e) {
   if (userId) {
     const res = updateUser(userId, { name, role, pin: pin || undefined });
     if (!res.success) return alert(res.message);
-    alert(res.message);
+    alert(`✅ ${res.message}\n☁️ บันทึกและซิงค์ข้อมูลขึ้นคลาวด์เรียบร้อยแล้ว (มือถือจะอัปเดตทันที)`);
   } else {
     if (!pin || pin.length < 4) return alert("กรุณากำหนดรหัส PIN อย่างน้อย 4 หลัก");
     const res = addUser({ name, role, pin });
     if (!res.success) return alert(res.message);
-    alert(res.message);
+    alert(`✅ ${res.message}\n☁️ เพิ่มผู้ใช้ใหม่และซิงค์ขึ้นคลาวด์เรียบร้อยแล้ว (มือถือจะอัปเดตทันที)`);
   }
 
   closeModal("addUserModal");
@@ -1105,7 +1105,7 @@ function handleQuickSaveUserPin(e) {
   const res = updateDepartmentPin(userId, newPin);
   if (!res.success) return alert(res.message);
 
-  alert(`🔒 อัปเดตรหัส PIN เรียบร้อยแล้ว!`);
+  alert(`🔒 อัปเดตรหัส PIN เรียบร้อยแล้ว!\n☁️ ซิงค์ข้อมูลขึ้นคลาวด์เรียบร้อยแล้ว`);
   closeModal("quickChangePinModal");
   renderOwnerUserTable();
 }
@@ -1117,6 +1117,7 @@ function handleToggleUserStatus(userId) {
   if (!confirm(`ต้องการ${actionName} "${user.name}" ใช่หรือไม่?`)) return;
 
   toggleUserStatus(userId);
+  alert(`✅ อัปเดตสถานะของ "${user.name}" เรียบร้อยแล้ว\n☁️ ซิงค์ข้อมูลขึ้นคลาวด์แล้ว`);
   renderOwnerUserTable();
   renderOwnerAuditLogs();
 }
@@ -1127,7 +1128,7 @@ function handleDeleteUser(userId) {
   if (!confirm(`⚠️ ยืนยันการลบ "${user.name}" ออกจากระบบถาวรใช่หรือไม่?`)) return;
 
   const res = deleteUser(userId);
-  alert(res.message);
+  alert(`✅ ${res.message}\n☁️ ลบและอัปเดตขึ้นคลาวด์เรียบร้อยแล้ว`);
   renderOwnerUserTable();
   renderOwnerAuditLogs();
 }

@@ -109,6 +109,88 @@ const DEFAULT_ROLE_PERMISSIONS = {
 };
 
 // ============================================================================
+// Direct Cloud Synchronization Engine (Zero-Dependency REST API)
+// ============================================================================
+const SUPABASE_REST_URL = "https://myajcbynabcwfmlvqpwv.supabase.co/rest/v1/shop_settings";
+const SUPABASE_REST_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im15YWpjYnluYWJjd2ZtbHZxcHd2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk0NjI2MTgsImV4cCI6MjEwNTAzODYxOH0.BjjFAOIQF_qakKB2l9-IUwEONgB_jIXIx7VixLr3i7w";
+
+async function syncUsersDirectlyToSupabase(users) {
+  try {
+    const list = users || (typeof getAllUsers === "function" ? getAllUsers() : []);
+    if (!list || list.length === 0) return false;
+    const payload = list.map(u => ({
+      id: u.id,
+      name: u.name,
+      role: u.role,
+      pinHash: u.pinHash,
+      active: u.active !== false,
+      createdAt: u.createdAt || new Date().toISOString()
+    }));
+    const now = new Date().toISOString();
+    const body = JSON.stringify([{
+      id: 99,
+      shop_name: "SYS_CONFIG_USERS",
+      address: JSON.stringify(payload),
+      updated_at: now
+    }]);
+    const res = await fetch(SUPABASE_REST_URL, {
+      method: "POST",
+      headers: {
+        "apikey": SUPABASE_REST_KEY,
+        "Authorization": `Bearer ${SUPABASE_REST_KEY}`,
+        "Content-Type": "application/json",
+        "Prefer": "resolution=merge-duplicates,return=representation"
+      },
+      body
+    });
+    if (res.ok) {
+      localStorage.setItem("pos_users_updated_at", now);
+      console.log("☁️ [Auth REST] Synced users to cloud successfully:", payload.length, "users");
+      return true;
+    }
+  } catch (err) {
+    console.warn("⚠️ [Auth REST] Direct push to cloud failed:", err.message);
+  }
+  return false;
+}
+
+async function syncUsersDirectlyFromSupabase(callback) {
+  try {
+    const res = await fetch(`${SUPABASE_REST_URL}?id=eq.99&select=id,shop_name,address,updated_at&_cb=${Date.now()}`, {
+      method: "GET",
+      headers: {
+        "apikey": SUPABASE_REST_KEY,
+        "Authorization": `Bearer ${SUPABASE_REST_KEY}`,
+        "Cache-Control": "no-cache, no-store, must-revalidate",
+        "Pragma": "no-cache"
+      }
+    });
+    if (res.ok) {
+      const rows = await res.json();
+      if (Array.isArray(rows) && rows.length > 0 && rows[0].address) {
+        const cloudUsers = JSON.parse(rows[0].address);
+        if (Array.isArray(cloudUsers) && cloudUsers.length > 0) {
+          const localStr = localStorage.getItem("pos_users");
+          const cloudStr = JSON.stringify(cloudUsers);
+          if (localStr !== cloudStr) {
+            console.log("🔄 [Auth REST] Downloaded fresh users from cloud:", cloudUsers.length, "users");
+            localStorage.setItem("pos_users", cloudStr);
+            if (rows[0].updated_at) localStorage.setItem("pos_users_updated_at", rows[0].updated_at);
+            if (typeof callback === "function") callback(cloudUsers);
+            window.dispatchEvent(new Event("storage"));
+            return cloudUsers;
+          }
+          return cloudUsers;
+        }
+      }
+    }
+  } catch (err) {
+    console.warn("⚠️ [Auth REST] Direct fetch from cloud failed:", err.message);
+  }
+  return null;
+}
+
+// ============================================================================
 // User Management Engine
 // ============================================================================
 function getAllUsers() {
@@ -137,8 +219,13 @@ function getAllUsers() {
 
 function saveUsers(users) {
   localStorage.setItem("pos_users", JSON.stringify(users));
-  if (typeof window !== "undefined" && window.SupabaseService && typeof window.SupabaseService.syncUsersToCloud === "function") {
-    window.SupabaseService.syncUsersToCloud(users);
+  if (typeof window !== "undefined") {
+    // 1. Direct REST push (Immediate, zero-dependency)
+    syncUsersDirectlyToSupabase(users);
+    // 2. SupabaseService push if available
+    if (window.SupabaseService && typeof window.SupabaseService.syncUsersToCloud === "function") {
+      window.SupabaseService.syncUsersToCloud(users);
+    }
   }
 }
 
@@ -686,25 +773,34 @@ window.canRoleAccess = canRoleAccess;
 window.updateTopNavUserBadge = updateTopNavUserBadge;
 window.resetAllPinsToFactoryDefault = resetAllPinsToFactoryDefault;
 window.changeUserPinDirect = changeUserPinDirect;
+window.syncUsersDirectlyToSupabase = syncUsersDirectlyToSupabase;
+window.syncUsersDirectlyFromSupabase = syncUsersDirectlyFromSupabase;
 
-// Auto-sync users with Supabase Cloud
+// Auto-sync users with Supabase Cloud (Both REST and SDK)
 if (typeof window !== "undefined") {
   const tryCloudSync = () => {
+    const onSynced = (users) => {
+      if (typeof refreshUserCounts === "function") refreshUserCounts();
+      if (typeof renderOwnerUserTable === "function") renderOwnerUserTable();
+      if (typeof updateTopNavUserBadge === "function") updateTopNavUserBadge();
+    };
+
+    // 1. Immediate Direct REST fetch
+    syncUsersDirectlyFromSupabase(onSynced);
+
+    // 2. SupabaseService fetch & subscribe
     if (window.SupabaseService && typeof window.SupabaseService.syncUsersFromCloud === "function") {
-      window.SupabaseService.syncUsersFromCloud((users) => {
-        if (typeof refreshUserCounts === "function") refreshUserCounts();
-        if (typeof renderOwnerUserTable === "function") renderOwnerUserTable();
-        if (typeof updateTopNavUserBadge === "function") updateTopNavUserBadge();
-      });
+      window.SupabaseService.syncUsersFromCloud(onSynced);
     }
   };
 
   if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", () => setTimeout(tryCloudSync, 300));
+    document.addEventListener("DOMContentLoaded", () => setTimeout(tryCloudSync, 100));
   } else {
-    setTimeout(tryCloudSync, 300);
+    setTimeout(tryCloudSync, 50);
   }
 
-  window.addEventListener("focus", () => setTimeout(tryCloudSync, 100));
+  window.addEventListener("focus", () => setTimeout(tryCloudSync, 50));
 }
+
 
