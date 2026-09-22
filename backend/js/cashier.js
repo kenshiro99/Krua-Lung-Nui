@@ -6,23 +6,26 @@ let cashierPageReady = false;
 // เสียงแจ้งเตือนออเดอร์ใหม่ (Cashier) โดยใช้ Web Audio API — ไม่ต้องการไฟล์เสียง
 function playCashierNewOrderSound() {
   try {
-    const ctx = new (window.AudioContext || window.webkitAudioContext)();
-    // เล่น 2 tone: "ding-dong" แจ้งเตือน
-    const tones = [880, 1109]; // A5, C#6
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContext) return;
+    const ctx = new AudioContext();
+    if (ctx.state === 'suspended') ctx.resume();
+    // เล่น 2 tone: "ding-dong" แจ้งเตือน (880Hz, 1109Hz)
+    const tones = [880, 1109];
     tones.forEach((freq, i) => {
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
       osc.connect(gain);
       gain.connect(ctx.destination);
       osc.type = "sine";
-      osc.frequency.value = freq;
+      osc.frequency.setValueAtTime(freq, ctx.currentTime + i * 0.18);
       gain.gain.setValueAtTime(0.001, ctx.currentTime + i * 0.18);
       gain.gain.exponentialRampToValueAtTime(0.4, ctx.currentTime + i * 0.18 + 0.02);
       gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.18 + 0.25);
       osc.start(ctx.currentTime + i * 0.18);
       osc.stop(ctx.currentTime + i * 0.18 + 0.3);
     });
-    setTimeout(() => ctx.close(), 1000);
+    setTimeout(() => ctx.close().catch(() => {}), 1200);
   } catch (e) {
     console.warn("Cashier sound error:", e);
   }
@@ -60,14 +63,40 @@ document.addEventListener("DOMContentLoaded", () => {
   renderCashierView();
   refreshLucideIcons();
 
+  // Audio Unlocker for modern browser autoplay policy
+  let isCashierAudioUnlocked = false;
+  const unlockAudio = () => {
+    if (isCashierAudioUnlocked) return;
+    isCashierAudioUnlocked = true;
+    try {
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      if (ctx.state === 'suspended') ctx.resume();
+      setTimeout(() => ctx.close().catch(() => {}), 300);
+    } catch (e) {}
+  };
+  document.addEventListener("click", unlockAudio, { once: true });
+  document.addEventListener("touchstart", unlockAudio, { once: true });
+
   // Initial Cloud Sync — load without announcing
+  const markCashierReady = () => {
+    if (!cashierPageReady) {
+      cashierPageReady = true;
+      console.log("🟢 [Cashier POS] Ready — รอออเดอร์ใหม่...");
+    }
+  };
+
   syncCashierFromCloud().then(() => {
     if (window.posState && Array.isArray(window.posState.orders)) {
       window.posState.orders.forEach(o => { if (o && o.id) cashierAnnouncedIds.add(o.id); });
     }
-    cashierPageReady = true;
-    console.log("🟢 [Cashier] Ready — รอออเดอร์ใหม่...");
+  }).catch(e => {
+    console.warn("Initial cashier sync error:", e);
+  }).finally(() => {
+    markCashierReady();
   });
+
+  // Guarantee ready within 2 seconds
+  setTimeout(markCashierReady, 2000);
 
   // Realtime subscription from Supabase Cloud
   if (window.SupabaseService && typeof window.SupabaseService.subscribeOrders === "function") {
@@ -106,7 +135,7 @@ document.addEventListener("DOMContentLoaded", () => {
       window.posState.orders = JSON.parse(localStorage.getItem("pos_orders")) || [];
       window.posState.tables = JSON.parse(localStorage.getItem("pos_tables")) || [];
       renderCashierView();
-    });
+    }).catch(() => {});
   }, 3000);
 });
 

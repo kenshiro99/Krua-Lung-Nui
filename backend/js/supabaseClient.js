@@ -4,21 +4,31 @@
  * Features:
  *   - Automatic Realtime updates for Orders & Tables
  *   - Resilient Offline-First Fallback (Seamless operation when offline or no API key)
+ *   - Local SDK First + CDN Fallback
  */
 
 (function(window) {
   const DEFAULT_URL = "https://myajcbynabcwfmlvqpwv.supabase.co";
   const DEFAULT_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im15YWpjYnluYWJjd2ZtbHZxcHd2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk0NjI2MTgsImV4cCI6MjEwNTAzODYxOH0.BjjFAOIQF_qakKB2l9-IUwEONgB_jIXIx7VixLr3i7w";
   
+  function sanitize(val) {
+    if (!val || typeof val !== 'string') return '';
+    const trimmed = val.trim();
+    if (trimmed === 'null' || trimmed === 'undefined' || trimmed === '""') return '';
+    return trimmed;
+  }
+
   // Retrieve saved configuration from localStorage or global APP_CONFIG
   function getConfig() {
-    const savedKey = localStorage.getItem("KRUA_SUPABASE_ANON_KEY");
-    const savedUrl = localStorage.getItem("KRUA_SUPABASE_URL");
+    const savedKey = sanitize(localStorage.getItem("KRUA_SUPABASE_ANON_KEY"));
+    const savedUrl = sanitize(localStorage.getItem("KRUA_SUPABASE_URL"));
     const globalConfig = window.APP_CONFIG || {};
+    const globalUrl = sanitize(globalConfig.SUPABASE_URL);
+    const globalKey = sanitize(globalConfig.SUPABASE_ANON_KEY);
 
     return {
-      url: savedUrl || globalConfig.SUPABASE_URL || DEFAULT_URL,
-      key: savedKey || globalConfig.SUPABASE_ANON_KEY || DEFAULT_ANON_KEY
+      url: savedUrl || globalUrl || DEFAULT_URL,
+      key: savedKey || globalKey || DEFAULT_ANON_KEY
     };
   }
 
@@ -27,20 +37,24 @@
 
   function initClient() {
     const config = getConfig();
-    if (config.url && config.key && window.supabase && typeof window.supabase.createClient === 'function') {
+    const supaSdk = window.supabase;
+    if (config.url && config.key && supaSdk && typeof supaSdk.createClient === 'function') {
       try {
-        supabase = window.supabase.createClient(config.url, config.key);
+        supabase = supaSdk.createClient(config.url, config.key);
         isReady = true;
         console.log("🟢 [Supabase] Connected to project:", config.url);
         updateStatusBadge(true);
+        return true;
       } catch (err) {
         console.warn("⚠️ [Supabase] Failed to init client:", err.message);
         isReady = false;
         updateStatusBadge(false);
+        return false;
       }
     } else {
       isReady = false;
       updateStatusBadge(false);
+      return false;
     }
   }
 
@@ -64,8 +78,14 @@
 
   // Public Service Methods
   const SupabaseService = {
-    isConfigured: () => isReady,
-    getClient: () => supabase,
+    isConfigured: () => {
+      if (!isReady) initClient();
+      return isReady;
+    },
+    getClient: () => {
+      if (!isReady) initClient();
+      return supabase;
+    },
     saveCredentials: (url, key) => {
       if (url) localStorage.setItem("KRUA_SUPABASE_URL", url);
       if (key) localStorage.setItem("KRUA_SUPABASE_ANON_KEY", key);
@@ -74,7 +94,8 @@
 
     // 1. Menus
     async getMenus() {
-      if (!isReady) return null;
+      if (!isReady) initClient();
+      if (!isReady || !supabase) return null;
       try {
         const { data, error } = await supabase
           .from('menus')
@@ -90,7 +111,8 @@
 
     // 2. Categories
     async getCategories() {
-      if (!isReady) return null;
+      if (!isReady) initClient();
+      if (!isReady || !supabase) return null;
       try {
         const { data, error } = await supabase
           .from('categories')
@@ -106,7 +128,8 @@
 
     // 3. Tables
     async getTables() {
-      if (!isReady) return null;
+      if (!isReady) initClient();
+      if (!isReady || !supabase) return null;
       try {
         const { data, error } = await supabase
           .from('tables')
@@ -121,7 +144,8 @@
     },
 
     async updateTableStatus(tableId, status, currentOrderId = null) {
-      if (!isReady) return false;
+      if (!isReady) initClient();
+      if (!isReady || !supabase) return false;
       try {
         const updateData = { status };
         if (currentOrderId !== undefined) updateData.current_order_id = currentOrderId;
@@ -138,7 +162,8 @@
 
     // 4. Orders
     async getOrders() {
-      if (!isReady) return null;
+      if (!isReady) initClient();
+      if (!isReady || !supabase) return null;
       try {
         const { data, error } = await supabase
           .from('orders')
@@ -153,20 +178,28 @@
     },
 
     async createOrder(orderData) {
-      if (!isReady) return null;
+      if (!isReady) initClient();
+      if (!isReady || !supabase) {
+        console.error("❌ [Supabase] Database client not ready");
+        return { success: false, error: "Database client not ready" };
+      }
       try {
+        const notes = orderData.packagingNotes 
+          ? (orderData.notes ? `${orderData.packagingNotes} | ${orderData.notes}` : orderData.packagingNotes)
+          : (orderData.notes || '');
+
         const payload = {
           id: orderData.id,
           table_id: orderData.tableId || null,
           table_name: orderData.tableName || 'ไม่ระบุโต๊ะ',
-          order_type: orderData.orderType || 'dine-in',
+          order_type: (orderData.orderType === 'takeaway') ? 'takeaway' : 'dinein',
           status: orderData.status || 'pending',
           payment_status: orderData.paymentStatus || 'unpaid',
           payment_method: orderData.paymentMethod || 'promptpay',
-          subtotal: orderData.subtotal || 0,
-          total: orderData.total || 0,
+          subtotal: Number(orderData.subtotal || orderData.total || 0),
+          total: Number(orderData.total || 0),
           items: orderData.items || [],
-          customer_notes: orderData.notes || ''
+          customer_notes: notes
         };
         const { data, error } = await supabase
           .from('orders')
@@ -174,15 +207,17 @@
           .select()
           .single();
         if (error) throw error;
-        return data;
+        console.log("✅ [Supabase] Order created successfully:", data.id);
+        return { success: true, data };
       } catch (e) {
-        console.warn("[Supabase] createOrder failed, fallback to local:", e.message);
-        return null;
+        console.error("❌ [Supabase] createOrder error:", e.message || e);
+        return { success: false, error: e.message || String(e) };
       }
     },
 
     async updateOrderStatus(orderId, status, paymentStatus = null) {
-      if (!isReady) return false;
+      if (!isReady) initClient();
+      if (!isReady || !supabase) return false;
       try {
         const updates = { status, updated_at: new Date().toISOString() };
         if (paymentStatus) updates.payment_status = paymentStatus;
@@ -199,7 +234,8 @@
 
     // 5. Accounting & Ledger Transactions
     async getLedgerTransactions() {
-      if (!isReady) return null;
+      if (!isReady) initClient();
+      if (!isReady || !supabase) return null;
       try {
         const { data, error } = await supabase
           .from('ledger_transactions')
@@ -214,7 +250,8 @@
     },
 
     async insertLedgerTransaction(txn) {
-      if (!isReady) return null;
+      if (!isReady) initClient();
+      if (!isReady || !supabase) return null;
       try {
         const { data, error } = await supabase
           .from('ledger_transactions')
@@ -231,7 +268,12 @@
 
     // 6. Realtime Subscriptions
     subscribeOrders(onInsert, onUpdate) {
-      if (!isReady) return null;
+      if (!isReady) initClient();
+      if (!isReady || !supabase) {
+        // Retry subscription in 2 seconds
+        setTimeout(() => this.subscribeOrders(onInsert, onUpdate), 2000);
+        return null;
+      }
       try {
         return supabase
           .channel('public:orders')
@@ -241,7 +283,13 @@
           .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'orders' }, payload => {
             if (onUpdate) onUpdate(payload.new);
           })
-          .subscribe();
+          .subscribe((status, err) => {
+            if (status === 'SUBSCRIBED') {
+              console.log("🟢 [Supabase Realtime] Orders channel SUBSCRIBED");
+            } else if (status === 'CHANNEL_ERROR') {
+              console.warn("⚠️ [Supabase Realtime] Channel error:", err);
+            }
+          });
       } catch (e) {
         console.error("[Supabase] Realtime subscribe error:", e);
         return null;
@@ -249,16 +297,21 @@
     }
   };
 
-  // Auto load Supabase JS SDK from CDN if not already present
-  if (!window.supabase) {
-    const script = document.createElement('script');
-    script.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2';
-    script.onload = () => {
-      initClient();
-    };
-    document.head.appendChild(script);
-  } else {
+  // Immediate init or deferred once DOM/SDK ready
+  if (window.supabase && typeof window.supabase.createClient === 'function') {
     initClient();
+  } else {
+    // Check every 250ms up to 10 seconds for SDK availability
+    let attempts = 0;
+    const interval = setInterval(() => {
+      attempts++;
+      if (window.supabase && typeof window.supabase.createClient === 'function') {
+        clearInterval(interval);
+        initClient();
+      } else if (attempts > 40) {
+        clearInterval(interval);
+      }
+    }, 250);
   }
 
   window.SupabaseService = SupabaseService;

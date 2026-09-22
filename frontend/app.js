@@ -901,13 +901,25 @@ async function submitOrder() {
   }
 
   // 3. Sync to Supabase Cloud Database (Instant Realtime to Kitchen & Cashier)
-  if (window.SupabaseService && window.SupabaseService.isConfigured()) {
+  let cloudSuccess = false;
+  let cloudError = "";
+
+  if (window.SupabaseService) {
     try {
-      await window.SupabaseService.createOrder(newOrder);
-      console.log("🟢 [Supabase] ออเดอร์ส่งเข้าคลาวด์สำเร็จ:", newOrder.id);
+      const res = await window.SupabaseService.createOrder(newOrder);
+      if (res && res.success) {
+        cloudSuccess = true;
+        console.log("🟢 [Supabase] ออเดอร์ส่งเข้าคลาวด์สำเร็จ:", newOrder.id);
+      } else {
+        cloudError = (res && res.error) ? res.error : "Supabase createOrder returned false";
+        console.warn("⚠️ [Supabase] Cloud sync error:", cloudError);
+      }
     } catch (supaErr) {
-      console.warn("⚠️ [Supabase] Cloud sync error:", supaErr.message);
+      cloudError = supaErr.message || String(supaErr);
+      console.warn("⚠️ [Supabase] Cloud sync exception:", cloudError);
     }
+  } else {
+    cloudError = "SupabaseService ไม่พร้อมใช้งาน";
   }
 
   // 4. Try sending to Backend REST API (if local server running)
@@ -917,21 +929,28 @@ async function submitOrder() {
     body: JSON.stringify(newOrder)
   }).catch(() => console.log("Local-only mode"));
 
-  // 4. Play success audio
+  // 5. Play success audio chime
   playScanBeepSound();
 
-  // 5. Clear Cart & Close Modal
+  // 6. Clear Cart & Close Modal
   state.cart = [];
   closeModal("cartModal");
   updateCartUI();
   checkActiveOrders();
 
   if (isTakeaway) {
-    alert(`🎉 สั่งอาหารกลับบ้านสำเร็จ!\n\nหมายเลขคิวของคุณคือ: [ ${state.currentQueue} ]\nกรุณารอฟังเสียงเรียกคิวเพื่อรับอาหารครับ 🛍️👨‍🍳`);
-    // Prompt to pay via PromptPay immediately for takeaway
+    if (!cloudSuccess) {
+      alert(`⚠️ บันทึกออเดอร์ในเครื่องสำเร็จ แต่สัญญาณคลาวด์ขัดข้อง (${cloudError})\n\nหมายเลขคิวของคุณคือ: [ ${state.currentQueue} ]\nกรุณาแจ้งพนักงานหน้าร้านเพื่อตรวจสอบออเดอร์ครับ 🛍️`);
+    } else {
+      alert(`🎉 สั่งอาหารกลับบ้านสำเร็จ!\n\nหมายเลขคิวของคุณคือ: [ ${state.currentQueue} ]\nส่งตรงถึงห้องครัวและแคชเชียร์เรียบร้อยแล้ว กรุณารอฟังเสียงเรียกคิวเพื่อรับอาหารครับ 🛍️👨‍🍳`);
+    }
     requestBill();
   } else {
-    alert(`🎉 สั่งอาหารสำเร็จ!\n\nออเดอร์ของโต๊ะ ${state.currentTable} ถูกส่งไปยังกุ๊กครัวลุงหนุ่ยเรียบร้อยแล้วครับ 👨‍🍳`);
+    if (!cloudSuccess) {
+      alert(`⚠️ บันทึกออเดอร์โต๊ะ ${state.currentTable} ในเครื่องสำเร็จ แต่สัญญาณคลาวด์ขัดข้อง (${cloudError})\n\nกรุณาแจ้งพนักงานเพื่อตรวจสอบออเดอร์ครับ`);
+    } else {
+      alert(`🎉 สั่งอาหารสำเร็จ!\n\nออเดอร์ของโต๊ะ ${state.currentTable} ถูกส่งไปยังกุ๊กครัวลุงหนุ่ยและแคชเชียร์เรียบร้อยแล้วครับ 👨‍🍳`);
+    }
   }
 }
 

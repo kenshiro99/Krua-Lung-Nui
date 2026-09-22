@@ -22,23 +22,34 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Initial Cloud Sync: Load current orders WITHOUT announcing them
   // Then set kitchenPageReady = true so new orders AFTER this point trigger sounds
+  const markReady = () => {
+    if (!kitchenPageReady) {
+      kitchenPageReady = true;
+      console.log("🟢 [Kitchen KDS] Ready — รอออเดอร์ใหม่...");
+    }
+  };
+
   syncFromCloud().then(() => {
-    // Add all currently-in-cloud orders to announcedOrderIds (no sound for old orders)
     if (window.posState && Array.isArray(window.posState.orders)) {
       window.posState.orders.forEach(o => { if (o && o.id) announcedOrderIds.add(o.id); });
     }
-    // ✅ Page is now ready — orders arriving after this will trigger announcements
-    kitchenPageReady = true;
-    console.log("🟢 [Kitchen KDS] Ready — รอออเดอร์ใหม่...");
+  }).catch(e => {
+    console.warn("Initial sync error:", e);
+  }).finally(() => {
+    markReady();
   });
+
+  // Guarantee ready within 2 seconds even if cloud is slow
+  setTimeout(markReady, 2000);
 
   // Audio Unlocker for modern browser autoplay policy
   window.unlockKitchenAudio = function() {
     isAudioUnlocked = true;
-    const audio = document.getElementById("bellSound");
-    if (audio) {
-      audio.play().then(() => { audio.pause(); audio.currentTime = 0; }).catch(() => {});
-    }
+    try {
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      if (ctx.state === 'suspended') ctx.resume();
+      setTimeout(() => ctx.close().catch(() => {}), 500);
+    } catch (e) {}
     const banner = document.getElementById("kitchenAudioUnlockBanner");
     if (banner) {
       banner.style.background = "#16a34a";
@@ -53,7 +64,7 @@ document.addEventListener("DOMContentLoaded", () => {
   if (window.SupabaseService && typeof window.SupabaseService.subscribeOrders === "function") {
     window.SupabaseService.subscribeOrders(
       (newOrder) => {
-        if (!kitchenPageReady) return; // Ignore events before page is ready
+        if (!kitchenPageReady) return;
         console.log("🔔 [Kitchen KDS] New Cloud Order received:", newOrder);
         const norm = normalizeOrderFormat(newOrder);
         announceNewOrder(norm);
@@ -68,7 +79,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // Polling every 3 seconds — catches any orders Realtime might have missed
   setInterval(() => {
     syncFromCloud().then(() => {
-      if (!kitchenPageReady) return; // Don't announce during initial load
+      if (!kitchenPageReady) return;
       window.posState.orders = JSON.parse(localStorage.getItem("pos_orders")) || [];
       const activeOrders = window.posState.orders.filter(o => o.status === "pending" || o.status === "cooking");
       
@@ -81,7 +92,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
       lastPendingCount = activeOrders.length;
       renderKitchenView();
-    });
+    }).catch(() => {});
   }, 3000);
 });
 
@@ -242,19 +253,30 @@ function playKitchenBell() {
   const soundToggle = document.getElementById("kitchenSoundToggle");
   if (soundToggle && !soundToggle.checked) return;
 
-  // 1. ลองเล่นไฟล์กระดิ่งที่คุณลงไว้ใน sounds/bell.mp3 ก่อน
-  const customBell = new Audio("sounds/bell.mp3");
-  const playPromise = customBell.play();
-
-  if (playPromise !== undefined) {
-    playPromise.catch(() => {
-      // 2. ถ้าไม่มีไฟล์ bell.mp3 ให้เล่นเสียงกระดิ่ง Mixkit ออนไลน์เดิม
-      const audio = document.getElementById("bellSound");
-      if (audio) {
-        audio.currentTime = 0;
-        audio.play().catch(e => console.log("Audio autoplay prevented:", e.message));
-      }
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    if (ctx.state === 'suspended') ctx.resume();
+    // Warm restaurant chime: 880Hz -> 1174Hz (A5 -> D6)
+    [880, 1174].forEach((freq, idx) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(freq, ctx.currentTime + idx * 0.18);
+      gain.gain.setValueAtTime(0.001, ctx.currentTime + idx * 0.18);
+      gain.gain.exponentialRampToValueAtTime(0.4, ctx.currentTime + idx * 0.18 + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + idx * 0.18 + 0.35);
+      osc.start(ctx.currentTime + idx * 0.18);
+      osc.stop(ctx.currentTime + idx * 0.18 + 0.38);
     });
+    setTimeout(() => ctx.close().catch(() => {}), 1500);
+  } catch (e) {
+    const audio = document.getElementById("bellSound");
+    if (audio) {
+      audio.currentTime = 0;
+      audio.play().catch(() => {});
+    }
   }
 }
 
