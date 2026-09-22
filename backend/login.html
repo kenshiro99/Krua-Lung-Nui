@@ -165,6 +165,14 @@
         </div>
       </div>
 
+      <!-- Forgot / Change PIN link on Role List -->
+      <div style="text-align: center; margin-top: 0.85rem; border-top: 1px dashed #e2e8f0; padding-top: 0.85rem;">
+        <button type="button" class="btn btn-sm btn-outline" onclick="openResetPinModal()" style="border-radius: 9999px; font-size: 0.84rem; color: #475569; border-color: #cbd5e1; background: #ffffff; padding: 0.4rem 1rem;">
+          <i data-lucide="key-round"></i>
+          <span>เปลี่ยนรหัส PIN / ลืมรหัสผ่าน?</span>
+        </button>
+      </div>
+
     </div>
 
     <!-- 2. USER SELECTION STEP (Shown if multiple people exist in chosen role) -->
@@ -236,6 +244,14 @@
             <i data-lucide="log-in"></i> เข้าสู่ระบบ
           </button>
         </div>
+
+        <!-- Forgot / Change PIN link on Keypad Screen -->
+        <div style="margin-top: 0.85rem; text-align: center;">
+          <button type="button" class="btn btn-sm btn-outline" onclick="openResetPinModal()" style="border-radius: 9999px; font-size: 0.82rem; color: #64748b; border-color: #cbd5e1; background: #ffffff; padding: 0.35rem 0.85rem;">
+            <i data-lucide="key-round"></i>
+            <span>เปลี่ยนรหัส PIN / ลืมรหัสผ่าน?</span>
+          </button>
+        </div>
       </div>
 
       <!-- Owner First-Time PIN Setup Section -->
@@ -262,8 +278,98 @@
         </button>
       </div>
 
-    </div>
+  </div>
 
+  <!-- Modal: Reset / Change PIN -->
+  <div id="resetPinModal" class="modal-overlay" style="display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.65); backdrop-filter: blur(4px); z-index: 9999; align-items: center; justify-content: center; padding: 1rem;">
+    <div class="modal-dialog" style="background: #ffffff; border-radius: 20px; max-width: 440px; width: 100%; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); overflow: hidden; animation: modalPop 0.2s cubic-bezier(0.16, 1, 0.3, 1);">
+      <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; padding: 1.15rem 1.25rem; border-bottom: 1px solid #e2e8f0; background: #f8fafc;">
+        <h3 style="display: flex; align-items: center; gap: 0.5rem; font-size: 1.05rem; font-weight: 700; color: #0f172a; margin: 0;">
+          <span>🔑</span> <span>จัดการรหัส PIN / ลืมรหัสผ่าน</span>
+        </h3>
+        <button type="button" class="modal-close" onclick="closeResetPinModal()" style="background: none; border: none; font-size: 1.4rem; color: #64748b; cursor: pointer; line-height: 1;">&times;</button>
+      </div>
+      <div class="modal-body" style="padding: 1.25rem;">
+        
+        <!-- Toggle Tabs -->
+        <div style="display: flex; background: #f1f5f9; padding: 4px; border-radius: 12px; margin-bottom: 1.25rem; gap: 4px;">
+          <button type="button" id="tabBtnChangePin" onclick="switchResetPinTab('change')" style="flex: 1; padding: 0.5rem; border-radius: 8px; font-weight: 600; font-size: 0.86rem; border: none; cursor: pointer; background: #ffffff; color: #0f172a; box-shadow: 0 1px 3px rgba(0,0,0,0.1); transition: all 0.15s;">
+            ✏️ เปลี่ยนรหัส PIN
+          </button>
+          <button type="button" id="tabBtnFactoryReset" onclick="switchResetPinTab('factory')" style="flex: 1; padding: 0.5rem; border-radius: 8px; font-weight: 600; font-size: 0.86rem; border: none; cursor: pointer; background: transparent; color: #64748b; transition: all 0.15s;">
+            🔄 กู้คืนรหัสเริ่มต้น
+          </button>
+        </div>
+
+        <!-- TAB 1: Change PIN -->
+        <div id="tabContentChangePin">
+          <form onsubmit="handleModalSubmitChangePin(event)">
+            <div class="form-group" style="margin-bottom: 0.85rem;">
+              <label class="form-label" style="display: block; font-weight: 600; font-size: 0.86rem; color: #334155; margin-bottom: 0.35rem;">
+                เลือกแผนกที่ต้องการเปลี่ยนรหัส <span style="color:#ef4444;">*</span>
+              </label>
+              <select id="modalChangeRoleSelect" class="form-select" style="width: 100%; padding: 0.55rem 0.75rem; border: 1.5px solid #cbd5e1; border-radius: 10px; font-size: 0.92rem;" required>
+                <option value="owner">👑 เจ้าของร้าน (Owner)</option>
+                <option value="admin">🛡️ แอดมินระบบ (Admin)</option>
+                <option value="manager">👨‍💼 ผู้จัดการร้าน (Manager)</option>
+                <option value="cashier">💵 แคชเชียร์ (Cashier POS)</option>
+                <option value="kitchen">👨‍🍳 แผนกห้องครัว (Kitchen KDS)</option>
+              </select>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 0.85rem;">
+              <label class="form-label" style="display: block; font-weight: 600; font-size: 0.86rem; color: #334155; margin-bottom: 0.35rem;">
+                รหัส PIN เดิม <small style="color:#64748b; font-weight: normal;">(หรือใส่ Master PIN 8888)</small>
+              </label>
+              <input type="password" id="modalOldPin" class="form-control" maxlength="6" placeholder="รหัสเดิม (หรือ 8888)" style="width: 100%; padding: 0.55rem 0.75rem; border: 1.5px solid #cbd5e1; border-radius: 10px; font-size: 1.1rem; letter-spacing: 0.15em;">
+            </div>
+
+            <div class="form-group" style="margin-bottom: 0.85rem;">
+              <label class="form-label" style="display: block; font-weight: 600; font-size: 0.86rem; color: #334155; margin-bottom: 0.35rem;">
+                รหัส PIN ใหม่ (4-6 หลัก) <span style="color:#ef4444;">*</span>
+              </label>
+              <input type="password" id="modalNewPin1" class="form-control" maxlength="6" required placeholder="กำหนดรหัสใหม่ 4-6 หลัก" style="width: 100%; padding: 0.55rem 0.75rem; border: 1.5px solid #cbd5e1; border-radius: 10px; font-size: 1.1rem; letter-spacing: 0.15em;">
+            </div>
+
+            <div class="form-group" style="margin-bottom: 1rem;">
+              <label class="form-label" style="display: block; font-weight: 600; font-size: 0.86rem; color: #334155; margin-bottom: 0.35rem;">
+                ยืนยันรหัส PIN ใหม่อีกครั้ง <span style="color:#ef4444;">*</span>
+              </label>
+              <input type="password" id="modalNewPin2" class="form-control" maxlength="6" required placeholder="กรอกรหัสใหม่อีกครั้ง" style="width: 100%; padding: 0.55rem 0.75rem; border: 1.5px solid #cbd5e1; border-radius: 10px; font-size: 1.1rem; letter-spacing: 0.15em;">
+            </div>
+
+            <div id="modalPinErrorMsg" style="color: #ef4444; font-size: 0.85rem; margin-bottom: 0.85rem; display: none; font-weight: 600;"></div>
+
+            <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center; padding: 0.75rem; border-radius: 12px; font-weight: 600; display: flex; align-items: center; gap: 0.5rem; background: #2563eb; color: #fff; border: none; cursor: pointer;">
+              <i data-lucide="check"></i> <span>บันทึกรหัส PIN ใหม่</span>
+            </button>
+          </form>
+        </div>
+
+        <!-- TAB 2: Factory Reset -->
+        <div id="tabContentFactoryReset" style="display: none;">
+          <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 0.85rem; margin-bottom: 1rem; font-size: 0.86rem; line-height: 1.6;">
+            <b style="color: #0f172a; display: block; margin-bottom: 0.4rem;">📋 รหัส PIN เริ่มต้นจากโรงงาน:</b>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.45rem; font-size: 0.84rem;">
+              <div style="background:#fffbeb; padding:6px 10px; border-radius:8px; border:1px solid #fde68a;">👑 เจ้าของ: <b>8888</b></div>
+              <div style="background:#eff6ff; padding:6px 10px; border-radius:8px; border:1px solid #bfdbfe;">🛡️ แอดมิน: <b>1111</b> / <b>1234</b></div>
+              <div style="background:#f5f3ff; padding:6px 10px; border-radius:8px; border:1px solid #ddd6fe;">👨‍💼 ผจก: <b>2222</b></div>
+              <div style="background:#ecfdf5; padding:6px 10px; border-radius:8px; border:1px solid #a7f3d0;">💵 แคชเชียร์: <b>3333</b></div>
+              <div style="background:#fff7ed; padding:6px 10px; border-radius:8px; border:1px solid #fed7aa; grid-column: span 2;">👨‍🍳 ห้องครัว: <b>4444</b></div>
+            </div>
+          </div>
+
+          <p style="font-size: 0.82rem; color: #64748b; margin-bottom: 1.15rem; line-height: 1.5;">
+            💡 หากลืมรหัส PIN หรือถูกระงับเนื่องจากใส่ผิด สามารถกดปุ่มด้านล่างเพื่อรีเซ็ตทุกแผนกกลับเป็นรหัสเริ่มต้น และปลดล็อกระบบทันที
+          </p>
+
+          <button type="button" onclick="handleModalFactoryReset()" style="width: 100%; justify-content: center; color: #dc2626; border: 1.5px solid #fca5a5; background: #fff5f5; padding: 0.75rem; border-radius: 12px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 0.5rem;">
+            <i data-lucide="rotate-ccw"></i> <span>รีเซ็ตรหัสทั้งหมดเป็นค่าเริ่มต้นโรงงาน</span>
+          </button>
+        </div>
+
+      </div>
+    </div>
   </div>
 
   <script src="js/auth.js"></script>
@@ -508,6 +614,96 @@
         }
       }
     });
+
+    function openResetPinModal(role) {
+      const modal = document.getElementById("resetPinModal");
+      if (!modal) return;
+      modal.style.display = "flex";
+      if (role) {
+        const sel = document.getElementById("modalChangeRoleSelect");
+        if (sel) sel.value = role;
+      } else if (selectedUser && selectedUser.role) {
+        const sel = document.getElementById("modalChangeRoleSelect");
+        if (sel) sel.value = selectedUser.role;
+      }
+      switchResetPinTab('change');
+      document.getElementById("modalOldPin").value = "";
+      document.getElementById("modalNewPin1").value = "";
+      document.getElementById("modalNewPin2").value = "";
+      document.getElementById("modalPinErrorMsg").style.display = "none";
+      refreshLucideIcons();
+    }
+
+    function closeResetPinModal() {
+      const modal = document.getElementById("resetPinModal");
+      if (modal) modal.style.display = "none";
+    }
+
+    function switchResetPinTab(tab) {
+      const isChange = tab === 'change';
+      document.getElementById("tabContentChangePin").style.display = isChange ? "block" : "none";
+      document.getElementById("tabContentFactoryReset").style.display = isChange ? "none" : "block";
+
+      const btnChange = document.getElementById("tabBtnChangePin");
+      const btnFactory = document.getElementById("tabBtnFactoryReset");
+      if (isChange) {
+        btnChange.style.background = "#ffffff";
+        btnChange.style.color = "#0f172a";
+        btnChange.style.boxShadow = "0 1px 3px rgba(0,0,0,0.1)";
+        btnFactory.style.background = "transparent";
+        btnFactory.style.color = "#64748b";
+        btnFactory.style.boxShadow = "none";
+      } else {
+        btnFactory.style.background = "#ffffff";
+        btnFactory.style.color = "#0f172a";
+        btnFactory.style.boxShadow = "0 1px 3px rgba(0,0,0,0.1)";
+        btnChange.style.background = "transparent";
+        btnChange.style.color = "#64748b";
+        btnChange.style.boxShadow = "none";
+      }
+      refreshLucideIcons();
+    }
+
+    function handleModalSubmitChangePin(e) {
+      e.preventDefault();
+      const role = document.getElementById("modalChangeRoleSelect").value;
+      const oldPin = document.getElementById("modalOldPin").value.trim();
+      const newPin1 = document.getElementById("modalNewPin1").value.trim();
+      const newPin2 = document.getElementById("modalNewPin2").value.trim();
+      const errEl = document.getElementById("modalPinErrorMsg");
+
+      if (!newPin1 || newPin1.length < 4) {
+        errEl.innerText = "⚠️ รหัส PIN ใหม่ต้องมีอย่างน้อย 4 หลัก (4-6 หลัก)";
+        errEl.style.display = "block";
+        return;
+      }
+      if (newPin1 !== newPin2) {
+        errEl.innerText = "⚠️ รหัส PIN ใหม่ทั้งสองช่องไม่ตรงกัน กรุณากรอกให้ตรงกัน";
+        errEl.style.display = "block";
+        return;
+      }
+
+      const res = changeUserPinDirect(role, oldPin, newPin1);
+      if (!res.success) {
+        errEl.innerText = res.message;
+        errEl.style.display = "block";
+        return;
+      }
+
+      alert("✅ " + res.message);
+      closeResetPinModal();
+      refreshUserCounts();
+    }
+
+    function handleModalFactoryReset() {
+      if (!confirm("⚠️ ยืนยันการรีเซ็ตรหัส PIN ทั้งหมดกลับเป็นค่าเริ่มต้นจากโรงงานใช่หรือไม่?\n\n• 👑 เจ้าของร้าน: 8888\n• 🛡️ แอดมิน: 1111 (หรือ 1234)\n• 👨‍💼 ผู้จัดการ: 2222\n• 💵 แคชเชียร์: 3333\n• 👨‍🍳 ครัว: 4444")) {
+        return;
+      }
+      resetAllPinsToFactoryDefault();
+      alert("✅ รีเซ็ตรหัส PIN ทุกแผนกเป็นค่าเริ่มต้นโรงงานเรียบร้อยแล้ว!\n\n👑 เจ้าของ: 8888\n🛡️ แอดมิน: 1111\n👨‍💼 ผู้จัดการ: 2222\n💵 แคชเชียร์: 3333\n👨‍🍳 ครัว: 4444");
+      closeResetPinModal();
+      refreshUserCounts();
+    }
 
     document.addEventListener("DOMContentLoaded", () => {
       refreshUserCounts();

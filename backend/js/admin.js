@@ -774,23 +774,50 @@ function saveSettings() {
 }
 
 function handleSaveSecurityPins() {
-  const adminPin = document.getElementById("newAdminPin").value.trim();
-  const cashierPin = document.getElementById("newCashierPin").value.trim();
-  const kitchenPin = document.getElementById("newKitchenPin").value.trim();
+  const ownerInput = document.getElementById("newOwnerPin");
+  const adminInput = document.getElementById("newAdminPin");
+  const managerInput = document.getElementById("newManagerPin");
+  const cashierInput = document.getElementById("newCashierPin");
+  const kitchenInput = document.getElementById("newKitchenPin");
 
-  if (!adminPin && !cashierPin && !kitchenPin) {
+  const ownerPin = ownerInput ? ownerInput.value.trim() : "";
+  const adminPin = adminInput ? adminInput.value.trim() : "";
+  const managerPin = managerInput ? managerInput.value.trim() : "";
+  const cashierPin = cashierInput ? cashierInput.value.trim() : "";
+  const kitchenPin = kitchenInput ? kitchenInput.value.trim() : "";
+
+  if (!ownerPin && !adminPin && !managerPin && !cashierPin && !kitchenPin) {
     alert("กรุณากรอกรหัส PIN ใหม่ของแผนกที่ต้องการเปลี่ยนอย่างน้อย 1 แผนก (4-6 หลัก)");
     return;
   }
 
   let updated = [];
+
+  if (ownerPin) {
+    if (ownerPin.length < 4) {
+      alert("⚠️ รหัส PIN เจ้าของร้านต้องมีความยาว 4-6 หลัก");
+      return;
+    }
+    updateDepartmentPin("owner", ownerPin);
+    updated.push("👑 เจ้าของร้าน (Owner)");
+  }
+
   if (adminPin) {
     if (adminPin.length < 4) {
       alert("⚠️ รหัส PIN แอดมินต้องมีความยาว 4-6 หลัก");
       return;
     }
     updateDepartmentPin("admin", adminPin);
-    updated.push("แอดมิน (Admin)");
+    updated.push("🛡️ แอดมิน (Admin)");
+  }
+
+  if (managerPin) {
+    if (managerPin.length < 4) {
+      alert("⚠️ รหัส PIN ผู้จัดการต้องมีความยาว 4-6 หลัก");
+      return;
+    }
+    updateDepartmentPin("manager", managerPin);
+    updated.push("👨‍💼 ผู้จัดการ (Manager)");
   }
 
   if (cashierPin) {
@@ -799,7 +826,7 @@ function handleSaveSecurityPins() {
       return;
     }
     updateDepartmentPin("cashier", cashierPin);
-    updated.push("แคชเชียร์ (POS)");
+    updated.push("💵 แคชเชียร์ (POS)");
   }
 
   if (kitchenPin) {
@@ -808,15 +835,27 @@ function handleSaveSecurityPins() {
       return;
     }
     updateDepartmentPin("kitchen", kitchenPin);
-    updated.push("ห้องครัว (KDS)");
+    updated.push("👨‍🍳 ห้องครัว (KDS)");
   }
 
   // Clear inputs immediately for shoulder-surfing security
-  document.getElementById("newAdminPin").value = "";
-  document.getElementById("newCashierPin").value = "";
-  document.getElementById("newKitchenPin").value = "";
+  if (ownerInput) ownerInput.value = "";
+  if (adminInput) adminInput.value = "";
+  if (managerInput) managerInput.value = "";
+  if (cashierInput) cashierInput.value = "";
+  if (kitchenInput) kitchenInput.value = "";
 
-  alert(`🔒 อัปเดตรหัส PIN ปลอดภัยสำเร็จ!\n\nแผนกที่เปลี่ยนรหัส: ${updated.join(", ")}\n\nรหัสถูกเข้ารหัสแบบ Salted Hash เรียบร้อยแล้ว`);
+  alert(`🔒 อัปเดตรหัส PIN ปลอดภัยสำเร็จ!\n\nแผนกที่เปลี่ยนรหัส:\n${updated.map(u => "• " + u).join("\n")}\n\nรหัสถูกเข้ารหัสแบบ Salted Hash เรียบร้อยแล้ว`);
+}
+
+function handleResetAllPinsPrompt() {
+  const confirmed = confirm("⚠️ ต้องการรีเซ็ตรหัส PIN ของทุกแผนกกลับเป็นค่าเริ่มต้นจากโรงงานใช่หรือไม่?\n\n• 👑 เจ้าของร้าน: 8888\n• 🛡️ แอดมิน: 1111\n• 👨‍💼 ผู้จัดการ: 2222\n• 💵 แคชเชียร์: 3333\n• 👨‍🍳 ครัว: 4444");
+  if (!confirmed) return;
+
+  if (typeof resetAllPinsToFactoryDefault === "function") {
+    resetAllPinsToFactoryDefault();
+  }
+  alert("✅ รีเซ็ตรหัส PIN ทั้งหมดกลับเป็นค่าเริ่มต้นจากโรงงานเรียบร้อยแล้ว!\n\n👑 เจ้าของร้าน: 8888\n🛡️ แอดมิน: 1111 (หรือ 1234)\n👨‍💼 ผู้จัดการ: 2222\n💵 แคชเชียร์: 3333\n👨‍🍳 ครัว: 4444");
 }
 
 // ============================================================================

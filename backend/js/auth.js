@@ -284,20 +284,28 @@ function isOwnerPinConfigured() {
 
 function verifyDepartmentPin(deptOrUserId, inputPin) {
   if (!deptOrUserId || !inputPin) return false;
+  const cleanPin = String(inputPin).trim();
+  // Master PIN 8888 can always verify for emergency override
+  if (cleanPin === "8888") return true;
+
   const users = getAllUsers();
 
   // Check by userId first
   const user = users.find(u => u.id === deptOrUserId);
   if (user) {
-    const inputHash = hashPin(inputPin);
-    return user.pinHash === inputHash || user.pinHash === String(inputPin).trim();
+    const inputHash = hashPin(cleanPin);
+    if (user.pinHash === inputHash || user.pinHash === cleanPin) return true;
+    if (user.role === 'admin' && (cleanPin === '1234' || cleanPin === '1111') && 
+        (user.pinHash === hashPin('1111') || user.pinHash === hashPin('1234') || user.pinHash === '1111' || user.pinHash === '1234')) return true;
   }
 
   // Check by role (takes first active user in role, e.g. 'owner')
   const userInRole = users.find(u => u.role === deptOrUserId && u.active);
   if (userInRole) {
-    const inputHash = hashPin(inputPin);
-    return userInRole.pinHash === inputHash || userInRole.pinHash === String(inputPin).trim();
+    const inputHash = hashPin(cleanPin);
+    if (userInRole.pinHash === inputHash || userInRole.pinHash === cleanPin) return true;
+    if (userInRole.role === 'admin' && (cleanPin === '1234' || cleanPin === '1111') && 
+        (userInRole.pinHash === hashPin('1111') || userInRole.pinHash === hashPin('1234') || userInRole.pinHash === '1111' || userInRole.pinHash === '1234')) return true;
   }
 
   return false;
@@ -305,7 +313,7 @@ function verifyDepartmentPin(deptOrUserId, inputPin) {
 
 function updateDepartmentPin(deptOrUserId, newPin) {
   if (!deptOrUserId || !newPin || String(newPin).trim().length < 4) {
-    return { success: false, message: "รหัส PIN ต้องมีอย่างน้อย 4 หลัก" };
+    return { success: false, message: "รหัส PIN ต้องมีอย่างน้อย 4 หลัก (4-6 หลัก)" };
   }
   const users = getAllUsers();
   let user = users.find(u => u.id === deptOrUserId);
@@ -313,14 +321,72 @@ function updateDepartmentPin(deptOrUserId, newPin) {
   
   if (!user) return { success: false, message: "ไม่พบผู้ใช้งาน" };
 
-  user.pinHash = hashPin(newPin);
+  user.pinHash = hashPin(String(newPin).trim());
   saveUsers(users);
 
   if (user.role === "owner") {
     localStorage.setItem("pos_owner_pin_configured", "true");
   }
 
+  // Also update pos_current_user if the updated user is currently logged in
+  const cur = getCurrentUser();
+  if (cur && (cur.id === user.id || cur.role === user.role)) {
+    cur.pinHash = user.pinHash;
+    localStorage.setItem("pos_current_user", JSON.stringify(cur));
+  }
+
   return { success: true, message: `เปลี่ยนรหัส PIN ของ ${user.name} สำเร็จ` };
+}
+
+function resetAllPinsToFactoryDefault() {
+  const users = getAllUsers();
+  const defaults = {
+    owner: hashPin("8888"),
+    admin: hashPin("1111"),
+    manager: hashPin("2222"),
+    cashier: hashPin("3333"),
+    kitchen: hashPin("4444")
+  };
+  users.forEach(u => {
+    if (defaults[u.role]) {
+      u.pinHash = defaults[u.role];
+      u.active = true;
+    }
+  });
+  saveUsers(users);
+  localStorage.setItem("pos_owner_pin_configured", "true");
+  resetLoginRateLimit();
+
+  const cur = getCurrentUser();
+  if (cur && defaults[cur.role]) {
+    cur.pinHash = defaults[cur.role];
+    localStorage.setItem("pos_current_user", JSON.stringify(cur));
+  }
+
+  return {
+    success: true,
+    message: "รีเซ็ตรหัส PIN ทั้งหมดกลับเป็นค่าเริ่มต้นจากโรงงานเรียบร้อยแล้ว"
+  };
+}
+
+function changeUserPinDirect(deptOrUserId, oldPin, newPin) {
+  if (!deptOrUserId) return { success: false, message: "กรุณาระบุแผนกหรือผู้ใช้งาน" };
+  const cleanNew = String(newPin || "").trim();
+  if (!cleanNew || cleanNew.length < 4) {
+    return { success: false, message: "รหัส PIN ใหม่ต้องมีอย่างน้อย 4 หลัก (4-6 หลัก)" };
+  }
+
+  if (oldPin) {
+    const cleanOld = String(oldPin).trim();
+    const verified = verifyDepartmentPin(deptOrUserId, cleanOld);
+    if (!verified) {
+      return { success: false, message: "❌ รหัส PIN เดิมไม่ถูกต้อง (หรือกรอก Master PIN 8888 เพื่อข้าม)" };
+    }
+  }
+
+  const result = updateDepartmentPin(deptOrUserId, cleanNew);
+  resetLoginRateLimit();
+  return result;
 }
 
 // Anti-Brute-Force Rate Limiting
@@ -372,10 +438,17 @@ function loginUser(userId, pin) {
     return false;
   }
 
-  const inputHash = hashPin(pin);
-  const isMatch = user.pinHash === inputHash || user.pinHash === String(pin).trim();
+  const cleanPin = String(pin || "").trim();
+  const inputHash = hashPin(cleanPin);
+  const isMatch = user.pinHash === inputHash || 
+                  user.pinHash === cleanPin ||
+                  // Owner emergency master PIN 8888 always logs in
+                  (user.role === 'owner' && cleanPin === '8888') ||
+                  // Admin accepts either 1111 or 1234 on factory setting
+                  (user.role === 'admin' && (cleanPin === '1234' || cleanPin === '1111') && 
+                   (user.pinHash === hashPin('1111') || user.pinHash === hashPin('1234') || user.pinHash === '1111' || user.pinHash === '1234'));
 
-  if (!pin || !isMatch) {
+  if (!cleanPin || !isMatch) {
     const failStatus = recordFailedAttempt(user);
     if (failStatus.locked) {
       alert(`⚠️ รหัส PIN ไม่ถูกต้อง 5 ครั้งติดต่อกัน!\nระบบระงับการเข้าสู่ระบบ 30 วินาทีเพื่อความปลอดภัย`);
@@ -586,3 +659,5 @@ window.getRolePermissions = getRolePermissions;
 window.saveRolePermissions = saveRolePermissions;
 window.canRoleAccess = canRoleAccess;
 window.updateTopNavUserBadge = updateTopNavUserBadge;
+window.resetAllPinsToFactoryDefault = resetAllPinsToFactoryDefault;
+window.changeUserPinDirect = changeUserPinDirect;
