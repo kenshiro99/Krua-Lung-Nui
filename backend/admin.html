@@ -432,12 +432,12 @@
                     <div style="display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.75rem;">
                       <span style="font-size: 1.5rem;">👑</span>
                       <div>
-                        <strong style="display: block; font-size: 0.95rem; color: #92400e;">เจ้าของร้าน (Owner)</strong>
+                        <strong style="display: block; font-size: 0.95rem; color: #92400e;">ผู้สร้างระบบ (Owner)</strong>
                         <small style="color: #b45309;">สิทธิ์สูงสุด: ควบคุมทุกส่วน จัดการสิทธิ์ และกู้คืนรหัส</small>
                       </div>
                     </div>
                     <div class="form-group" style="margin-bottom: 0;">
-                      <label class="form-label" style="font-size: 0.85rem; font-weight: 600;">ตั้งรหัส PIN เจ้าของร้านใหม่ (4-6 หลัก)</label>
+                      <label class="form-label" style="font-size: 0.85rem; font-weight: 600;">ตั้งรหัส PIN ผู้สร้างระบบใหม่ (4-6 หลัก)</label>
                       <input type="password" id="newOwnerPin" class="form-control" maxlength="6" placeholder="กำหนดรหัสใหม่ (ปล่อยว่างหากไม่เปลี่ยน)" style="background: #ffffff;">
                     </div>
                   </div>
@@ -506,7 +506,7 @@
 
                 <div style="margin-top: 1.25rem; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 1rem; border-top: 1px solid #e2e8f0; padding-top: 1rem;">
                   <div style="font-size: 0.84rem; color: #475569; line-height: 1.6;">
-                    💡 <b>รหัสเริ่มต้นจากโรงงาน:</b> 👑 เจ้าของร้าน <b>8888</b> | 🛡️ แอดมิน <b>1111</b> (หรือ <b>1234</b>) | 👨‍💼 ผจก <b>2222</b> | 💵 แคชเชียร์ <b>3333</b> | 👨‍🍳 ครัว <b>4444</b>
+                    💡 <b>รหัสเริ่มต้นจากโรงงาน:</b> 👑 ผู้สร้างระบบ <b>8888</b> | 🛡️ แอดมิน <b>1111</b> (หรือ <b>1234</b>) | 👨‍💼 ผจก <b>2222</b> | 💵 แคชเชียร์ <b>3333</b> | 👨‍🍳 ครัว <b>4444</b>
                   </div>
                   <div style="display: flex; align-items: center; gap: 0.75rem;">
                     <button type="button" class="btn btn-outline" onclick="handleResetAllPinsPrompt()" style="color: #dc2626; border-color: #fca5a5; background: #fff5f5;" title="รีเซ็ตรหัส PIN ทั้งหมดกลับเป็นค่าเริ่มต้น">
@@ -680,7 +680,7 @@
               <h2 class="page-title" style="display:flex; align-items:center; gap:0.5rem; color:#92400e;">
                 <span>👑</span> <span>ศูนย์จัดการผู้ใช้งาน & บันทึกการเข้าสู่ระบบ (Owner Access & Audit Center)</span>
               </h2>
-              <p class="page-subtitle">เฉพาะเจ้าของร้าน (Owner) • คุณคือผู้จัดการบัญชีผู้ใช้งาน สิทธิ์ และตรวจสอบประวัติการเข้าใช้งานของทุกคน</p>
+              <p class="page-subtitle">เฉพาะผู้สร้างระบบ (Owner) • คุณคือผู้จัดการบัญชีผู้ใช้งาน สิทธิ์ และตรวจสอบประวัติการเข้าใช้งานของทุกคน</p>
             </div>
             <div class="header-actions" style="display:flex; gap:0.65rem; align-items:center;">
               <button type="button" class="btn btn-primary" onclick="openAddUserModal()" style="background:#d97706; border-color:#b45309;">
@@ -707,12 +707,12 @@
           <!-- Master Owner PIN Card -->
           <div class="data-card" style="margin-bottom: 1.5rem; border: 2px solid #f59e0b; background: linear-gradient(135deg, #fffbeb, #ffffff);">
             <div class="data-card-header" style="display:flex; justify-content:space-between; align-items:center; border-bottom: 1px solid #fde68a;">
-              <h3 style="color:#92400e;"><i data-lucide="key-round" style="color:#d97706;"></i> รหัสผ่านส่วนตัวของเจ้าของร้าน (Master Owner PIN)</h3>
+              <h3 style="color:#92400e;"><i data-lucide="key-round" style="color:#d97706;"></i> รหัสผ่านส่วนตัวของผู้สร้างระบบ (Master Owner PIN)</h3>
               <span class="badge" style="background:#f59e0b; color:#fff;">รหัสลับส่วนตัว</span>
             </div>
             <div class="data-card-body">
               <p style="color:#78350f; font-size:0.88rem; margin-bottom:1rem;">
-                รหัสนี้ใช้สำหรับเข้าสู่ระบบของเจ้าของร้าน (Owner) สิทธิ์สูงสุดเด็ดขาด เพื่อเข้าดูข้อมูลทุกอย่างและจัดการสิทธิ์ของทุกคน
+                รหัสนี้ใช้สำหรับเข้าสู่ระบบของผู้สร้างระบบ (Owner) สิทธิ์สูงสุดเด็ดขาด เพื่อเข้าดูข้อมูลทุกอย่างและจัดการสิทธิ์ของทุกคน
               </p>
               <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap:1rem; align-items:flex-end;">
                 <div class="form-group" style="margin-bottom:0;">
@@ -805,7 +805,7 @@
           <div class="data-card" style="border: 2px solid #e2e8f0;">
             <div class="data-card-header" style="display:flex; justify-content:space-between; align-items:center;">
               <h3><i data-lucide="sliders"></i> กำหนดขอบเขตสิทธิ์ของแต่ละตำแหน่ง (Role Permission Matrix)</h3>
-              <span class="badge badge-success-subtle">เจ้าของร้านเป็นผู้ควบคุม</span>
+              <span class="badge badge-success-subtle">ผู้สร้างระบบเป็นผู้ควบคุม</span>
             </div>
             <div class="data-card-body">
               <p style="color:#64748b; font-size:0.88rem; margin-bottom:1.5rem;">
@@ -1292,7 +1292,7 @@
               <option value="admin">🛡️ แอดมินระบบ (Admin)</option>
               <option value="cashier">💵 แคชเชียร์ & หน้าร้าน (Cashier POS)</option>
               <option value="kitchen">👨‍🍳 แผนกครัว (Kitchen KDS)</option>
-              <option value="owner">👑 เจ้าของร้าน (Owner)</option>
+              <option value="owner">👑 ผู้สร้างระบบ (Owner)</option>
             </select>
           </div>
 
@@ -1397,18 +1397,18 @@
   <script src="data/menus/mixer.js"></script>
   <script src="data/menus/index.js"></script>
   <!-- Supabase Official JS SDK & Client Sync Engine (Local Offline-First + CDN Fallback) -->
-  <script src="js/supabase.min.js?v=20260922_c3"></script>
+  <script src="js/supabase.min.js?v=20260924_owner_creator"></script>
   <script>
     if (typeof supabase === 'undefined' || typeof supabase.createClient !== 'function') {
       document.write('<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"><\/script>');
     }
   </script>
-  <script src="config.js?v=20260922_c3" onerror="this.onerror=null;"></script>
-  <script src="js/supabaseClient.js?v=20260922_c3"></script>
-  <script src="js/state.js?v=20260922_c3"></script>
-  <script src="js/auth.js?v=20260922_c3"></script>
-  <script src="js/promptpay.js?v=20260922_c3"></script>
-  <script src="js/accounting.js?v=20260922_c3"></script>
-  <script src="js/admin.js?v=20260922_c3"></script>
+  <script src="config.js?v=20260924_owner_creator" onerror="this.onerror=null;"></script>
+  <script src="js/supabaseClient.js?v=20260924_owner_creator"></script>
+  <script src="js/state.js?v=20260924_owner_creator"></script>
+  <script src="js/auth.js?v=20260924_owner_creator"></script>
+  <script src="js/promptpay.js?v=20260924_owner_creator"></script>
+  <script src="js/accounting.js?v=20260924_owner_creator"></script>
+  <script src="js/admin.js?v=20260924_owner_creator"></script>
 </body>
 </html>

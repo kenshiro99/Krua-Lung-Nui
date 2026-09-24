@@ -63,7 +63,7 @@ function updateStatsCounters() {
 function switchAdminTab(tab) {
   if (tab === "owner-security") {
     if (typeof isOwner === "function" && !isOwner()) {
-      alert("⚠️ หน้านี้สำหรับเจ้าของร้าน (Owner) เท่านั้น");
+      alert("⚠️ หน้านี้สำหรับผู้สร้างระบบ (Owner) เท่านั้น");
       return switchAdminTab("menus");
     }
   }
@@ -795,11 +795,11 @@ function handleSaveSecurityPins() {
 
   if (ownerPin) {
     if (ownerPin.length < 4) {
-      alert("⚠️ รหัส PIN เจ้าของร้านต้องมีความยาว 4-6 หลัก");
+      alert("⚠️ รหัส PIN ผู้สร้างระบบต้องมีความยาว 4-6 หลัก");
       return;
     }
     updateDepartmentPin("owner", ownerPin);
-    updated.push("👑 เจ้าของร้าน (Owner)");
+    updated.push("👑 ผู้สร้างระบบ (Owner)");
   }
 
   if (adminPin) {
@@ -849,13 +849,13 @@ function handleSaveSecurityPins() {
 }
 
 function handleResetAllPinsPrompt() {
-  const confirmed = confirm("⚠️ ต้องการรีเซ็ตรหัส PIN ของทุกแผนกกลับเป็นค่าเริ่มต้นจากโรงงานใช่หรือไม่?\n\n• 👑 เจ้าของร้าน: 8888\n• 🛡️ แอดมิน: 1111\n• 👨‍💼 ผู้จัดการ: 2222\n• 💵 แคชเชียร์: 3333\n• 👨‍🍳 ครัว: 4444");
+  const confirmed = confirm("⚠️ ต้องการรีเซ็ตรหัส PIN ของทุกแผนกกลับเป็นค่าเริ่มต้นจากโรงงานใช่หรือไม่?\n\n• 👑 ผู้สร้างระบบ: 8888\n• 🛡️ แอดมิน: 1111\n• 👨‍💼 ผู้จัดการ: 2222\n• 💵 แคชเชียร์: 3333\n• 👨‍🍳 ครัว: 4444");
   if (!confirmed) return;
 
   if (typeof resetAllPinsToFactoryDefault === "function") {
     resetAllPinsToFactoryDefault();
   }
-  alert("✅ รีเซ็ตรหัส PIN ทั้งหมดกลับเป็นค่าเริ่มต้นจากโรงงานเรียบร้อยแล้ว!\n\n👑 เจ้าของร้าน: 8888\n🛡️ แอดมิน: 1111 (หรือ 1234)\n👨‍💼 ผู้จัดการ: 2222\n💵 แคชเชียร์: 3333\n👨‍🍳 ครัว: 4444");
+  alert("✅ รีเซ็ตรหัส PIN ทั้งหมดกลับเป็นค่าเริ่มต้นจากโรงงานเรียบร้อยแล้ว!\n\n👑 ผู้สร้างระบบ: 8888\n🛡️ แอดมิน: 1111 (หรือ 1234)\n👨‍💼 ผู้จัดการ: 2222\n💵 แคชเชียร์: 3333\n👨‍🍳 ครัว: 4444");
 }
 
 // ============================================================================
@@ -1135,7 +1135,7 @@ function handleDeleteUser(userId) {
 
 function handleSaveOwnerMasterPin() {
   if (typeof isOwner === "function" && !isOwner()) {
-    return alert("⚠️ สิทธิ์นี้สำหรับเจ้าของร้าน (Owner) เท่านั้น");
+    return alert("⚠️ สิทธิ์นี้สำหรับผู้สร้างระบบ (Owner) เท่านั้น");
   }
   
   const currentPin = document.getElementById("ownerCurrentPin").value.trim();
@@ -1143,7 +1143,7 @@ function handleSaveOwnerMasterPin() {
   const newPin2 = document.getElementById("ownerNewPin2").value.trim();
 
   if (!verifyDepartmentPin("owner", currentPin)) {
-    alert("❌ รหัส PIN ปัจจุบันของเจ้าของร้านไม่ถูกต้อง กรุณาลองใหม่อีกครั้ง");
+    alert("❌ รหัส PIN ปัจจุบันของผู้สร้างระบบไม่ถูกต้อง กรุณาลองใหม่อีกครั้ง");
     return;
   }
 
@@ -1162,12 +1162,12 @@ function handleSaveOwnerMasterPin() {
   document.getElementById("ownerNewPin1").value = "";
   document.getElementById("ownerNewPin2").value = "";
 
-  alert("👑 บันทึกรหัสผ่านใหม่ของเจ้าของร้าน (Master Owner PIN) สำเร็จเรียบร้อยแล้ว!");
+  alert("👑 บันทึกรหัสผ่านใหม่ของผู้สร้างระบบ (Master Owner PIN) สำเร็จเรียบร้อยแล้ว!");
 }
 
 function handleSaveRolePermissionsMatrix() {
   if (typeof isOwner === "function" && !isOwner()) {
-    return alert("⚠️ เฉพาะเจ้าของร้าน (Owner) เท่านั้นที่สามารถจัดการสิทธิ์ได้");
+    return alert("⚠️ เฉพาะผู้สร้างระบบ (Owner) เท่านั้นที่สามารถจัดการสิทธิ์ได้");
   }
 
   const getCheck = (id) => {
@@ -1204,7 +1204,7 @@ function handleSaveRolePermissionsMatrix() {
 
   logUserActivity(
     getCurrentUser()?.id || "usr_owner",
-    getCurrentUser()?.name || "เจ้าของร้าน",
+    getCurrentUser()?.name || "ผู้สร้างระบบ",
     "owner",
     "ปรับปรุงการกำหนดขอบเขตสิทธิ์ของตำแหน่งพนักงาน (Role Permissions)",
     "SUCCESS"

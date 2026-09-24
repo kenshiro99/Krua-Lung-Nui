@@ -9,7 +9,7 @@
  */
 
 const ROLES = {
-  owner: { name: "เจ้าของร้าน (Owner)", icon: "👑", page: "admin.html", color: "#d97706", bg: "#fef3c7", border: "#fde68a" },
+  owner: { name: "ผู้สร้างระบบ (Owner)", icon: "👑", page: "admin.html", color: "#d97706", bg: "#fef3c7", border: "#fde68a" },
   admin: { name: "แอดมิน (Admin)", icon: "🛡️", page: "admin.html", color: "#2563eb", bg: "#eff6ff", border: "#bfdbfe" },
   manager: { name: "ผู้จัดการร้าน (Manager)", icon: "👨‍💼", page: "admin.html", color: "#7c3aed", bg: "#f5f3ff", border: "#ddd6fe" },
   cashier: { name: "แคชเชียร์ (POS)", icon: "💵", page: "cashier.html", color: "#059669", bg: "#ecfdf5", border: "#a7f3d0" },
@@ -38,7 +38,7 @@ function hashPin(pin) {
 const INITIAL_USERS = [
   {
     id: "usr_owner",
-    name: "เจ้าของร้าน (Owner Main)",
+    name: "ผู้สร้างระบบ (Owner Main)",
     role: "owner",
     pinHash: hashPin("8888"),
     active: true,
@@ -259,7 +259,7 @@ function addUser({ name, role, pin }) {
 
   logUserActivity(
     getCurrentUser()?.id || "system",
-    getCurrentUser()?.name || "เจ้าของร้าน",
+    getCurrentUser()?.name || "ผู้สร้างระบบ",
     "owner",
     `เพิ่มผู้ใช้งานใหม่: ${newUser.name} (${ROLES[role].name})`,
     "SUCCESS"
@@ -294,7 +294,7 @@ function updateUser(userId, { name, role, pin, active }) {
 
   logUserActivity(
     getCurrentUser()?.id || "system",
-    getCurrentUser()?.name || "เจ้าของร้าน",
+    getCurrentUser()?.name || "ผู้สร้างระบบ",
     "owner",
     `อัปเดตข้อมูลผู้ใช้งาน: ${user.name} (${ROLES[user.role].name})`,
     "SUCCESS"
@@ -335,7 +335,7 @@ function deleteUser(userId) {
 
   logUserActivity(
     getCurrentUser()?.id || "system",
-    getCurrentUser()?.name || "เจ้าของร้าน",
+    getCurrentUser()?.name || "ผู้สร้างระบบ",
     "owner",
     `ลบผู้ใช้งาน: ${user.name} (${ROLES[user.role].name}) ออกจากระบบ`,
     "SUCCESS"
@@ -350,7 +350,7 @@ function toggleUserStatus(userId) {
   if (!user) return { success: false, message: "ไม่พบผู้ใช้งาน" };
 
   if (user.role === "owner") {
-    return { success: false, message: "ไม่สามารถระงับสิทธิ์ของเจ้าของร้านได้" };
+    return { success: false, message: "ไม่สามารถระงับสิทธิ์ของผู้สร้างระบบได้" };
   }
 
   user.active = !user.active;
@@ -358,7 +358,7 @@ function toggleUserStatus(userId) {
 
   logUserActivity(
     getCurrentUser()?.id || "system",
-    getCurrentUser()?.name || "เจ้าของร้าน",
+    getCurrentUser()?.name || "ผู้สร้างระบบ",
     "owner",
     `${user.active ? 'เปิดใช้งาน' : 'ระงับการใช้งาน'} ผู้ใช้: ${user.name}`,
     "SUCCESS"
@@ -538,7 +538,7 @@ function loginUser(userId, pin) {
   if (!user) return { success: false, message: "ไม่พบผู้ใช้งาน" };
 
   if (!user.active) {
-    alert("⚠️ บัญชีนี้ถูกระงับการใช้งาน กรุณาติดต่อเจ้าของร้าน (Owner)");
+    alert("⚠️ บัญชีนี้ถูกระงับการใช้งาน กรุณาติดต่อผู้สร้างระบบ (Owner)");
     return false;
   }
 
@@ -619,7 +619,7 @@ function verifyPageAccess(requiredRole = null) {
 
   // If page requires owner only
   if (requiredRole === "owner" && currentRole !== "owner") {
-    alert("⚠️ หน้านี้สำหรับเจ้าของร้าน (Owner) เท่านั้น");
+    alert("⚠️ หน้านี้สำหรับผู้สร้างระบบ (Owner) เท่านั้น");
     window.location.href = ROLES[currentRole]?.page || "login.html";
     return false;
   }
