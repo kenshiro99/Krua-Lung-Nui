@@ -206,10 +206,48 @@
           .insert([payload])
           .select()
           .single();
-        if (error) throw error;
+        if (error) {
+          if (error.message && error.message.includes('orders_table_id_fkey')) {
+            console.warn("⚠️ [Supabase] table_id constraint triggered, retrying with table_id = null");
+            const fallbackPayload = { ...payload, table_id: null };
+            const fallbackRes = await supabase.from('orders').insert([fallbackPayload]).select().single();
+            if (fallbackRes.error) throw fallbackRes.error;
+            console.log("✅ [Supabase] Order created successfully (fallback):", fallbackRes.data.id);
+            return { success: true, data: fallbackRes.data };
+          }
+          throw error;
+        }
         console.log("✅ [Supabase] Order created successfully:", data.id);
         return { success: true, data };
       } catch (e) {
+        if (e && e.message && e.message.includes('orders_table_id_fkey')) {
+          try {
+            console.warn("⚠️ [Supabase] Catch block fallback with table_id = null");
+            const notes = orderData.packagingNotes 
+              ? (orderData.notes ? `${orderData.packagingNotes} | ${orderData.notes}` : orderData.packagingNotes)
+              : (orderData.notes || '');
+            const fallbackPayload = {
+              id: orderData.id,
+              table_id: null,
+              table_name: orderData.tableName || 'ไม่ระบุโต๊ะ',
+              order_type: (orderData.orderType === 'takeaway') ? 'takeaway' : 'dinein',
+              status: orderData.status || 'pending',
+              payment_status: orderData.paymentStatus || 'unpaid',
+              payment_method: orderData.paymentMethod || 'promptpay',
+              subtotal: Number(orderData.subtotal || orderData.total || 0),
+              total: Number(orderData.total || 0),
+              items: orderData.items || [],
+              customer_notes: notes
+            };
+            const fallbackRes = await supabase.from('orders').insert([fallbackPayload]).select().single();
+            if (!fallbackRes.error) {
+              console.log("✅ [Supabase] Order created successfully via catch fallback:", fallbackRes.data.id);
+              return { success: true, data: fallbackRes.data };
+            }
+          } catch (retryErr) {
+            console.error("❌ [Supabase] Fallback retry failed:", retryErr);
+          }
+        }
         console.error("❌ [Supabase] createOrder error:", e.message || e);
         return { success: false, error: e.message || String(e) };
       }
