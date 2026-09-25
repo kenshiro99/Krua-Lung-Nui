@@ -535,11 +535,14 @@ function renderMenuFeed() {
       priceDisplay = `฿${item.price.toFixed(0)} - ฿${(item.price + maxExtra).toFixed(0)}`;
     }
 
+    const itemQtyInCart = state.cart.filter(c => c.menuId === item.id).reduce((s, c) => s + c.qty, 0);
+
     return `
-    <article class="food-card ${!item.isAvailable ? 'out-of-stock' : ''}" onclick="openCustomizeModal('${item.id}')">
+    <article class="food-card ${!item.isAvailable ? 'out-of-stock' : ''} ${itemQtyInCart > 0 ? 'in-cart' : ''}" onclick="openCustomizeModal('${item.id}')">
       <div class="food-card-img-wrap">
         <img src="${resolveImageUrl(item.imageUrl)}" alt="${item.name}" class="food-card-img" data-local="${(item.imageUrl || '').replace(/^images\//, '').replace(/^image\//, '')}" onerror="this.onerror=null; if(this.dataset.local){this.src='images/' + this.dataset.local;}else{this.src='logo/logo.png';}">
         ${!item.isAvailable ? '<div class="food-stock-badge">หมดชั่วคราว</div>' : ''}
+        ${itemQtyInCart > 0 ? `<div class="food-in-cart-badge"><i data-lucide="check"></i> สั่ง ${itemQtyInCart}</div>` : ''}
       </div>
       <div class="food-card-info">
         <div>
@@ -549,9 +552,12 @@ function renderMenuFeed() {
         <div class="food-price-row">
           <span class="food-price">${priceDisplay}</span>
           ${item.isAvailable ? `
-            <button class="btn-add-circle" onclick="event.stopPropagation(); openCustomizeModal('${item.id}')" title="สั่งเมนูนี้">
-              <i data-lucide="plus"></i>
-            </button>
+            <div class="food-add-wrap">
+              ${itemQtyInCart > 0 ? `<span class="food-badge-qty-pill">${itemQtyInCart}</span>` : ''}
+              <button class="btn-add-circle" onclick="event.stopPropagation(); openCustomizeModal('${item.id}')" title="สั่งเมนูนี้">
+                <i data-lucide="plus"></i>
+              </button>
+            </div>
           ` : ''}
         </div>
       </div>
@@ -747,6 +753,12 @@ function updateCartUI() {
   } else {
     if (floatBar) floatBar.style.display = "none";
     if (mascotWidget) mascotWidget.classList.remove("has-cart");
+  }
+
+  // Live update food card badges if on menu feed
+  const menuView = document.getElementById("pageViewMenu");
+  if (menuView && menuView.classList.contains("active") && (state.orderMode !== "dinein" || state.isTableScanned)) {
+    renderMenuFeed();
   }
 }
 
