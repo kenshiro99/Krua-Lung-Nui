@@ -188,6 +188,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Init LINE LIFF if available
   initLineLiff();
+
+  // Init Realtime Bill Settlement Listener
+  initBillCompletedListener();
 });
 
 // LINE LIFF SDK Initialization
@@ -963,6 +966,11 @@ function checkActiveOrders() {
   if (dot) {
     dot.style.display = activeOrders.length > 0 ? "block" : "none";
   }
+
+  // If customer requested bill and cashier has settled (active unpaid orders now 0)
+  if (state.billRequested && activeOrders.length === 0) {
+    handleBillSettledByCashier();
+  }
 }
 
 function openOrderTrackerModal() {
@@ -1045,7 +1053,41 @@ function requestBill() {
     o.paymentStatus === "unpaid"
   );
 
+  if (activeOrders.length === 0) {
+    showAppAlert("ยังไม่มีรายการอาหารที่ค้างชำระในขณะนี้ครับ", "ครัวลุงหนุ่ย", "ℹ️");
+    return;
+  }
+
   const total = activeOrders.reduce((sum, o) => sum + (o.total || 0), 0);
+  state.billRequested = true;
+
+  // Realtime notification to Cashier
+  const cleanNum = String(targetId).replace(/^โต๊ะ\s*/, '').trim();
+  const normTableId = `t-${cleanNum}`;
+
+  // 1. LocalStorage
+  const billReqs = JSON.parse(localStorage.getItem("pos_bill_requests")) || {};
+  billReqs[cleanNum] = {
+    tableId: normTableId,
+    tableName: targetId,
+    total: total,
+    requestedAt: new Date().toISOString()
+  };
+  localStorage.setItem("pos_bill_requests", JSON.stringify(billReqs));
+  window.dispatchEvent(new Event('storage'));
+
+  // 2. Supabase Realtime Broadcast & Table Status
+  if (window.SupabaseService) {
+    try {
+      if (typeof window.SupabaseService.broadcastBillRequest === "function") {
+        window.SupabaseService.broadcastBillRequest(normTableId, targetId, total);
+      } else if (typeof window.SupabaseService.updateTableStatus === "function") {
+        window.SupabaseService.updateTableStatus(normTableId, 'bill_requested');
+      }
+    } catch(err) {
+      console.warn("Bill broadcast error:", err);
+    }
+  }
 
   document.getElementById("billMerchantName").innerText = state.settings.shopName;
   document.getElementById("billTargetDisplay").innerText = state.orderMode === "dinein"
@@ -1070,7 +1112,59 @@ function requestBill() {
   }
 
   closeModal("trackerModal");
+
+  // Show polite, reassuring message to customer
+  showAppAlert(
+    `แจ้งแคชเชียร์ขอเช็คบิลเรียบร้อยแล้วครับ 🧾\n\nโต๊ะ ${state.currentTable} • ยอดรวม ฿${total.toFixed(2)}\n\nพนักงานกำลังเตรียมใบเสร็จและตรวจสอบยอดเงิน\nกรุณารอสักครู่นะครับ 😊\n\nท่านสามารถสแกน QR Code พร้อมเพย์ หรือชำระด้วยเงินสดได้ครับ`,
+    "ครัวลุงหนุ่ย",
+    "🧾"
+  );
+
   openModal("billModal");
+}
+
+function handleBillSettledByCashier() {
+  state.billRequested = false;
+  closeModal("billModal");
+  closeModal("trackerModal");
+
+  showAppAlert(
+    "ชำระเงินเรียบร้อยแล้วครับ 🎉\n\nขอบคุณที่มาอุดหนุนครัวลุงหนุ่ยครับ 🙏\nหวังว่าจะได้รับความอร่อยและความประทับใจ แล้วแวะมาใหม่นะครับ 😊",
+    "ครัวลุงหนุ่ย",
+    "🎉"
+  );
+
+  state.cart = [];
+  saveCart();
+  updateCartUI();
+  checkActiveOrders();
+}
+
+function initBillCompletedListener() {
+  if (window.SupabaseService && typeof window.SupabaseService.subscribeAlerts === "function") {
+    window.SupabaseService.subscribeAlerts(
+      null, // onBillRequest
+      (comp) => {
+        if (!comp) return;
+        const myTbl = String(state.currentTable || '').replace(/^โต๊ะ\s*/, '').trim();
+        const compTbl = String(comp.tableName || comp.tableId || '').replace(/^t-/, '').replace(/^โต๊ะ\s*/, '').trim();
+        if (myTbl && compTbl && myTbl === compTbl) {
+          handleBillSettledByCashier();
+        }
+      }
+    );
+  }
+
+  window.addEventListener('storage', (e) => {
+    if (e.key === 'pos_orders' || e.key === 'pos_tables') {
+      checkActiveOrders();
+    }
+  });
+
+  // Check periodically every 4s
+  setInterval(() => {
+    checkActiveOrders();
+  }, 4000);
 }
 
 // ============================================================================
