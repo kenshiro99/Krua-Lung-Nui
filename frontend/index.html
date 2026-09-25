@@ -91,22 +91,6 @@
     <!-- VIEW 1: MENU & ORDER FEED (Tab: menu / order) -->
     <!-- ========================================== -->
     <div id="pageViewMenu" class="liff-page-view active">
-      <!-- Mascot "Lung Nui" Friendly Welcome & Recommendation Widget -->
-      <div class="mascot-greeting-card" id="mascotGreetingCard">
-        <div class="mascot-avatar-wrap" onclick="mascotSpeakNextTip()" title="แตะให้ลุงหนุ่ยแนะนำเมนู">
-          <img src="logo/logo.jpg" alt="ลุงหนุ่ย" class="mascot-avatar-img" onerror="this.src='logo/logo.png'">
-          <span class="mascot-badge-name">ลุงหนุ่ย</span>
-        </div>
-        <div class="mascot-speech-bubble" onclick="mascotSpeakNextTip()">
-          <div class="speech-bubble-header">
-            <span class="bubble-tag">👨‍🍳 ลุงหนุ่ยทักทาย & แนะนำเมนู</span>
-            <button type="button" class="btn-bubble-dismiss" onclick="event.stopPropagation(); dismissMascotBubble()" title="ย่อเก็บ">✕</button>
-          </div>
-          <p class="speech-bubble-text" id="mascotSpeechText">
-            ยินดีต้อนรับครับ! วันนี้ลุงคัดวัตถุดิบสดใหม่ รับประกันรสชาติจัดจ้านทุกจานครับ ❤️
-          </p>
-        </div>
-      </div>
 
       <!-- Rich Menu 6-Action Quick Hub -->
       <section class="rich-hub-section" id="richHubSection">
@@ -399,23 +383,8 @@
     <!-- ========================================== -->
     <!-- FLOATING MASCOT & FLOATING CART WIDGETS -->
     <!-- ========================================== -->
-
-    <!-- Floating Interactive Mascot "Lung Nui" (Always accessible on screen) -->
-    <aside class="mascot-floating-widget" id="mascotFloatingWidget">
-      <div class="mascot-bubble-box" id="mascotBubbleBox" onclick="mascotSpeakNextTip()">
-        <div class="mascot-bubble-title">
-          <span>👨‍🍳 ลุงหนุ่ย แนะนำเมนู</span>
-          <button type="button" class="btn-bubble-close" onclick="event.stopPropagation(); toggleMascotBubble()" title="ย่อเก็บ">✕</button>
-        </div>
-        <p class="mascot-bubble-msg" id="mascotFloatingMsg">
-          สวัสดีครับ! ยินดีต้อนรับสู่ครัวลุงหนุ่ย ❤️ แตะตัวลุงให้แนะนำเมนูเด็ดได้ตลอดเลยนะคร้าบ
-        </p>
-      </div>
-      <button type="button" class="mascot-floating-avatar" onclick="toggleMascotBubble()" title="แตะคุยกับลุงหนุ่ย">
-        <img src="logo/logo.jpg" alt="ลุงหนุ่ย" class="mascot-floating-img" onerror="this.src='logo/logo.png'">
-        <span class="mascot-floating-name">ลุงหนุ่ย</span>
-      </button>
-    </aside>
+    <!-- FLOATING CART DOCK -->
+    <!-- ========================================== -->
 
     <!-- Floating Cart Bar (Fixed above bottom nav, z-index 120) -->
     <aside class="floating-cart-bar" id="floatingCartBar" onclick="openCartModal()">
@@ -508,14 +477,6 @@
       </div>
       
       <div class="sheet-scroll-body" id="cartModalScrollBody">
-        <!-- Friendly Mascot Encouragement -->
-        <div class="cart-mascot-banner">
-          <img src="logo/logo.jpg" alt="ลุงหนุ่ย" class="cart-mascot-img" onerror="this.src='logo/logo.png'">
-          <div class="cart-mascot-text">
-            <strong>👨‍🍳 ลุงหนุ่ย:</strong> ตรวจสอบรายการอาหารแล้วกด <b>"ยืนยันสั่งอาหาร"</b> ด้านล่างได้เลย เดี๋ยวลุงรีบเข้าครัวปรุงร้อนๆ ให้ครับ! ❤️
-          </div>
-        </div>
-
         <!-- Items container -->
         <div id="cartModalItemsContainer"></div>
 
@@ -628,11 +589,11 @@
       </div>
       <div class="modal-body" style="padding: 1rem;">
         
-        <!-- Friendly Notice with Mascot -->
-        <div class="table-qr-hint-box" style="margin-bottom: 0.85rem;">
-          <img src="logo/logo.jpg" alt="ลุงหนุ่ย" style="width: 44px; height: 44px; border-radius: 50%; border: 2.5px solid #f59e0b; flex-shrink: 0; object-fit: cover;" onerror="this.src='logo/logo.png'">
+        <!-- Friendly Notice -->
+        <div class="table-qr-hint-box" style="margin-bottom: 0.85rem; display: flex; align-items: center; gap: 0.65rem;">
+          <div style="width: 42px; height: 42px; border-radius: 12px; background: #fff7ed; border: 1.5px solid #fdba74; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; flex-shrink: 0;">📷</div>
           <div style="font-size: 0.85rem; color: #1e293b;">
-            <strong style="color: #b45309; display: block; margin-bottom: 0.15rem;">👨‍🍳 สแกน QR Code ประจำโต๊ะ</strong>
+            <strong style="color: #b45309; display: block; margin-bottom: 0.15rem;">สแกน QR Code ประจำโต๊ะ</strong>
             กรุณาส่องกล้องไปที่ QR Code บนป้ายประจำโต๊ะอาหารของคุณเพื่อเริ่มสั่งอาหารครับ
           </div>
         </div>
@@ -661,6 +622,23 @@
           </button>
         </div>
 
+      </div>
+    </div>
+  </div>
+
+  <!-- Custom Branded Alert / Confirm Dialog (ครัวลุงหนุ่ย) -->
+  <div id="customAlertModal" class="modal-overlay">
+    <div class="modal-dialog custom-alert-card">
+      <div class="custom-alert-header">
+        <div class="custom-alert-icon" id="customAlertIcon">🌾</div>
+        <h3 class="custom-alert-title" id="customAlertTitle">ครัวลุงหนุ่ย</h3>
+      </div>
+      <div class="custom-alert-body" id="customAlertBody">
+        <!-- Message -->
+      </div>
+      <div class="custom-alert-actions">
+        <button type="button" class="btn-alert-confirm" id="btnAlertConfirm">ตกลง</button>
+        <button type="button" class="btn-alert-cancel" id="btnAlertCancel" style="display:none;">ยกเลิก</button>
       </div>
     </div>
   </div>
@@ -694,9 +672,9 @@
       document.write('<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"><\/script>');
     }
   </script>
-  <script src="config.js?v=20260925_qr_scan_only" onerror="this.onerror=null;"></script>
-  <script src="supabaseClient.js?v=20260925_qr_scan_only"></script>
-  <script src="promptpay.js?v=20260925_qr_scan_only"></script>
-  <script src="app.js?v=20260925_qr_scan_only"></script>
+  <script src="config.js?v=20260925_brand_alert" onerror="this.onerror=null;"></script>
+  <script src="supabaseClient.js?v=20260925_brand_alert"></script>
+  <script src="promptpay.js?v=20260925_brand_alert"></script>
+  <script src="app.js?v=20260925_brand_alert"></script>
 </body>
 </html>

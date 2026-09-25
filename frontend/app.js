@@ -307,7 +307,7 @@ function handleReservationSubmit(e) {
   existingRes.push(reservationData);
   localStorage.setItem("pos_reservations", JSON.stringify(existingRes));
 
-  alert(`🎉 บันทึกการจองโต๊ะสำเร็จ!\n\nคุณ ${name}\nวันที่: ${date} เวลา: ${time}\nจำนวน: ${seats}\n\nทางร้านครัวลุงหนุ่ยยินดีต้อนรับครับ ขอบคุณครับ ❤️`);
+  showAppAlert(`บันทึกการจองโต๊ะสำเร็จ!\n\nคุณ ${name}\nวันที่: ${date} เวลา: ${time}\nจำนวน: ${seats} ท่าน\n\nทางร้านครัวลุงหนุ่ยยินดีต้อนรับครับ ขอบคุณครับ ❤️`, "ครัวลุงหนุ่ย", "📅");
   
   // Reset and return to menu
   e.target.reset();
@@ -481,9 +481,8 @@ function renderMenuFeed() {
     container.innerHTML = `
       <div class="table-gate-container">
         <div class="table-gate-card">
-          <div class="gate-mascot-avatar-wrap">
-            <img src="logo/logo.jpg" alt="ลุงหนุ่ย" class="gate-mascot-avatar" onerror="this.src='logo/logo.png'">
-            <span class="gate-mascot-badge">👨‍🍳 ลุงหนุ่ยยินดีต้อนรับ</span>
+          <div style="width: 58px; height: 58px; border-radius: 50%; background: linear-gradient(135deg, #fef3c7, #fde68a); border: 2.5px solid #f59e0b; display: flex; align-items: center; justify-content: center; margin: 0 auto 0.85rem; font-size: 1.8rem; box-shadow: 0 4px 12px rgba(245, 158, 11, 0.25);">
+            📷
           </div>
           <h2 class="gate-title">กรุณาสแกน QR Code ที่โต๊ะ</h2>
           <p class="gate-desc">
@@ -820,9 +819,10 @@ function adjustCartItemQty(index, delta) {
   updateCartUI();
 }
 
-function clearCart() {
+async function clearCart() {
   if (state.cart.length === 0) return;
-  if (confirm("ต้องการล้างรายการอาหารในตะกร้าทั้งหมดใช่หรือไม่?")) {
+  const ok = await showAppConfirm("ต้องการล้างรายการอาหารในตะกร้าทั้งหมดใช่หรือไม่?", "ครัวลุงหนุ่ย", "🗑️");
+  if (ok) {
     state.cart = [];
     openCartModal();
     updateCartUI();
@@ -837,8 +837,8 @@ async function submitOrder() {
 
   // Verify that table is scanned for dine-in orders
   if (state.orderMode === "dinein" && (!state.isTableScanned || !state.currentTable)) {
-    alert("⚠️ กรุณาสแกน QR Code ประจำโต๊ะก่อนสั่งอาหาร เพื่อให้พนักงานเสิร์ฟอาหารและคิดเงินได้ถูกต้องครับ");
-    openTableQrModal();
+    await showAppAlert("กรุณาสแกน QR Code ประจำโต๊ะก่อนสั่งอาหาร\nเพื่อให้พนักงานเสิร์ฟอาหารและคิดเงินได้ถูกต้องครับ", "ครัวลุงหนุ่ย", "🍽️");
+    openTableQrModal(true);
     return;
   }
 
@@ -934,16 +934,16 @@ async function submitOrder() {
 
   if (isTakeaway) {
     if (!cloudSuccess) {
-      alert(`⚠️ บันทึกออเดอร์ในเครื่องสำเร็จ แต่สัญญาณคลาวด์ขัดข้อง (${cloudError})\n\nหมายเลขคิวของคุณคือ: [ ${state.currentQueue} ]\nกรุณาแจ้งพนักงานหน้าร้านเพื่อตรวจสอบออเดอร์ครับ 🛍️`);
+      showAppAlert(`บันทึกออเดอร์ในเครื่องสำเร็จ แต่สัญญาณคลาวด์ขัดข้อง (${cloudError})\n\nหมายเลขคิวของคุณคือ: [ ${state.currentQueue} ]\nกรุณาแจ้งพนักงานหน้าร้านเพื่อตรวจสอบออเดอร์ครับ 🛍️`, "ครัวลุงหนุ่ย", "⚠️");
     } else {
-      alert(`🎉 สั่งอาหารกลับบ้านสำเร็จ!\n\nหมายเลขคิวของคุณคือ: [ ${state.currentQueue} ]\nส่งตรงถึงห้องครัวและแคชเชียร์เรียบร้อยแล้ว กรุณารอฟังเสียงเรียกคิวเพื่อรับอาหารครับ 🛍️👨‍🍳`);
+      showAppAlert(`สั่งอาหารกลับบ้านสำเร็จ!\n\nหมายเลขคิวของคุณคือ: [ ${state.currentQueue} ]\nส่งตรงถึงห้องครัวและแคชเชียร์เรียบร้อยแล้ว\nกรุณารอฟังเสียงเรียกคิวเพื่อรับอาหารครับ 🛍️`, "ครัวลุงหนุ่ย", "🎉");
     }
     requestBill();
   } else {
     if (!cloudSuccess) {
-      alert(`⚠️ บันทึกออเดอร์โต๊ะ ${state.currentTable} ในเครื่องสำเร็จ แต่สัญญาณคลาวด์ขัดข้อง (${cloudError})\n\nกรุณาแจ้งพนักงานเพื่อตรวจสอบออเดอร์ครับ`);
+      showAppAlert(`บันทึกออเดอร์โต๊ะ ${state.currentTable} ในเครื่องสำเร็จ แต่สัญญาณคลาวด์ขัดข้อง (${cloudError})\n\nกรุณาแจ้งพนักงานเพื่อตรวจสอบออเดอร์ครับ`, "ครัวลุงหนุ่ย", "⚠️");
     } else {
-      alert(`🎉 สั่งอาหารสำเร็จ!\n\nออเดอร์ของโต๊ะ ${state.currentTable} ถูกส่งไปยังกุ๊กครัวลุงหนุ่ยและแคชเชียร์เรียบร้อยแล้วครับ 👨‍🍳`);
+      showAppAlert(`สั่งอาหารสำเร็จ!\n\nออเดอร์ของโต๊ะ ${state.currentTable} ถูกส่งไปยังครัวลุงหนุ่ยและแคชเชียร์เรียบร้อยแล้วครับ 🍲`, "ครัวลุงหนุ่ย", "🎉");
     }
   }
 }
@@ -1034,7 +1034,7 @@ function openOrderTrackerModal() {
 // 9. Service Calls & PromptPay Bill Generation
 // ============================================================================
 function callWaiter() {
-  alert(`🔔 เรียกพนักงานเรียบร้อย!\n\nพนักงานกำลังเดินทางมาให้บริการที่ โต๊ะ ${state.currentTable} ครับ`);
+  showAppAlert(`เรียกพนักงานเรียบร้อย!\n\nพนักงานกำลังเดินทางมาให้บริการที่ โต๊ะ ${state.currentTable} ครับ`, "ครัวลุงหนุ่ย", "🔔");
 }
 
 function requestBill() {
@@ -1225,7 +1225,7 @@ function triggerLiffScan() {
           handleScannedQrResult(result.value);
         }
       }).catch(err => {
-        alert("ไม่สามารถเปิดกล้อง LINE ได้: " + (err.message || err));
+        showAppAlert("ไม่สามารถเปิดกล้อง LINE ได้: " + (err.message || err), "ครัวลุงหนุ่ย", "⚠️");
       });
     }
   }
@@ -1420,84 +1420,78 @@ function closeModal(modalId) {
 }
 
 // ============================================================================
-// 12. Mascot "Lung Nui" Controller (Interactive Greeting & Food Tips)
+// 12. Custom Branded Alert & Confirm Controller (ครัวลุงหนุ่ย - ไม่ใช้ alert ของ browser)
 // ============================================================================
-const MASCOT_TIPS = [
-  "🔥 วันนี้ลุงแนะนำ 'ไก่ย่าง' หนังกรอบเนื้อนุ่ม จิ้มแจ่วรสเด็ด แซ่บอีหลีครับ!",
-  "🍲 อากาศแบบนี้ ต้องซด 'ต้มยำทะเลรวมมิตร' หรือ 'ต้มแซ่บกระดูกหมู' ร้อนๆ คล่องคอมากครับ!",
-  "🥗 'ส้มตำปูปลาร้า' ปลาร้าต้มสุกสะอาด หอมนัว จัดจ้านสะใจแน่นอนคร้าบ!",
-  "🥩 'เสือร้องไห้' ย่างเตาถ่านหอมๆ ติดมันนิดๆ เคี้ยวเพลินจิ้มแจ่วแซ่บๆ สั่งได้เลยนะ!",
-  "🥤 อย่าลืมสั่งเครื่องดื่มเย็นๆ ชื่นใจ น้ำดื่ม โค้ก หรือเบียร์วุ้นดับกระหายด้วยนะคร้าบ!",
-  "🍳 อาหารตามสั่ง กะเพราเนื้อ กะเพราหมูกรอบ ผัดพริกแกง ลุงผัดจานต่อจานหอมกลิ่นกระทะครับ!",
-  "🐟 'เมี่ยงปลาทับทิมเผาเกลือ' ตัวโตๆ เสิร์ฟพร้อมผักสดและน้ำจิ้มซีฟู้ดรสเด็ด ลุงคัดพิเศษเลย!"
-];
+function showAppAlert(message, title = "ครัวลุงหนุ่ย", icon = "🌾") {
+  return new Promise(resolve => {
+    const modal = document.getElementById("customAlertModal");
+    const titleEl = document.getElementById("customAlertTitle");
+    const bodyEl = document.getElementById("customAlertBody");
+    const iconEl = document.getElementById("customAlertIcon");
+    const btnCancel = document.getElementById("btnAlertCancel");
+    const btnConfirm = document.getElementById("btnAlertConfirm");
 
-let currentMascotTipIndex = 0;
-
-function updateMascotGreeting(context = "default") {
-  const textEl = document.getElementById("mascotSpeechText");
-  const floatMsgEl = document.getElementById("mascotFloatingMsg");
-
-  let msg = "ยินดีต้อนรับครับ! วันนี้ลุงคัดวัตถุดิบสดใหม่ รับประกันรสชาติจัดจ้านทุกจานครับ ❤️";
-
-  if (context === "table_confirmed" && state.currentTable) {
-    msg = `🎉 ยินดีต้อนรับ <b>โต๊ะ ${state.currentTable}</b> ครับ! เลือกเมนูอาหารที่ชอบแล้วสั่งได้เลยนะ เดี๋ยวลุงรีบทำให้เสิร์ฟร้อนๆ ถึงโต๊ะครับ 😊`;
-  } else if (context === "takeaway") {
-    msg = `🛍️ สั่งกลับบ้าน คิว ${state.currentQueue} นะครับ ลุงจะแพ็กใส่กล่องอย่างดี รอเรียกรับอาหารหน้าร้านได้เลยครับ!`;
-  } else if (context === "cart_active" && state.cart.length > 0) {
-    msg = `🛒 สั่งอาหารไปแล้ว ${state.cart.length} อย่าง แตะ <b>'ดูตะกร้า'</b> ด้านล่างเพื่อส่งออเดอร์เข้าครัวได้เลยครับ!`;
-  } else if (!state.isTableScanned && state.orderMode === "dinein") {
-    msg = `👋 สวัสดีครับ! ยินดีต้อนรับสู่ครัวลุงหนุ่ย นั่งโต๊ะไหนแตะเลือกหมายเลขโต๊ะได้เลย หรือสแกน QR Code บนโต๊ะนะคร้าบ ❤️`;
-  }
-
-  if (textEl) textEl.innerHTML = msg;
-  if (floatMsgEl) floatMsgEl.innerHTML = msg;
+    if (titleEl) titleEl.innerText = title;
+    if (iconEl) iconEl.innerText = icon;
+    if (bodyEl) {
+      bodyEl.innerHTML = String(message)
+        .replace(/\n/g, '<br>')
+        .replace(/\[\s*([^\]]+)\s*\]/g, '<b style="color:#d97706; font-size:1.05em;">[$1]</b>');
+    }
+    if (btnCancel) btnCancel.style.display = "none";
+    if (btnConfirm) {
+      btnConfirm.innerText = "ตกลง";
+      btnConfirm.onclick = () => {
+        closeModal("customAlertModal");
+        resolve(true);
+      };
+    }
+    openModal("customAlertModal");
+  });
 }
 
-function mascotSpeakNextTip() {
-  const textEl = document.getElementById("mascotSpeechText");
-  const floatMsgEl = document.getElementById("mascotFloatingMsg");
-  const avatarImg = document.querySelector(".mascot-avatar-img");
-  const floatAvatarImg = document.querySelector(".mascot-floating-img");
+function showAppConfirm(message, title = "ครัวลุงหนุ่ย", icon = "❓") {
+  return new Promise(resolve => {
+    const modal = document.getElementById("customAlertModal");
+    const titleEl = document.getElementById("customAlertTitle");
+    const bodyEl = document.getElementById("customAlertBody");
+    const iconEl = document.getElementById("customAlertIcon");
+    const btnCancel = document.getElementById("btnAlertCancel");
+    const btnConfirm = document.getElementById("btnAlertConfirm");
 
-  // Tiny bounce animation on tap
-  if (avatarImg) {
-    avatarImg.style.transform = "scale(1.2) rotate(-8deg)";
-    setTimeout(() => { avatarImg.style.transform = ""; }, 250);
-  }
-  if (floatAvatarImg) {
-    floatAvatarImg.style.transform = "scale(1.25) rotate(-10deg)";
-    setTimeout(() => { floatAvatarImg.style.transform = ""; }, 250);
-  }
-
-  // Ensure floating bubble box is visible when tapped
-  const floatBox = document.getElementById("mascotBubbleBox");
-  if (floatBox) floatBox.style.display = "block";
-
-  // Cycle through tips
-  currentMascotTipIndex = (currentMascotTipIndex + 1) % MASCOT_TIPS.length;
-  const tip = MASCOT_TIPS[currentMascotTipIndex];
-  if (textEl) textEl.innerHTML = tip;
-  if (floatMsgEl) floatMsgEl.innerHTML = tip;
+    if (titleEl) titleEl.innerText = title;
+    if (iconEl) iconEl.innerText = icon;
+    if (bodyEl) {
+      bodyEl.innerHTML = String(message).replace(/\n/g, '<br>');
+    }
+    if (btnCancel) {
+      btnCancel.style.display = "inline-flex";
+      btnCancel.onclick = () => {
+        closeModal("customAlertModal");
+        resolve(false);
+      };
+    }
+    if (btnConfirm) {
+      btnConfirm.innerText = "ยืนยัน";
+      btnConfirm.onclick = () => {
+        closeModal("customAlertModal");
+        resolve(true);
+      };
+    }
+    openModal("customAlertModal");
+  });
 }
 
-function toggleMascotBubble() {
-  const floatBox = document.getElementById("mascotBubbleBox");
-  if (!floatBox) return;
-  if (floatBox.style.display === "none") {
-    floatBox.style.display = "block";
-    mascotSpeakNextTip();
-  } else {
-    floatBox.style.display = "none";
-  }
+// Override native window.alert to always display branded "ครัวลุงหนุ่ย" dialog instead of browser domain URL
+if (typeof window !== "undefined") {
+  window.alert = function(msg) {
+    showAppAlert(msg, "ครัวลุงหนุ่ย", "🍲");
+  };
 }
 
-function dismissMascotBubble() {
-  const card = document.getElementById("mascotGreetingCard");
-  if (card) {
-    card.style.opacity = "0";
-    card.style.transform = "translateY(-10px)";
-    setTimeout(() => { card.style.display = "none"; }, 250);
-  }
-}
+// Safe no-op stubs for retired mascot
+function updateMascotGreeting() {}
+function mascotSpeakNextTip() {}
+function toggleMascotBubble() {}
+function dismissMascotBubble() {}
 

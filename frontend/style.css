@@ -2984,19 +2984,114 @@ body {
 }
 
 .gate-mascot-badge {
-  position: absolute;
-  bottom: -6px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: linear-gradient(135deg, #d97706, #b45309);
-  color: #ffffff;
-  font-size: 0.68rem;
+  display: none !important;
+}
+
+/* ==========================================================================
+   CUSTOM BRANDED ALERT & CONFIRM DIALOG (ครัวลุงหนุ่ย)
+   ========================================================================== */
+.custom-alert-card {
+  max-width: 360px;
+  width: 90%;
+  text-align: center;
+  border-radius: 20px;
+  overflow: hidden;
+  border: 1.5px solid #d97706;
+  box-shadow: 0 20px 45px rgba(0, 0, 0, 0.4);
+  background: #ffffff;
+  animation: popIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  margin: auto;
+}
+
+@keyframes popIn {
+  0% { transform: scale(0.85); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.custom-alert-header {
+  background: linear-gradient(135deg, #2b1810 0%, #170d06 100%);
+  padding: 1.25rem 1rem 0.85rem;
+  border-bottom: 2px solid #b45309;
+}
+
+.custom-alert-icon {
+  font-size: 2.2rem;
+  line-height: 1;
+  margin-bottom: 0.35rem;
+}
+
+.custom-alert-title {
+  font-size: 1.15rem;
   font-weight: 800;
-  padding: 0.15rem 0.55rem;
-  border-radius: 9999px;
-  border: 1.5px solid #ffffff;
-  white-space: nowrap;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+  color: #fef3c7;
+  margin: 0;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+  font-family: var(--font-family);
+}
+
+.custom-alert-body {
+  padding: 1.25rem 1.15rem;
+  font-size: 0.92rem;
+  color: #1e293b;
+  line-height: 1.6;
+  background: #ffffff;
+  white-space: normal;
+  word-break: break-word;
+}
+
+.custom-alert-actions {
+  display: flex;
+  gap: 0.5rem;
+  padding: 0.85rem 1.15rem 1.15rem;
+  background: #fdfaf4;
+  border-top: 1px solid #fed7aa;
+}
+
+.btn-alert-confirm {
+  flex: 1;
+  padding: 0.65rem 1rem;
+  font-size: 0.92rem;
+  border-radius: 12px;
+  font-weight: 700;
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  color: #ffffff;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 4px 10px rgba(217, 119, 6, 0.3);
+  font-family: var(--font-family);
+  transition: var(--transition-fast);
+}
+
+.btn-alert-confirm:active {
+  transform: scale(0.96);
+  background: #b45309;
+}
+
+.btn-alert-cancel {
+  flex: 1;
+  padding: 0.65rem 1rem;
+  font-size: 0.92rem;
+  border-radius: 12px;
+  font-weight: 600;
+  background: #f1f5f9;
+  color: #64748b;
+  border: 1px solid #cbd5e1;
+  cursor: pointer;
+  font-family: var(--font-family);
+  transition: var(--transition-fast);
+}
+
+.btn-alert-cancel:active {
+  transform: scale(0.96);
+  background: #e2e8f0;
+}
+
+/* Mascot completely retired & hidden */
+.mascot-greeting-card,
+.mascot-floating-widget,
+.cart-mascot-banner,
+.gate-mascot-avatar-wrap {
+  display: none !important;
 }
 
 
