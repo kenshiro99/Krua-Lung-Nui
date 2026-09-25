@@ -629,34 +629,13 @@
       <div class="modal-body" style="padding: 1rem;">
         
         <!-- Friendly Notice with Mascot -->
-        <div class="table-qr-hint-box">
+        <div class="table-qr-hint-box" style="margin-bottom: 0.85rem;">
           <img src="logo/logo.jpg" alt="ลุงหนุ่ย" style="width: 44px; height: 44px; border-radius: 50%; border: 2.5px solid #f59e0b; flex-shrink: 0; object-fit: cover;" onerror="this.src='logo/logo.png'">
           <div style="font-size: 0.85rem; color: #1e293b;">
-            <strong style="color: #b45309; display: block; margin-bottom: 0.15rem;">👨‍🍳 ลุงหนุ่ยยินดีต้อนรับครับ!</strong>
-            สแกน QR Code บนโต๊ะ หรือแตะเลือกหมายเลขโต๊ะที่คุณนั่งได้ทันทีครับ
+            <strong style="color: #b45309; display: block; margin-bottom: 0.15rem;">👨‍🍳 สแกน QR Code ประจำโต๊ะ</strong>
+            กรุณาส่องกล้องไปที่ QR Code บนป้ายประจำโต๊ะอาหารของคุณเพื่อเริ่มสั่งอาหารครับ
           </div>
         </div>
-
-        <!-- 1-Tap Table Quick Selector (No Camera Needed) -->
-        <div class="table-quick-select-box">
-          <div class="quick-select-label">
-            <i data-lucide="layout-grid"></i> แตะเลือกหมายเลขโต๊ะของคุณ:
-          </div>
-          <div class="table-numbers-grid">
-            <button type="button" class="btn-num-table" onclick="confirmScannedTable('1')">โต๊ะ 1</button>
-            <button type="button" class="btn-num-table" onclick="confirmScannedTable('2')">โต๊ะ 2</button>
-            <button type="button" class="btn-num-table" onclick="confirmScannedTable('3')">โต๊ะ 3</button>
-            <button type="button" class="btn-num-table" onclick="confirmScannedTable('4')">โต๊ะ 4</button>
-            <button type="button" class="btn-num-table" onclick="confirmScannedTable('5')">โต๊ะ 5</button>
-            <button type="button" class="btn-num-table" onclick="confirmScannedTable('6')">โต๊ะ 6</button>
-            <button type="button" class="btn-num-table" onclick="confirmScannedTable('7')">โต๊ะ 7</button>
-            <button type="button" class="btn-num-table" onclick="confirmScannedTable('8')">โต๊ะ 8</button>
-            <button type="button" class="btn-num-table" onclick="confirmScannedTable('9')">โต๊ะ 9</button>
-            <button type="button" class="btn-num-table" onclick="confirmScannedTable('10')">โต๊ะ 10</button>
-          </div>
-        </div>
-
-        <div class="gate-divider" style="margin: 0.9rem 0;"><span>หรือสแกนป้าย QR บนโต๊ะ</span></div>
 
         <!-- Camera Scanner Viewport (Triggered by user click only) -->
         <div class="qr-camera-box">
@@ -715,9 +694,9 @@
       document.write('<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"><\/script>');
     }
   </script>
-  <script src="config.js?v=20260925_mobile_ui" onerror="this.onerror=null;"></script>
-  <script src="supabaseClient.js?v=20260925_mobile_ui"></script>
-  <script src="promptpay.js?v=20260925_mobile_ui"></script>
-  <script src="app.js?v=20260925_mobile_ui"></script>
+  <script src="config.js?v=20260925_qr_scan_only" onerror="this.onerror=null;"></script>
+  <script src="supabaseClient.js?v=20260925_qr_scan_only"></script>
+  <script src="promptpay.js?v=20260925_qr_scan_only"></script>
+  <script src="app.js?v=20260925_qr_scan_only"></script>
 </body>
 </html>

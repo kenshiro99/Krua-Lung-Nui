@@ -364,13 +364,13 @@ function setOrderMode(mode) {
       }
     } else {
       if (iconWrap) iconWrap.innerHTML = "📷";
-      if (titleWrap) titleWrap.innerHTML = `<span style="color:#b45309; font-weight:700;">ยังไม่ได้ระบุโต๊ะ</span>`;
-      if (descWrap) descWrap.innerText = "แตะด้านล่างเพื่อเลือกโต๊ะหรือสแกน QR";
+      if (titleWrap) titleWrap.innerHTML = `<span style="color:#b45309; font-weight:700;">ยังไม่ได้สแกน QR โต๊ะ</span>`;
+      if (descWrap) descWrap.innerText = "กรุณาสแกน QR Code ประจำโต๊ะเพื่อเริ่มสั่งอาหาร";
       if (changeBtnWrap) changeBtnWrap.innerHTML = "";
       if (actionsWrap) {
         actionsWrap.innerHTML = `
-          <button class="context-action-btn btn-scan-highlight" onclick="openTableQrModal()" style="width:100%;">
-            <i data-lucide="scan-line"></i> <span>แตะเพื่อเลือกโต๊ะ / สแกน QR</span>
+          <button class="context-action-btn btn-scan-highlight" onclick="openTableQrModal(true)" style="width:100%;">
+            <i data-lucide="scan-line"></i> <span>แตะเปิดกล้องสแกน QR โต๊ะ</span>
           </button>
         `;
       }
@@ -485,32 +485,14 @@ function renderMenuFeed() {
             <img src="logo/logo.jpg" alt="ลุงหนุ่ย" class="gate-mascot-avatar" onerror="this.src='logo/logo.png'">
             <span class="gate-mascot-badge">👨‍🍳 ลุงหนุ่ยยินดีต้อนรับ</span>
           </div>
-          <h2 class="gate-title">ยินดีต้อนรับสู่ ครัวลุงหนุ่ย</h2>
+          <h2 class="gate-title">กรุณาสแกน QR Code ที่โต๊ะ</h2>
           <p class="gate-desc">
-            สวัสดีครับ! กรุณาระบุโต๊ะของคุณก่อนเลือกอาหาร เพื่อให้ลุงเสิร์ฟอาหารถึงโต๊ะและเช็คบิลได้ถูกต้องครับ ❤️
+            สวัสดีครับ! กรุณาส่องกล้องสแกน QR Code ที่ติดอยู่บนโต๊ะอาหารของคุณ เพื่อเริ่มดูเมนูและสั่งอาหารครับ ❤️
           </p>
-
-          <div class="table-quick-select-box" style="margin-bottom: 1.25rem;">
-            <div class="quick-select-label">
-              <i data-lucide="layout-grid"></i> แตะเลือกหมายเลขโต๊ะของคุณได้ทันที:
-            </div>
-            <div class="table-numbers-grid">
-              <button type="button" class="btn-num-table" onclick="confirmScannedTable('1')">โต๊ะ 1</button>
-              <button type="button" class="btn-num-table" onclick="confirmScannedTable('2')">โต๊ะ 2</button>
-              <button type="button" class="btn-num-table" onclick="confirmScannedTable('3')">โต๊ะ 3</button>
-              <button type="button" class="btn-num-table" onclick="confirmScannedTable('4')">โต๊ะ 4</button>
-              <button type="button" class="btn-num-table" onclick="confirmScannedTable('5')">โต๊ะ 5</button>
-              <button type="button" class="btn-num-table" onclick="confirmScannedTable('6')">โต๊ะ 6</button>
-              <button type="button" class="btn-num-table" onclick="confirmScannedTable('7')">โต๊ะ 7</button>
-              <button type="button" class="btn-num-table" onclick="confirmScannedTable('8')">โต๊ะ 8</button>
-              <button type="button" class="btn-num-table" onclick="confirmScannedTable('9')">โต๊ะ 9</button>
-              <button type="button" class="btn-num-table" onclick="confirmScannedTable('10')">โต๊ะ 10</button>
-            </div>
-          </div>
           
-          <button type="button" class="btn-gate-scan-primary" onclick="openTableQrModal(true)">
+          <button type="button" class="btn-gate-scan-primary" onclick="openTableQrModal(true)" style="margin-bottom: 0.75rem;">
             <i data-lucide="scan-line"></i>
-            <span>เปิดสแกนเนอร์สแกน QR โต๊ะ</span>
+            <span>เปิดกล้องสแกน QR Code โต๊ะ</span>
           </button>
           
           <div class="gate-divider"><span>หรือ</span></div>
@@ -1097,7 +1079,7 @@ function requestBill() {
 let html5QrScanner = null;
 let isCameraActive = false;
 
-function openTableQrModal() {
+function openTableQrModal(autoStart = true) {
   openModal("tableQrModal");
 
   // Check LINE LIFF QR scanning capability
@@ -1110,8 +1092,12 @@ function openTableQrModal() {
     }
   }
 
-  // NOTE: Do NOT auto-start camera automatically!
-  // Let the user tap the scan button or choose table number directly to avoid scary browser permission popups.
+  // Auto-start camera scanner so customer can scan table QR immediately
+  if (autoStart) {
+    setTimeout(() => {
+      startQrCamera();
+    }, 200);
+  }
 }
 
 function closeTableQrModal() {
@@ -1129,7 +1115,7 @@ function startQrCamera() {
   if (typeof Html5Qrcode === "undefined") {
     if (statusEl) {
       statusEl.style.display = "block";
-      statusEl.innerHTML = `<span style="color:#d97706;">⚠️ สแกนเนอร์ไม่พร้อมใช้งาน กรุณาเลือกหมายเลขโต๊ะด้านบนได้เลยครับ</span>`;
+      statusEl.innerHTML = `<span style="color:#d97706;">⚠️ สแกนเนอร์ไม่พร้อมใช้งาน กรุณาลองใหม่อีกครั้ง หรือใช้กล้องมือถือ/LINE สแกนป้ายบนโต๊ะโดยตรง</span>`;
     }
     return;
   }
@@ -1396,10 +1382,10 @@ function renderTableQrPreviewCards() {
   const baseUrl = window.location.href.split('?')[0];
 
   grid.innerHTML = tables.map(t => `
-    <div class="qr-preview-card" onclick="confirmScannedTable('${t.name}')" title="คลิกเพื่อจำลองการสแกนโต๊ะ ${t.name}">
+    <div class="qr-preview-card" title="ป้าย QR โต๊ะ ${t.name}">
       <strong>โต๊ะ ${t.name}</strong>
       <div class="qr-canvas-holder" id="previewQrHolder_${t.name}"></div>
-      <div style="font-size:0.7rem; color:#64748b;">กดเพื่อทดสอบสแกน</div>
+      <div style="font-size:0.7rem; color:#64748b;">สแกนด้วยกล้องมือถือ</div>
     </div>
   `).join("");
 
