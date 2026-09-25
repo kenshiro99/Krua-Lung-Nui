@@ -248,10 +248,10 @@ function renderCashierView() {
   if (currentCashierTab === "dinein") {
     // Show Dine-in tables
     tableListContainer.innerHTML = window.posState.tables.map(t => {
-      const isOccupied = t.status === "occupied";
       const isSelected = t.id === selectedCashierTableId;
       const tableOrders = dineinOrders.filter(o => isOrderForTable(o, t));
       const totalDue = tableOrders.reduce((sum, o) => sum + (o.total || 0), 0);
+      const isOccupied = t.status === "occupied" || tableOrders.length > 0;
 
       return `
         <div class="cashier-table-item ${isOccupied ? 'occupied' : 'available'} ${isSelected ? 'active' : ''}" onclick="selectCashierTarget('${t.id}', 'dinein')">
@@ -500,6 +500,13 @@ function confirmPaymentAndCloseTable() {
     });
 
     table.status = "available";
+    if (window.SupabaseService && window.SupabaseService.isConfigured() && typeof window.SupabaseService.updateTableStatus === "function") {
+      try {
+        window.SupabaseService.updateTableStatus(table.id, "available", null);
+      } catch (e) {
+        console.warn("Supabase table status update error:", e);
+      }
+    }
     alert(`✅ เช็คบิลโต๊ะ ${table.name} เรียบร้อยแล้ว! (฿${paidAmount.toFixed(2)})`);
   } else {
     const order = window.posState.orders.find(o => o.id === selectedCashierTableId);
