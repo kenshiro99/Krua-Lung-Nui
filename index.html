@@ -159,22 +159,22 @@
       margin-top: 0.2rem;
     }
 
-    /* 8 Iconic Grid Cards matching User Reference Banner */
-    .iconic-grid-8 {
+    /* 6 Iconic Grid Cards matching LINE Rich Menu 6 Buttons */
+    .iconic-grid-6 {
       display: grid;
-      grid-template-columns: repeat(4, 1fr);
+      grid-template-columns: repeat(3, 1fr);
       gap: 1.15rem;
       margin-bottom: 2.25rem;
     }
 
     @media (max-width: 860px) {
-      .iconic-grid-8 {
+      .iconic-grid-6 {
         grid-template-columns: repeat(2, 1fr);
       }
     }
 
     @media (max-width: 480px) {
-      .iconic-grid-8 {
+      .iconic-grid-6 {
         grid-template-columns: 1fr;
       }
       .brand-title {
@@ -350,72 +350,56 @@
         <p>เลือกรายการที่ท่านต้องการใช้บริการด้านล่างนี้ได้ทันที</p>
       </div>
 
-      <!-- 8 Signature Cards (Matching User Graphic) -->
-      <div class="iconic-grid-8">
+      <!-- 6 Signature Cards (Matching LINE Rich Menu 6 Buttons) -->
+      <div class="iconic-grid-6">
         
-        <!-- 1. เมนูอาหาร -->
-        <a href="frontend/index.html?table=1" class="iconic-card">
-          <div class="iconic-card-img">📖</div>
-          <div class="iconic-card-title">เมนูอาหาร</div>
-          <div class="iconic-card-sub">ดูเมนูแนะนำรสเด็ด</div>
-          <span class="iconic-badge-pill">สูตรลุงหนุ่ย</span>
+        <!-- 1. ดูเมนู -->
+        <a href="frontend/index.html?page=menu" class="iconic-card">
+          <div class="iconic-card-img" style="background: #ecfdf5; border-color: #a7f3d0;">📖</div>
+          <div class="iconic-card-title">ดูเมนู</div>
+          <div class="iconic-card-sub">ดูรายการอาหารทั้งหมด</div>
+          <span class="iconic-badge-pill" style="background: #10b981; color: #fff;">สูตรลุงหนุ่ย</span>
         </a>
 
-        <!-- 2. สั่งอาหาร (ทานที่ร้าน) -->
-        <a href="frontend/index.html?table=1" class="iconic-card" style="border-color: #f59e0b; background: #fffdf5;">
-          <div class="iconic-card-img" style="background: #fef3c7;">🍽️</div>
-          <div class="iconic-card-title" style="color: #b45309;">สั่งอาหาร</div>
-          <div class="iconic-card-sub">นั่งทานที่ร้าน โต๊ะ 1-6</div>
-          <span class="iconic-badge-pill" style="background: #d97706; color: #fff;">สั่งเข้าโต๊ะทันที</span>
+        <!-- 2. สั่งอาหาร -->
+        <a href="frontend/index.html?page=order&type=takeaway" class="iconic-card" style="border-color: #f87171; background: #fffdfd;">
+          <div class="iconic-card-img" style="background: #fee2e2; border-color: #fecaca;">🛍️</div>
+          <div class="iconic-card-title" style="color: #b91c1c;">สั่งอาหาร</div>
+          <div class="iconic-card-sub">สั่งอาหาร รับที่ร้าน / กลับบ้าน</div>
+          <span class="iconic-badge-pill" style="background: #dc2626; color: #fff;">สั่งซื้อออนไลน์</span>
         </a>
 
-        <!-- 3. สั่งกลับบ้าน -->
-        <a href="frontend/index.html?type=takeaway" class="iconic-card" style="border-color: #ea580c; background: #fffaf5;">
-          <div class="iconic-card-img" style="background: #ffedd5;">🛵</div>
-          <div class="iconic-card-title" style="color: #ea580c;">สั่งกลับบ้าน</div>
-          <div class="iconic-card-sub">รับบัตรคิวในมือถือ</div>
-          <span class="iconic-badge-pill" style="background: #ea580c; color: #fff;">แพ็กกล่อง/ถุง</span>
+        <!-- 3. แผนที่ร้าน -->
+        <a href="frontend/index.html?page=map" class="iconic-card" style="border-color: #93c5fd; background: #f8fafc;">
+          <div class="iconic-card-img" style="background: #dbeafe; border-color: #bfdbfe;">📍</div>
+          <div class="iconic-card-title" style="color: #1d4ed8;">แผนที่ร้าน</div>
+          <div class="iconic-card-sub">ดูเส้นทางมาร้าน ซ.คุ้มเกล้า 20</div>
+          <span class="iconic-badge-pill" style="background: #2563eb; color: #fff;">Google Maps</span>
         </a>
 
-        <!-- 4. เช็คออเดอร์ -->
-        <a href="frontend/index.html" class="iconic-card">
-          <div class="iconic-card-img">📋</div>
-          <div class="iconic-card-title">เช็คออเดอร์</div>
-          <div class="iconic-card-sub">ตรวจสถานะการสั่งซื้อ</div>
-          <span class="iconic-badge-pill">Real-time</span>
+        <!-- 4. โปรโมชั่น -->
+        <a href="frontend/index.html?page=promotion" class="iconic-card">
+          <div class="iconic-card-img" style="background: #ffedd5; border-color: #fed7aa;">🎁</div>
+          <div class="iconic-card-title" style="color: #c2410c;">โปรโมชั่น</div>
+          <div class="iconic-card-sub">ดูโปรและสิทธิพิเศษสุดคุ้ม</div>
+          <span class="iconic-badge-pill" style="background: #ea580c; color: #fff;">ลดพิเศษ</span>
         </a>
 
-        <!-- 5. โปรโมชั่น -->
-        <a href="frontend/index.html" class="iconic-card">
-          <div class="iconic-card-img">📢</div>
-          <div class="iconic-card-title">โปรโมชั่น</div>
-          <div class="iconic-card-sub">โปรโมชั่นสุดพิเศษ</div>
-          <span class="iconic-badge-pill">ลดพิเศษ</span>
+        <!-- 5. ติดต่อร้าน -->
+        <a href="frontend/index.html?page=contact" class="iconic-card">
+          <div class="iconic-card-img" style="background: #ecfdf5; border-color: #a7f3d0;">📞</div>
+          <div class="iconic-card-title" style="color: #047857;">ติดต่อร้าน</div>
+          <div class="iconic-card-sub">โทร แชท สอบถามข้อมูล</div>
+          <span class="iconic-badge-pill" style="background: #059669; color: #fff;">090-123-4567</span>
         </a>
 
-        <!-- 6. สะสมแต้ม -->
-        <a href="frontend/index.html" class="iconic-card">
-          <div class="iconic-card-img">🎟️</div>
-          <div class="iconic-card-title">สะสมแต้ม</div>
-          <div class="iconic-card-sub">สะสมแต้มแลกรางวัล</div>
-          <span class="iconic-badge-pill">สมาชิก</span>
+        <!-- 6. จองโต๊ะ -->
+        <a href="frontend/index.html?page=reservation" class="iconic-card">
+          <div class="iconic-card-img" style="background: #f3e8ff; border-color: #e9d5ff;">📅</div>
+          <div class="iconic-card-title" style="color: #6b21a8;">จองโต๊ะ</div>
+          <div class="iconic-card-sub">เลือกวัน เวลา จำนวนคนล่วงหน้า</div>
+          <span class="iconic-badge-pill" style="background: #7c3aed; color: #fff;">สำรองที่นั่ง</span>
         </a>
-
-        <!-- 7. เกี่ยวกับเรา -->
-        <div class="iconic-card" onclick="alert('ร้านครัวลุงหนุ่ย\nอร่อย สะอาด วัตถุดิบสดใหม่\nอาหารไทยรสจัดจ้าน ไก่ย่างหอมกลิ่นเตา ตำแซ่บถึงเครื่อง\nใส่ใจทุกจานเหมือนทำให้ครอบครัวทานครับ 🙏')">
-          <div class="iconic-card-img">🏡</div>
-          <div class="iconic-card-title">เกี่ยวกับเรา</div>
-          <div class="iconic-card-sub">รู้จักครัวลุงหนุ่ย</div>
-          <span class="iconic-badge-pill">ประวัติร้าน</span>
-        </div>
-
-        <!-- 8. ติดต่อเรา -->
-        <div class="iconic-card" onclick="alert('📞 ติดต่อครัวลุงหนุ่ย\nเบอร์โทร: 090-123-4567\nLINE: @krualungnui\nเปิดบริการทุกวัน 10:00 - 22:00 น.')">
-          <div class="iconic-card-img">💬</div>
-          <div class="iconic-card-title">ติดต่อเรา</div>
-          <div class="iconic-card-sub">สอบถาม / แผนที่ร้าน</div>
-          <span class="iconic-badge-pill">090-123-4567</span>
-        </div>
 
       </div>
 

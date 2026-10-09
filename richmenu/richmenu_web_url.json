@@ -4,7 +4,7 @@
     "height": 1686
   },
   "selected": true,
-  "name": "Krua_Lung_Nui_RichMenu_6Buttons",
+  "name": "Krua_Lung_Nui_RichMenu_WebURL",
   "chatBarText": "แตะเปิดเมนูร้าน 🍲",
   "areas": [
     {
@@ -17,7 +17,7 @@
       "action": {
         "type": "uri",
         "label": "ดูเมนู",
-        "uri": "https://liff.line.me/2011360237-nVKENOs7?page=menu"
+        "uri": "https://kenshiro99.github.io/Krua-Lung-Nui/frontend/index.html?page=menu"
       }
     },
     {
@@ -30,7 +30,7 @@
       "action": {
         "type": "uri",
         "label": "สั่งอาหาร",
-        "uri": "https://liff.line.me/2011360237-nVKENOs7?page=order&type=takeaway"
+        "uri": "https://kenshiro99.github.io/Krua-Lung-Nui/frontend/index.html?page=order&type=takeaway"
       }
     },
     {
@@ -43,7 +43,7 @@
       "action": {
         "type": "uri",
         "label": "แผนที่ร้าน",
-        "uri": "https://liff.line.me/2011360237-nVKENOs7?page=map"
+        "uri": "https://kenshiro99.github.io/Krua-Lung-Nui/frontend/index.html?page=map"
       }
     },
     {
@@ -56,7 +56,7 @@
       "action": {
         "type": "uri",
         "label": "โปรโมชั่น",
-        "uri": "https://liff.line.me/2011360237-nVKENOs7?page=promotion"
+        "uri": "https://kenshiro99.github.io/Krua-Lung-Nui/frontend/index.html?page=promotion"
       }
     },
     {
@@ -69,7 +69,7 @@
       "action": {
         "type": "uri",
         "label": "ติดต่อร้าน",
-        "uri": "https://liff.line.me/2011360237-nVKENOs7?page=contact"
+        "uri": "https://kenshiro99.github.io/Krua-Lung-Nui/frontend/index.html?page=contact"
       }
     },
     {
@@ -82,7 +82,7 @@
       "action": {
         "type": "uri",
         "label": "จองโต๊ะ",
-        "uri": "https://liff.line.me/2011360237-nVKENOs7?page=reservation"
+        "uri": "https://kenshiro99.github.io/Krua-Lung-Nui/frontend/index.html?page=reservation"
       }
     }
   ]
