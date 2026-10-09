@@ -116,11 +116,45 @@ document.addEventListener("DOMContentLoaded", () => {
     localStorage.setItem("pos_menu_version", MENU_SCHEMA_VERSION);
   }
 
-  // Parse URL Parameters
+  // Parse URL Parameters (Supporting standard query, liff.state, and hash)
+  function resolveTargetPage() {
+    if (window.__INITIAL_PAGE__) return window.__INITIAL_PAGE__;
+    const urlParams = new URLSearchParams(window.location.search);
+    let page = urlParams.get("page");
+    if (!page && urlParams.has("liff.state")) {
+      try {
+        const decoded = decodeURIComponent(urlParams.get("liff.state"));
+        const qIdx = decoded.indexOf("?");
+        if (qIdx !== -1) {
+          const sp = new URLSearchParams(decoded.substring(qIdx));
+          page = sp.get("page");
+        }
+      } catch(e) {}
+    }
+    if (!page && window.location.hash) {
+      const cleanHash = window.location.hash.replace(/^[#\/?]+/, "");
+      const qIdx = cleanHash.indexOf("?");
+      const hp = new URLSearchParams(qIdx !== -1 ? cleanHash.substring(qIdx) : cleanHash);
+      page = hp.get("page");
+    }
+    if (page && ["menu", "order", "map", "promotion", "contact", "reservation"].includes(page)) {
+      return page;
+    }
+    const typeParam = urlParams.get("type");
+    const tableParam = urlParams.get("table");
+    if (typeParam === "takeaway" || tableParam) {
+      return "order";
+    }
+    return "menu";
+  }
+
+  const initialTargetPage = resolveTargetPage();
   const urlParams = new URLSearchParams(window.location.search);
-  const pageParam = urlParams.get("page");
   const typeParam = urlParams.get("type");
   const tableParam = urlParams.get("table");
+
+  // Instantly activate the target page before heavy rendering to eliminate any flicker
+  switchLiffPage(initialTargetPage);
 
   if (urlParams.has("reset") || urlParams.has("clear")) {
     sessionStorage.removeItem("pos_scanned_table");
@@ -177,15 +211,6 @@ document.addEventListener("DOMContentLoaded", () => {
     updateMascotGreeting("default");
   }
 
-  // Set initial page from ?page=...
-  if (pageParam && ["menu", "order", "map", "promotion", "contact", "reservation"].includes(pageParam)) {
-    switchLiffPage(pageParam);
-  } else if (typeParam === "takeaway" || tableParam) {
-    switchLiffPage("order");
-  } else {
-    switchLiffPage("menu");
-  }
-
   // Init LINE LIFF if available
   initLineLiff();
 
@@ -217,6 +242,7 @@ function initLineLiff() {
 // LIFF Page Switcher (Matching 6 LINE Rich Menu buttons)
 function switchLiffPage(page) {
   currentLiffPage = page;
+  document.documentElement.setAttribute('data-active-page', page);
   
   // Hide all page views
   document.querySelectorAll(".liff-page-view").forEach(el => el.classList.remove("active"));

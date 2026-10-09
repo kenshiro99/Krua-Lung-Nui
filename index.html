@@ -3,21 +3,24 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script>
+    // ถ้าเปิดผ่าน LINE LIFF หรือมีพารามิเตอร์ liff/table/type/page ให้พาไปหน้าลูกค้าทันที
+    (function() {
+      var s = window.location.search || '';
+      var h = window.location.hash || '';
+      var isLiff = /Line\//i.test(navigator.userAgent) || s.indexOf('liff') !== -1 || s.indexOf('table') !== -1 || s.indexOf('type') !== -1 || s.indexOf('page') !== -1 || h.indexOf('liff') !== -1;
+      if (isLiff) {
+        window.location.replace('frontend/index.html' + s + h);
+      }
+    })();
+  </script>
   <title>ครัวลุงหนุ่ย (Krua Lung Nui) | อร่อย สะอาด วัตถุดิบสดใหม่</title>
   <!-- Google Fonts: Prompt & Plus Jakarta Sans -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://fonts.gstatic.com">
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Prompt:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
   <!-- Lucide Icons -->
   <script src="https://unpkg.com/lucide@latest"></script>
-  <script>
-    // ถ้าเปิดผ่าน LINE LIFF หรือมีพารามิเตอร์ liff/table/type ให้พาไปหน้าสั่งอาหารของลูกค้าทันที
-    const urlParams = new URLSearchParams(window.location.search);
-    const isLiff = /Line\//i.test(navigator.userAgent) || urlParams.has('liff.state') || urlParams.has('table') || urlParams.has('type') || urlParams.has('page');
-    if (isLiff || window.location.hash.includes('liff')) {
-      window.location.replace('frontend/index.html' + window.location.search + window.location.hash);
-    }
-  </script>
   <style>
     :root {
       --wood-dark: #1b1008;

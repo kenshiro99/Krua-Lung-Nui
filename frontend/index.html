@@ -17,6 +17,65 @@
   <!-- Lucide Icons -->
   <script src="https://unpkg.com/lucide@latest"></script>
   <link rel="stylesheet" href="style.css?v=20260925_mobile_ui">
+  <!-- ⚡ Instant Pre-render Routing & Anti-Flicker: Runs before DOM construction to eliminate flash of menu -->
+  <script>
+    (function() {
+      function getInitialTarget() {
+        var search = window.location.search || '';
+        var hash = window.location.hash || '';
+        var params = new URLSearchParams(search);
+        var page = params.get('page');
+
+        if (!page && params.has('liff.state')) {
+          try {
+            var decoded = decodeURIComponent(params.get('liff.state'));
+            var qIdx = decoded.indexOf('?');
+            if (qIdx !== -1) {
+              var sp = new URLSearchParams(decoded.substring(qIdx));
+              page = sp.get('page');
+            }
+          } catch(e) {}
+        }
+
+        if (!page && hash) {
+          var cleanHash = hash.replace(/^[#\/?]+/, '');
+          var qIdx = cleanHash.indexOf('?');
+          var hp = new URLSearchParams(qIdx !== -1 ? cleanHash.substring(qIdx) : cleanHash);
+          page = hp.get('page');
+        }
+
+        if (page && ['menu', 'order', 'map', 'promotion', 'contact', 'reservation'].indexOf(page) !== -1) {
+          return page;
+        }
+        if (params.get('type') === 'takeaway' || params.has('table')) {
+          return 'order';
+        }
+        return 'menu';
+      }
+
+      var targetPage = getInitialTarget();
+      window.__INITIAL_PAGE__ = targetPage;
+      document.documentElement.setAttribute('data-active-page', targetPage);
+    })();
+  </script>
+  <style>
+    /* ⚡ Zero-Flicker Layout: Immediately activate the target page on first paint */
+    html[data-active-page="map"] #pageViewMap,
+    html[data-active-page="promotion"] #pageViewPromotion,
+    html[data-active-page="contact"] #pageViewContact,
+    html[data-active-page="reservation"] #pageViewReservation,
+    html[data-active-page="menu"] #pageViewMenu,
+    html[data-active-page="order"] #pageViewMenu {
+      display: block !important;
+    }
+
+    html:not([data-active-page="menu"]):not([data-active-page="order"]) #pageViewMenu,
+    html:not([data-active-page="menu"]):not([data-active-page="order"]) #headerSearchCategoryArea,
+    html:not([data-active-page="menu"]):not([data-active-page="order"]) #orderContextBanner,
+    html:not([data-active-page="menu"]):not([data-active-page="order"]) #floatingCartBar {
+      display: none !important;
+    }
+  </style>
 </head>
 <body>
   <div class="mobile-container has-bottom-nav">
@@ -90,7 +149,7 @@
     <!-- ========================================== -->
     <!-- VIEW 1: MENU & ORDER FEED (Tab: menu / order) -->
     <!-- ========================================== -->
-    <div id="pageViewMenu" class="liff-page-view active">
+    <div id="pageViewMenu" class="liff-page-view">
 
       <!-- Rich Menu 6-Action Quick Hub -->
       <section class="rich-hub-section" id="richHubSection">
@@ -407,7 +466,7 @@
     <!-- 6-BUTTON BOTTOM NAVIGATION BAR (MATCHING RICH MENU) -->
     <!-- ========================================== -->
     <nav class="liff-bottom-nav">
-      <button class="liff-nav-item active" id="navBtnMenu" onclick="switchLiffPage('menu')">
+      <button class="liff-nav-item" id="navBtnMenu" onclick="switchLiffPage('menu')">
         <i data-lucide="book-open"></i>
         <span>ดูเมนู</span>
       </button>
