@@ -172,17 +172,24 @@ document.addEventListener("DOMContentLoaded", () => {
     state.currentTable = cleanTable;
     state.isTableScanned = true;
     sessionStorage.setItem("pos_scanned_table", cleanTable);
-    localStorage.setItem("pos_scanned_table", cleanTable);
+    sessionStorage.setItem("pos_scanned_time", Date.now().toString());
+    localStorage.removeItem("pos_scanned_table");
     setOrderMode("dinein");
   } else {
-    // Check if table was scanned earlier in this session or stored locally
-    const savedTable = sessionStorage.getItem("pos_scanned_table") || localStorage.getItem("pos_scanned_table");
-    if (savedTable) {
+    // Check if table was scanned earlier in this active session (within 4 hours)
+    const savedTable = sessionStorage.getItem("pos_scanned_table");
+    const savedTime = parseInt(sessionStorage.getItem("pos_scanned_time") || "0", 10);
+    const isSessionRecent = (Date.now() - savedTime) < (4 * 60 * 60 * 1000);
+
+    if (savedTable && isSessionRecent) {
       state.currentTable = savedTable;
       state.isTableScanned = true;
     } else {
       state.currentTable = null;
       state.isTableScanned = false;
+      sessionStorage.removeItem("pos_scanned_table");
+      sessionStorage.removeItem("pos_scanned_time");
+      localStorage.removeItem("pos_scanned_table");
     }
     setOrderMode("dinein");
   }
@@ -449,16 +456,24 @@ function setOrderMode(mode) {
 function updateHeaderLabels() {
   const cartHeader = document.getElementById("cartModalHeaderTitle");
   if (cartHeader) {
-    cartHeader.innerText = state.orderMode === "dinein" 
-      ? `ตะกร้าอาหาร (ทานที่ร้าน โต๊ะ ${state.currentTable})` 
-      : `ตะกร้าอาหาร (สั่งกลับบ้าน ${state.currentQueue})`;
+    if (state.orderMode === "dinein") {
+      cartHeader.innerText = (state.isTableScanned && state.currentTable)
+        ? `ตะกร้าอาหาร (ทานที่ร้าน โต๊ะ ${state.currentTable})`
+        : `ตะกร้าอาหาร (ทานที่ร้าน • ยังไม่ได้สแกน QR โต๊ะ)`;
+    } else {
+      cartHeader.innerText = `ตะกร้าอาหาร (สั่งกลับบ้าน ${state.currentQueue})`;
+    }
   }
 
   const trackerHeader = document.getElementById("trackerModalHeaderTitle");
   if (trackerHeader) {
-    trackerHeader.innerText = state.orderMode === "dinein"
-      ? `สถานะอาหาร (โต๊ะ ${state.currentTable})`
-      : `สถานะอาหาร (สั่งกลับบ้าน ${state.currentQueue})`;
+    if (state.orderMode === "dinein") {
+      trackerHeader.innerText = (state.isTableScanned && state.currentTable)
+        ? `สถานะอาหาร (โต๊ะ ${state.currentTable})`
+        : `สถานะอาหาร (ทานที่ร้าน)`;
+    } else {
+      trackerHeader.innerText = `สถานะอาหาร (สั่งกลับบ้าน ${state.currentQueue})`;
+    }
   }
 }
 
@@ -788,7 +803,11 @@ function openCartModal() {
   } else {
     if (takeawayForm) takeawayForm.style.display = "none";
     btnSubmit.classList.remove("takeaway-btn");
-    btnSubmit.innerHTML = `<i data-lucide="send"></i> ยืนยันสั่งอาหารเข้าครัวลุงหนุ่ย`;
+    if (!state.isTableScanned || !state.currentTable) {
+      btnSubmit.innerHTML = `<i data-lucide="scan-line"></i> สแกน QR โต๊ะเพื่อยืนยันสั่งอาหาร`;
+    } else {
+      btnSubmit.innerHTML = `<i data-lucide="send"></i> ยืนยันสั่งอาหารเข้าครัวลุงหนุ่ย (โต๊ะ ${state.currentTable})`;
+    }
   }
 
   if (state.cart.length === 0) {
@@ -1161,7 +1180,14 @@ function handleBillSettledByCashier() {
   );
 
   state.cart = [];
-  saveCart();
+  // Reset table scan session so the next visit requires a new scan
+  sessionStorage.removeItem("pos_scanned_table");
+  sessionStorage.removeItem("pos_scanned_time");
+  localStorage.removeItem("pos_scanned_table");
+  state.currentTable = null;
+  state.isTableScanned = false;
+  setOrderMode("dinein");
+
   updateCartUI();
   checkActiveOrders();
 }
@@ -1282,7 +1308,7 @@ function startQrCamera() {
     isCameraActive = false;
     if (btnToggleText) btnToggleText.innerText = "เปิดกล้องสแกน QR Code";
     if (statusEl) {
-      statusEl.innerHTML = `<span style="color:#64748b;">💡 หากเปิดกล้องไม่ได้ สามารถแตะเลือกหมายเลขโต๊ะด้านบนได้ทันที</span>`;
+      statusEl.innerHTML = `<span style="color:#64748b;">💡 หากเปิดกล้องในเว็บไม่ได้ สามารถใช้แอปกล้องมือถือหรือ LINE สแกนป้ายบนโต๊ะได้โดยตรงครับ</span>`;
     }
     console.log("QR Camera start error:", err);
   });
@@ -1435,7 +1461,8 @@ function confirmScannedTable(tableNum) {
   state.currentTable = cleanTable;
   state.isTableScanned = true;
   sessionStorage.setItem("pos_scanned_table", cleanTable);
-  localStorage.setItem("pos_scanned_table", cleanTable);
+  sessionStorage.setItem("pos_scanned_time", Date.now().toString());
+  localStorage.removeItem("pos_scanned_table");
 
   setOrderMode("dinein");
   closeTableQrModal();
