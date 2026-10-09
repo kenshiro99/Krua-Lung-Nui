@@ -149,10 +149,21 @@
       try {
         const updateData = { status };
         if (currentOrderId !== undefined) updateData.current_order_id = currentOrderId;
-        const { error } = await supabase
+        const normId = String(tableId).startsWith('t-') ? tableId : ('t-' + tableId);
+        const cleanName = String(tableId).replace(/^t-/, '').replace(/^โต๊ะ\s*/, '');
+        
+        let { error } = await supabase
           .from('tables')
           .update(updateData)
-          .eq('id', tableId);
+          .eq('id', normId);
+        
+        if (error) {
+          const res = await supabase
+            .from('tables')
+            .update(updateData)
+            .eq('name', cleanName);
+          error = res.error;
+        }
         return !error;
       } catch (e) {
         console.error("[Supabase] updateTableStatus failed:", e);
@@ -508,6 +519,96 @@
           });
       } catch (e) {
         console.error("[Supabase] Realtime subscribe error:", e);
+        return null;
+      }
+    },
+
+    // 8. Realtime Alerts & Bill Requests
+    async broadcastBillRequest(tableId, tableName, total) {
+      if (!isReady) initClient();
+      const normId = String(tableId).startsWith('t-') ? tableId : ('t-' + tableId);
+      const cleanName = String(tableName || tableId).replace(/^t-/, '').replace(/^โต๊ะ\s*/, '');
+      const payload = {
+        type: 'bill_request',
+        tableId: normId,
+        tableName: cleanName,
+        total: Number(total || 0),
+        timestamp: new Date().toISOString()
+      };
+
+      // 1. Update table status in database
+      await this.updateTableStatus(normId, 'bill_requested');
+
+      // 2. Broadcast via Realtime channel
+      if (isReady && supabase) {
+        try {
+          const ch = supabase.channel('krua_pos_alerts');
+          await ch.subscribe();
+          await ch.send({
+            type: 'broadcast',
+            event: 'bill_request',
+            payload: payload
+          });
+        } catch (err) {
+          console.warn("[Supabase] broadcastBillRequest warning:", err);
+        }
+      }
+      return payload;
+    },
+
+    async broadcastBillCompleted(tableId, tableName) {
+      if (!isReady) initClient();
+      const normId = String(tableId).startsWith('t-') ? tableId : ('t-' + tableId);
+      const cleanName = String(tableName || tableId).replace(/^t-/, '').replace(/^โต๊ะ\s*/, '');
+      const payload = {
+        type: 'bill_completed',
+        tableId: normId,
+        tableName: cleanName,
+        timestamp: new Date().toISOString()
+      };
+
+      // 1. Reset table status in database
+      await this.updateTableStatus(normId, 'available', null);
+
+      // 2. Broadcast via Realtime channel
+      if (isReady && supabase) {
+        try {
+          const ch = supabase.channel('krua_pos_alerts');
+          await ch.subscribe();
+          await ch.send({
+            type: 'broadcast',
+            event: 'bill_completed',
+            payload: payload
+          });
+        } catch (err) {
+          console.warn("[Supabase] broadcastBillCompleted warning:", err);
+        }
+      }
+      return payload;
+    },
+
+    subscribeAlerts(onBillRequest, onBillCompleted) {
+      if (!isReady) initClient();
+      if (!isReady || !supabase) {
+        setTimeout(() => this.subscribeAlerts(onBillRequest, onBillCompleted), 2000);
+        return null;
+      }
+      try {
+        const ch = supabase.channel('krua_pos_alerts');
+        ch.on('broadcast', { event: 'bill_request' }, event => {
+          if (typeof onBillRequest === 'function') onBillRequest(event.payload);
+        });
+        ch.on('broadcast', { event: 'bill_completed' }, event => {
+          if (typeof onBillCompleted === 'function') onBillCompleted(event.payload);
+        });
+        ch.subscribe((status, err) => {
+          if (status === 'SUBSCRIBED') {
+            console.log("🟢 [Supabase Realtime] Alerts channel SUBSCRIBED");
+          }
+        });
+        return ch;
+      } catch (e) {
+        console.warn("[Supabase] subscribeAlerts error:", e);
         return null;
       }
     }
