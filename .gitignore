@@ -29,6 +29,7 @@ desktop.ini
 *.swp
 *.bak
 *.tmp
-.agents/
-test_results.json
+# Python Caches
+__pycache__/
+*.pyc
 
